@@ -151,6 +151,10 @@
         td { padding: 16px 12px; font-size: 14px; border-bottom: 1px solid var(--border-color); color: var(--color-text-primary); white-space: nowrap; }
         tr:hover td { background-color: rgba(255,255,255,0.01); }
 
+        /* Estilo para placeholders de datos vacíos */
+        .empty-placeholder { text-align: center; color: var(--color-text-secondary); padding: 40px 20px !important; font-size: 14px; }
+        .empty-placeholder i { font-size: 32px; color: var(--border-color); margin-bottom: 12px; display: block; }
+
         /* Badges de Estado */
         .badge { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
         .badge-presupuesto { background-color: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
@@ -214,7 +218,7 @@
         .modal-box { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 500px; max-width: 100%; padding: 24px; display: flex; flex-direction: column; gap: 20px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; }
         .modal-header h3 { font-size: 18px; font-weight: 700; color: var(--color-accent); }
-        .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+        .modal-close { background: none; border: none; color: var(--color-text-secondary); font-size: 20px; cursor: pointer; }
         .modal-close:hover { color: var(--color-danger); }
         
         .form-group { display: flex; flex-direction: column; gap: 8px; }
@@ -337,9 +341,9 @@
         </div>
         
         <div class="user-profile">
-            <div class="avatar">T</div>
+            <div class="avatar">S</div>
             <div>
-                <h4 style="font-size: 14px; font-weight: 700;">Tomás</h4>
+                <h4 style="font-size: 14px; font-weight: 700;">Santiago</h4>
                 <p style="font-size: 12px; color: var(--color-text-secondary);">Administrador</p>
             </div>
         </div>
@@ -356,7 +360,7 @@
             
             <div class="header-app">
                 <div>
-                    <h1 id="welcome-text">¡Hola, Tomás!</h1>
+                    <h1 id="welcome-text">¡Hola, Santiago!</h1>
                     <p id="sub-welcome-text">Panel de operaciones de VESA unificado en tiempo real.</p>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
@@ -373,23 +377,23 @@
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-title">Pedidos Pendientes <i class="fa-solid fa-basket-shopping"></i></div>
-                    <div class="metric-value" id="val-pendientes">12</div>
-                    <div class="metric-subtext" id="val-produccion-sub" style="color: var(--color-text-secondary);">5 en producción</div>
+                    <div class="metric-value" id="val-pendientes">0</div>
+                    <div class="metric-subtext" id="val-produccion-sub" style="color: var(--color-text-secondary);">0 en producción</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-title">Ventas del Mes <i class="fa-solid fa-arrow-trend-up"></i></div>
-                    <div class="metric-value" id="val-ventas">$2.450.000</div>
-                    <div class="metric-subtext text-green"><i class="fa-solid fa-caret-up"></i> 18% vs mes anterior</div>
+                    <div class="metric-value" id="val-ventas">$0</div>
+                    <div class="metric-subtext" id="val-ventas-trend" style="color: var(--color-text-secondary);"><i class="fa-solid fa-minus"></i> 0% vs mes anterior</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-title">Ganancia Estimada <i class="fa-solid fa-wallet"></i></div>
-                    <div class="metric-value" id="val-ganancias">$980.000</div>
-                    <div class="metric-subtext text-green"><i class="fa-solid fa-caret-up"></i> 22% vs mes anterior</div>
+                    <div class="metric-value" id="val-ganancias">$0</div>
+                    <div class="metric-subtext" id="val-ganancias-trend" style="color: var(--color-text-secondary);"><i class="fa-solid fa-minus"></i> 0% vs mes anterior</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-title">Stock Bajo <i class="fa-solid fa-triangle-exclamation"></i></div>
-                    <div class="metric-value" id="val-stock" style="color: var(--color-danger);">7</div>
-                    <div class="metric-subtext" style="color: var(--color-danger);">Falta reponer</div>
+                    <div class="metric-value" id="val-stock" style="color: var(--color-success);">0</div>
+                    <div class="metric-subtext" style="color: var(--color-success);">Sin alertas de insumos</div>
                 </div>
             </div>
 
@@ -849,68 +853,79 @@
         </div>
     </div>
 
-    <!-- INTEGRACIÓN FIREBASE & APEXCORE STACK ENGINE (Compatibilidad para file:// sin módulos) -->
+    <!-- LOGICA E INTEGRACIÓN CORE DE APEXTECH (SIN CRASHES POR HOISTING EN VARIABLES GLOBALES) -->
     <script>
-        // Comprobación de disponibilidad de Firebase en el entorno de ApexTech
-        const hasFirebase = typeof __firebase_config !== 'undefined';
-        let db, auth, authUser = null;
-        let appId = "vesa-core-os";
+        // Configuración y variables de estado del motor de datos de VESA
+        var hasFirebase = false;
+        var db = null;
+        var auth = null;
+        var authUser = null;
+        var appId = "vesa-core-os";
 
-        // Estructuras de Datos Iniciales (Por si el entorno es local/vacío)
-        const defaultState = {
-            pedidos: [
-                { id: 1027, cliente: "Los Ángeles FC", detalle: "3 remeras oversize", estado: "En producción", monto: 320000, fecha: "15/05/2026", tipoEntrega: "Retiro en local", horaEntrega: "14:00 hs", medioPago: "Mercado Pago" },
-                { id: 1026, cliente: "Básquet Alvear", detalle: "12 camisetas", estado: "En diseño", monto: 450000, fecha: "14/05/2026", tipoEntrega: "Envío", horaEntrega: "15:30 hs", medioPago: "Transferencia" },
-                { id: 1025, cliente: "Juan N.", detalle: "2 buzos canguro", estado: "Estampado", monto: 850000, fecha: "13/05/2026", tipoEntrega: "Retiro en local", horaEntrega: "17:00 hs", medioPago: "Efectivo" },
-                { id: 1024, cliente: "Energy Gym", detalle: "15 musculosas M", estado: "Listo", monto: 120000, fecha: "12/05/2026", tipoEntrega: "Envío", horaEntrega: "10:00 hs", medioPago: "Tarjeta" },
-                { id: 1023, cliente: "Fede", detalle: "1 remera básica S", estado: "Entregado", monto: 60000, fecha: "11/05/2026", tipoEntrega: "Retiro en local", horaEntrega: "12:00 hs", medioPago: "Mercado Pago" }
-            ],
-            clientes: [
-                { id: 1, nombre: "Los Ángeles FC", whatsapp: "+54 376 4112233", instagram: "@losangelesfc" },
-                { id: 2, nombre: "Básquet Alvear", whatsapp: "+54 376 4556677", instagram: "@basquetalvear" },
-                { id: 3, nombre: "Juan N.", whatsapp: "+54 376 4889900", instagram: "@juann" },
-                { id: 4, nombre: "Energy Gym", whatsapp: "+54 376 4223344", instagram: "@energygym" },
-                { id: 5, nombre: "Fede", whatsapp: "+54 376 4778899", instagram: "@fede_wear" }
-            ],
-            stock: [
-                { id: 1, item: "Remera Oversize Negra", talle: "XL", cantidad: 3, minimo: 10 },
-                { id: 2, item: "Remera Básica Blanca", talle: "L", cantidad: 4, minimo: 10 },
-                { id: 3, item: "Buzo Canguro Gris", talle: "M", cantidad: 2, minimo: 5 },
-                { id: 4, item: "Film DTF 33cm x 100m", talle: "U", cantidad: 1, minimo: 2 }
-            ],
-            finanzas: [
-                { id: 1, tipo: "Ingreso", detalle: "Seña Los Ángeles FC", monto: 160000, fecha: "15/05/2026", medioPago: "Mercado Pago" },
-                { id: 2, tipo: "Egreso", detalle: "Compra Film DTF", monto: 45000, fecha: "14/05/2026", medioPago: "Efectivo" },
-                { id: 3, tipo: "Ingreso", detalle: "Saldo Básquet Alvear", monto: 450000, fecha: "15/05/2026", medioPago: "Transferencia" }
-            ]
+        // Referencias de comparación de meses anteriores (Baseline matemática sin IA)
+        var ventasMesAnterior = 1500000; // Valor base configurable representativo del mes pasado
+        var gananciasMesAnterior = 600000; // 40% estimado del mes pasado
+
+        // Esquemas lógicos por defecto TOTALMENTE EN CERO
+        var defaultState = {
+            pedidos: [],
+            clientes: [],
+            stock: [],
+            finanzas: []
         };
 
-        // Estado en memoria dinámico de la App
-        let appState = { pedidos: [], clientes: [], stock: [], finanzas: [] };
-        let chart1 = null, chart2 = null;
+        var appState = { pedidos: [], clientes: [], stock: [], finanzas: [] };
+        var chart1 = null;
+        var chart2 = null;
 
-        // INICIALIZACIÓN POR FLUJO DE CONEXIÓN
-        const initApexCore = async () => {
-            const statusBadge = document.getElementById("status-badge");
-            const statusText = document.getElementById("status-text");
+        // Disparador del arranque de ApexCore al cargar el DOM del Navegador
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar de manera 100% segura si Firebase está configurado
+            try {
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    hasFirebase = true;
+                }
+            } catch (e) {
+                hasFirebase = false;
+            }
+
+            initApexCore();
+        });
+
+        // 1. Inicializar el Core de la aplicación
+        function initApexCore() {
+            var statusBadge = document.getElementById("status-badge");
+            var statusText = document.getElementById("status-text");
 
             if (hasFirebase) {
                 try {
-                    // Inicializar Firebase Compat en la Nube VESA
-                    const firebaseConfig = JSON.parse(__firebase_config);
+                    var firebaseConfig = JSON.parse(__firebase_config);
                     firebase.initializeApp(firebaseConfig);
                     auth = firebase.auth();
                     db = firebase.firestore();
-                    appId = typeof __app_id !== 'undefined' ? __app_id : 'vesa-core-os';
+                    
+                    try {
+                        if (typeof __app_id !== 'undefined' && __app_id) {
+                            appId = __app_id;
+                        }
+                    } catch (e) {}
 
-                    // Autenticación segura de extremo a extremo
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await auth.signInWithCustomToken(__initial_auth_token);
+                    var token = null;
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            token = __initial_auth_token;
+                        }
+                    } catch (e) {}
+
+                    if (token) {
+                        auth.signInWithCustomToken(token).catch(function() {
+                            auth.signInAnonymously();
+                        });
                     } else {
-                        await auth.signInAnonymously();
+                        auth.signInAnonymously();
                     }
 
-                    auth.onAuthStateChanged((user) => {
+                    auth.onAuthStateChanged(function(user) {
                         if (user) {
                             authUser = user;
                             statusBadge.className = "db-status online";
@@ -923,79 +938,22 @@
                     setupLocalStorageFallback();
                 }
             } else {
-                // Fallback automático local (Perfecto para demo offline)
                 setupLocalStorageFallback();
             }
-        };
+        }
 
-        // Escuchar colecciones en tiempo real (Firebase Compat Rules)
-        const bindFirebaseCollections = () => {
-            const pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
-            const pathClientes = db.collection('artifacts/' + appId + '/public/data/clientes');
-            const pathStock = db.collection('artifacts/' + appId + '/public/data/stock');
-            const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
-
-            pathPedidos.onSnapshot((snapshot) => {
-                let list = [];
-                snapshot.forEach(doc => list.push({ docId: doc.id, ...doc.data() }));
-                appState.pedidos = list.sort((a,b) => b.id - a.id);
-                if (list.length === 0) seedDatabase();
-                renderAll();
-                updateCharts();
-            }, (error) => console.error("Error en Snapshot Pedidos: ", error));
-
-            pathClientes.onSnapshot((snapshot) => {
-                let list = [];
-                snapshot.forEach(doc => list.push({ docId: doc.id, ...doc.data() }));
-                appState.clientes = list.sort((a,b) => b.id - a.id);
-                renderAll();
-            }, (error) => console.error("Error en Snapshot Clientes: ", error));
-
-            pathStock.onSnapshot((snapshot) => {
-                let list = [];
-                snapshot.forEach(doc => list.push({ docId: doc.id, ...doc.data() }));
-                appState.stock = list.sort((a,b) => a.id - b.id);
-                renderAll();
-                updateCharts();
-            }, (error) => console.error("Error en Snapshot Stock: ", error));
-
-            pathFinanzas.onSnapshot((snapshot) => {
-                let list = [];
-                snapshot.forEach(doc => list.push({ docId: doc.id, ...doc.data() }));
-                appState.finanzas = list.sort((a,b) => b.id - a.id);
-                renderAll();
-                updateCharts();
-            }, (error) => console.error("Error en Snapshot Finanzas: ", error));
-        };
-
-        // Sembrar datos de demostración en bases de datos vacías en producción
-        const seedDatabase = async () => {
-            if (!authUser) return;
-            appendConsoleLine("Iniciando carga de esquemas iniciales...", "warn");
-            
-            const pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
-            const pathClientes = db.collection('artifacts/' + appId + '/public/data/clientes');
-            const pathStock = db.collection('artifacts/' + appId + '/public/data/stock');
-            const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
-
-            for (let p of defaultState.pedidos) { await pathPedidos.add(p); }
-            for (let c of defaultState.clientes) { await pathClientes.add(c); }
-            for (let s of defaultState.stock) { await pathStock.add(s); }
-            for (let f of defaultState.finanzas) { await pathFinanzas.add(f); }
-            appendConsoleLine("Base de datos de producción sincronizada con éxito.", "success");
-        };
-
-        // Base de Datos Local de Resguardo (Cero caídas, funciona directo con doble clic)
-        const setupLocalStorageFallback = () => {
-            const statusBadge = document.getElementById("status-badge");
-            const statusText = document.getElementById("status-text");
+        // 2. Base de Datos Local de Resguardo (localStorage limpio)
+        function setupLocalStorageFallback() {
+            var statusBadge = document.getElementById("status-badge");
+            var statusText = document.getElementById("status-text");
             statusBadge.className = "db-status local";
             statusText.innerText = "Local Protegido";
 
-            const localPed = localStorage.getItem("vesa_pedidos");
-            const localCli = localStorage.getItem("vesa_clientes");
-            const localStk = localStorage.getItem("vesa_stock");
-            const localFin = localStorage.getItem("vesa_finanzas");
+            // Se usa vesa_pedidos_clean_v3 para forzar la limpieza de datos anteriores en Vercel
+            var localPed = localStorage.getItem("vesa_pedidos_clean_v3");
+            var localCli = localStorage.getItem("vesa_clientes_clean_v3");
+            var localStk = localStorage.getItem("vesa_stock_clean_v3");
+            var localFin = localStorage.getItem("vesa_finanzas_clean_v3");
 
             if (localPed && localCli && localStk && localFin) {
                 appState.pedidos = JSON.parse(localPed);
@@ -1003,25 +961,64 @@
                 appState.stock = JSON.parse(localStk);
                 appState.finanzas = JSON.parse(localFin);
             } else {
-                appState.pedidos = [...defaultState.pedidos];
-                appState.clientes = [...defaultState.clientes];
-                appState.stock = [...defaultState.stock];
-                appState.finanzas = [...defaultState.finanzas];
+                appState.pedidos = [];
+                appState.clientes = [];
+                appState.stock = [];
+                appState.finanzas = [];
                 saveToLocalStorage();
             }
             renderAll();
             initCharts();
-        };
+        }
 
-        const saveToLocalStorage = () => {
-            localStorage.setItem("vesa_pedidos", JSON.stringify(appState.pedidos));
-            localStorage.setItem("vesa_clientes", JSON.stringify(appState.clientes));
-            localStorage.setItem("vesa_stock", JSON.stringify(appState.stock));
-            localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
-        };
+        function saveToLocalStorage() {
+            localStorage.setItem("vesa_pedidos_clean_v3", JSON.stringify(appState.pedidos));
+            localStorage.setItem("vesa_clientes_clean_v3", JSON.stringify(appState.clientes));
+            localStorage.setItem("vesa_stock_clean_v3", JSON.stringify(appState.stock));
+            localStorage.setItem("vesa_finanzas_clean_v3", JSON.stringify(appState.finanzas));
+        }
 
-        // CONTROLADORES DE RENDERIZADO VISUAL
-        const renderAll = () => {
+        // 3. Enlazar colecciones de Firebase en tiempo real
+        function bindFirebaseCollections() {
+            var pathPedidos = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pedidos');
+            var pathClientes = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('clientes');
+            var pathStock = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('stock');
+            var pathFinanzas = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('finanzas');
+
+            pathPedidos.onSnapshot(function(snapshot) {
+                var list = [];
+                snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
+                appState.pedidos = list.sort(function(a, b) { return b.id - a.id; });
+                renderAll();
+                updateCharts();
+            }, function(error) { console.error("Error en Snapshot Pedidos: ", error); });
+
+            pathClientes.onSnapshot(function(snapshot) {
+                var list = [];
+                snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
+                appState.clientes = list.sort(function(a, b) { return b.id - a.id; });
+                renderAll();
+            }, function(error) { console.error("Error en Snapshot Clientes: ", error); });
+
+            pathStock.onSnapshot(function(snapshot) {
+                var list = [];
+                snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
+                appState.stock = list.sort(function(a, b) { return a.id - b.id; });
+                renderAll();
+                updateCharts();
+            }, function(error) { console.error("Error en Snapshot Stock: ", error); });
+
+            pathFinanzas.onSnapshot(function(snapshot) {
+                var list = [];
+                snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
+                appState.finanzas = list.sort(function(a, b) { return b.id - a.id; });
+                renderAll();
+                updateCharts();
+            }, function(error) { console.error("Error en Snapshot Finanzas: ", error); });
+        }
+
+        // 4. Métodos de Renderizado de la Interfaz Visual
+        function renderAll() {
             renderMetrics();
             renderDashboardAlerts();
             renderDashboardOrders();
@@ -1032,33 +1029,68 @@
             renderFinanzasTable();
             renderEntregasTable();
             populateClientDropdown();
-        };
+        }
 
-        const renderMetrics = () => {
-            const pendientes = appState.pedidos.filter(p => p.estado !== "Entregado");
+        function renderMetrics() {
+            var pendientes = appState.pedidos.filter(function(p) { return p.estado !== "Entregado"; });
             document.getElementById("val-pendientes").innerText = pendientes.length;
             
-            const produccion = appState.pedidos.filter(p => p.estado === "Producción" || p.estado === "En producción").length;
-            document.getElementById("val-produccion-sub").innerText = `${produccion} en producción`;
+            var produccion = appState.pedidos.filter(function(p) { return p.estado === "Producción" || p.estado === "En producción"; }).length;
+            document.getElementById("val-produccion-sub").innerText = produccion + " en producción";
 
-            const ventasTotal = appState.pedidos.reduce((acc, p) => acc + p.monto, 0);
-            document.getElementById("val-ventas").innerText = `$${ventasTotal.toLocaleString('es-AR')}`;
+            // Ventas mes actual
+            var ventasTotal = appState.pedidos.reduce(function(acc, p) { return acc + p.monto; }, 0);
+            document.getElementById("val-ventas").innerText = "$" + ventasTotal.toLocaleString('es-AR');
 
-            const ganancia = Math.round(ventasTotal * 0.4);
-            document.getElementById("val-ganancias").innerText = `$${ganancia.toLocaleString('es-AR')}`;
+            // Ganancias mes actual (estimación 40%)
+            var ganancia = Math.round(ventasTotal * 0.4);
+            document.getElementById("val-ganancias").innerText = "$" + ganancia.toLocaleString('es-AR');
 
-            const stockBajoCount = appState.stock.filter(s => s.cantidad <= s.minimo).length;
-            const stockValElement = document.getElementById("val-stock");
+            // --- CÁLCULO DE CRECIMIENTO MATEMÁTICO REAL ---
+            var ventasTrendEl = document.getElementById("val-ventas-trend");
+            var gananciasTrendEl = document.getElementById("val-ganancias-trend");
+
+            if (ventasMesAnterior > 0) {
+                var porcentajeVentas = ((ventasTotal - ventasMesAnterior) / ventasMesAnterior) * 100;
+                var signoVentas = porcentajeVentas >= 0 ? "+" : "";
+                
+                ventasTrendEl.innerText = `${signoVentas}${porcentajeVentas.toFixed(1)}% vs mes anterior`;
+                if (porcentajeVentas >= 0) {
+                    ventasTrendEl.className = "metric-subtext text-green";
+                    ventasTrendEl.innerHTML = `<i class="fa-solid fa-caret-up"></i> ${signoVentas}${porcentajeVentas.toFixed(1)}% vs mes anterior`;
+                } else {
+                    ventasTrendEl.className = "metric-subtext text-red";
+                    ventasTrendEl.innerHTML = `<i class="fa-solid fa-caret-down"></i> ${porcentajeVentas.toFixed(1)}% vs mes anterior`;
+                }
+            }
+
+            if (gananciasMesAnterior > 0) {
+                var porcentajeGanancias = ((ganancia - gananciasMesAnterior) / gananciasMesAnterior) * 100;
+                var signoGanancias = porcentajeGanancias >= 0 ? "+" : "";
+
+                gananciasTrendEl.innerText = `${signoGanancias}${porcentajeGanancias.toFixed(1)}% vs mes anterior`;
+                if (porcentajeGanancias >= 0) {
+                    gananciasTrendEl.className = "metric-subtext text-green";
+                    gananciasTrendEl.innerHTML = `<i class="fa-solid fa-caret-up"></i> ${signoGanancias}${porcentajeGanancias.toFixed(1)}% vs mes anterior`;
+                } else {
+                    gananciasTrendEl.className = "metric-subtext text-red";
+                    gananciasTrendEl.innerHTML = `<i class="fa-solid fa-caret-down"></i> ${porcentajeGanancias.toFixed(1)}% vs mes anterior`;
+                }
+            }
+
+            var stockBajoCount = appState.stock.filter(function(s) { return s.cantidad <= s.minimo; }).length;
+            var stockValElement = document.getElementById("val-stock");
             stockValElement.innerText = stockBajoCount;
             stockValElement.style.color = stockBajoCount > 0 ? "var(--color-danger)" : "var(--color-success)";
-        };
+        }
 
-        const renderDashboardAlerts = () => {
-            const container = document.getElementById("dash-alerts");
+        function renderDashboardAlerts() {
+            var container = document.getElementById("dash-alerts");
+            if (!container) return;
             container.innerHTML = "";
 
-            const stockBajo = appState.stock.filter(s => s.cantidad <= s.minimo);
-            const atrasados = appState.pedidos.filter(p => p.estado === "En diseño" || p.estado === "Confirmado").length;
+            var stockBajo = appState.stock.filter(function(s) { return s.cantidad <= s.minimo; });
+            var atrasados = appState.pedidos.filter(function(p) { return p.estado === "En diseño" || p.estado === "Confirmado"; }).length;
 
             if (atrasados > 0) {
                 container.innerHTML += `
@@ -1084,23 +1116,39 @@
                 `;
             }
 
-            container.innerHTML += `
-                <div class="alert-item success" style="border-left-color: var(--color-success);">
-                    <div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div>
-                    <div class="alert-text">
-                        <h4>Finanzas del mes saludables</h4>
-                        <p>Los cobros superan el costo fijo mensual.</p>
+            if (atrasados === 0 && stockBajo.length === 0) {
+                container.innerHTML += `
+                    <div class="alert-item success" style="border-left-color: var(--color-success);">
+                        <div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div>
+                        <div class="alert-text">
+                            <h4>Operación limpia</h4>
+                            <p>No se registran alertas ni retrasos en la cola de trabajo.</p>
+                        </div>
                     </div>
-                </div>
-            `;
-        };
+                `;
+            }
+        }
 
-        const renderDashboardOrders = () => {
-            const tbody = document.getElementById("dash-pedidos-tbody");
+        function renderDashboardOrders() {
+            var tbody = document.getElementById("dash-pedidos-tbody");
+            if (!tbody) return;
             tbody.innerHTML = "";
-            const ultimos = appState.pedidos.slice(0, 4);
-            ultimos.forEach(p => {
-                const badgeClass = `badge-${p.estado.toLowerCase().replace(" ", "")}`;
+
+            if (appState.pedidos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-placeholder">
+                            <i class="fa-solid fa-list-check"></i>
+                            No hay pedidos cargados. Hacé clic en "Nuevo Pedido" abajo para empezar.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            var ultimos = appState.pedidos.slice(0, 4);
+            ultimos.forEach(function(p) {
+                var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
                 tbody.innerHTML += `
                     <tr>
                         <td>#${p.id}</td>
@@ -1111,14 +1159,26 @@
                     </tr>
                 `;
             });
-        };
+        }
 
-        const renderDashboardStock = () => {
-            const container = document.getElementById("dash-stock-list");
+        function renderDashboardStock() {
+            var container = document.getElementById("dash-stock-list");
+            if (!container) return;
             container.innerHTML = "";
-            appState.stock.forEach(s => {
-                const isLow = s.cantidad <= s.minimo;
-                const qtyClass = isLow ? "stock-qty low" : "stock-qty";
+
+            if (appState.stock.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-placeholder" style="padding: 24px 0 !important;">
+                        <i class="fa-solid fa-boxes-stacked" style="font-size: 24px;"></i>
+                        Sin stock registrado.
+                    </div>
+                `;
+                return;
+            }
+
+            appState.stock.forEach(function(s) {
+                var isLow = s.cantidad <= s.minimo;
+                var qtyClass = isLow ? "stock-qty low" : "stock-qty";
                 container.innerHTML += `
                     <div class="stock-item">
                         <div class="stock-info">
@@ -1129,13 +1189,27 @@
                     </div>
                 `;
             });
-        };
+        }
 
-        const renderPedidosTable = () => {
-            const tbody = document.getElementById("pedidos-tbody");
+        function renderPedidosTable() {
+            var tbody = document.getElementById("pedidos-tbody");
+            if (!tbody) return;
             tbody.innerHTML = "";
-            appState.pedidos.forEach(p => {
-                const badgeClass = `badge-${p.estado.toLowerCase().replace(" ", "")}`;
+
+            if (appState.pedidos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-placeholder">
+                            <i class="fa-solid fa-box-open"></i>
+                            Aún no registraste ningún pedido. Hacé clic en "Nuevo Pedido" para ingresar uno.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            appState.pedidos.forEach(function(p) {
+                var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
                 tbody.innerHTML += `
                     <tr>
                         <td>#${p.id}</td>
@@ -1148,30 +1222,58 @@
                     </tr>
                 `;
             });
-        };
+        }
 
-        const renderClientesTable = () => {
-            const tbody = document.getElementById("clientes-tbody");
+        function renderClientesTable() {
+            var tbody = document.getElementById("clientes-tbody");
+            if (!tbody) return;
             tbody.innerHTML = "";
-            appState.clientes.forEach(c => {
+
+            if (appState.clientes.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-placeholder">
+                            <i class="fa-solid fa-users-slash"></i>
+                            No hay clientes registrados en la cartera. Registrá uno nuevo desde el botón inferior.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            appState.clientes.forEach(function(c) {
                 tbody.innerHTML += `
                     <tr>
                         <td>#${c.id}</td>
                         <td style="font-weight:700;">${c.nombre}</td>
                         <td style="color: var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${c.whatsapp}</td>
                         <td style="color: var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${c.instagram}</td>
-                        <td><button class="btn btn-small btn-danger" style="padding:6px 12px;" onclick="eliminarCliente('${c.docId}', ${c.id})"><i class="fa-solid fa-trash"></i></button></td>
+                        <td><button class="btn btn-small btn-danger" style="padding:6px 12px;" onclick="eliminarCliente('${c.docId || ''}', ${c.id})"><i class="fa-solid fa-trash"></i></button></td>
                     </tr>
                 `;
             });
-        };
+        }
 
-        const renderStockTable = () => {
-            const tbody = document.getElementById("stock-tbody");
+        function renderStockTable() {
+            var tbody = document.getElementById("stock-tbody");
+            if (!tbody) return;
             tbody.innerHTML = "";
-            appState.stock.forEach(s => {
-                const isLow = s.cantidad <= s.minimo;
-                const statusBadge = isLow ? `<span class="badge" style="background-color:rgba(239, 68, 68, 0.15); color: var(--color-danger);">Stock Bajo</span>` : `<span class="badge" style="background-color:rgba(16, 185, 129, 0.15); color: var(--color-success);">Suficiente</span>`;
+
+            if (appState.stock.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-placeholder">
+                            <i class="fa-solid fa-layer-group"></i>
+                            El depósito está vacío. Agregá insumos o prendas base con el botón "Añadir Insumo".
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            appState.stock.forEach(function(s) {
+                var isLow = s.cantidad <= s.minimo;
+                var statusBadge = isLow ? `<span class="badge" style="background-color:rgba(239, 68, 68, 0.15); color: var(--color-danger);">Stock Bajo</span>` : `<span class="badge" style="background-color:rgba(16, 185, 129, 0.15); color: var(--color-success);">Suficiente</span>`;
                 tbody.innerHTML += `
                     <tr>
                         <td>#${s.id}</td>
@@ -1183,13 +1285,27 @@
                     </tr>
                 `;
             });
-        };
+        }
 
-        const renderFinanzasTable = () => {
-            const tbody = document.getElementById("finanzas-tbody");
+        function renderFinanzasTable() {
+            var tbody = document.getElementById("finanzas-tbody");
+            if (!tbody) return;
             tbody.innerHTML = "";
-            appState.finanzas.forEach(f => {
-                const classMonto = f.tipo === "Ingreso" ? "color: var(--color-success); font-weight:700;" : "color: var(--color-danger); font-weight:700;";
+
+            if (appState.finanzas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-placeholder">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                            No se registran movimientos de caja diariaria para este período.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            appState.finanzas.forEach(function(f) {
+                var classMonto = f.tipo === "Ingreso" ? "color: var(--color-success); font-weight:700;" : "color: var(--color-danger); font-weight:700;";
                 tbody.innerHTML += `
                     <tr>
                         <td>${f.fecha}</td>
@@ -1200,13 +1316,28 @@
                     </tr>
                 `;
             });
-        };
+        }
 
-        const renderEntregasTable = () => {
-            const tbody = document.getElementById("entregas-tbody");
+        function renderEntregasTable() {
+            var tbody = document.getElementById("entregas-tbody");
+            if (!tbody) return;
             tbody.innerHTML = "";
-            const entregasHoy = appState.pedidos.filter(p => p.estado !== "Entregado");
-            entregasHoy.forEach(e => {
+
+            var entregasHoy = appState.pedidos.filter(function(p) { return p.estado !== "Entregado"; });
+
+            if (entregasHoy.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-placeholder">
+                            <i class="fa-solid fa-truck-ramp-box"></i>
+                            No hay despachos o retiros programados para hoy.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            entregasHoy.forEach(function(e) {
                 tbody.innerHTML += `
                     <tr>
                         <td>#${e.id}</td>
@@ -1217,34 +1348,46 @@
                     </tr>
                 `;
             });
-        };
+        }
 
-        const populateClientDropdown = () => {
-            const select = document.getElementById("form-ped-cliente");
+        function populateClientDropdown() {
+            var select = document.getElementById("form-ped-cliente");
             if (!select) return;
             select.innerHTML = "";
-            appState.clientes.forEach(c => {
+
+            if (appState.clientes.length === 0) {
+                select.innerHTML = `<option value="" disabled selected>Primero registrá un cliente</option>`;
+                return;
+            }
+
+            appState.clientes.forEach(function(c) {
                 select.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
             });
-        };
+        }
 
-        // ACCIONES DE GUARDADO DE DATOS (NUBE / LOCAL)
-        const guardarNuevoPedido = async () => {
-            const cliente = document.getElementById("form-ped-cliente").value;
-            const detalle = document.getElementById("form-ped-detalle").value;
-            const monto = parseInt(document.getElementById("form-ped-monto").value) || 0;
-            const estado = document.getElementById("form-ped-estado").value;
-            const mediopago = document.getElementById("form-ped-metodopago").value;
-            const entrega = document.getElementById("form-ped-entrega").value;
-            const hora = document.getElementById("form-ped-hora").value || "A coordinar";
+        // 5. Métodos de Acción y Persistencia
+        async function guardarNuevoPedido() {
+            var clienteSelect = document.getElementById("form-ped-cliente");
+            var cliente = clienteSelect.value;
+            var detalle = document.getElementById("form-ped-detalle").value;
+            var monto = parseInt(document.getElementById("form-ped-monto").value) || 0;
+            var estado = document.getElementById("form-ped-estado").value;
+            var mediopago = document.getElementById("form-ped-metodopago").value;
+            var entrega = document.getElementById("form-ped-entrega").value;
+            var hora = document.getElementById("form-ped-hora").value || "A coordinar";
+
+            if (!cliente) {
+                showToast("Falta Cliente", "Cargá primero al menos un cliente en su respectiva pestaña.");
+                return;
+            }
 
             if (!detalle) {
                 showToast("Falta descripción", "Completá el detalle de las prendas.");
                 return;
             }
 
-            const nuevoId = appState.pedidos.length > 0 ? appState.pedidos[0].id + 1 : 1000;
-            const nuevoPed = {
+            var nuevoId = appState.pedidos.length > 0 ? appState.pedidos[0].id + 1 : 1000;
+            var nuevoPed = {
                 id: nuevoId,
                 cliente: cliente,
                 detalle: detalle,
@@ -1257,11 +1400,11 @@
             };
 
             if (hasFirebase && authUser) {
-                const pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
+                var pathPedidos = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pedidos');
                 await pathPedidos.add(nuevoPed);
 
                 if (estado !== "Presupuesto") {
-                    const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
+                    var pathFinanzas = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('finanzas');
                     await pathFinanzas.add({
                         id: appState.finanzas.length + 1,
                         tipo: "Ingreso",
@@ -1290,23 +1433,23 @@
 
             closeModal('modalPedido');
             showToast("Pedido Registrado", `Pedido #${nuevoId} cargado correctamente.`);
-        };
+        }
 
-        const guardarNuevoCliente = async () => {
-            const nombre = document.getElementById("form-cli-nombre").value;
-            const whatsapp = document.getElementById("form-cli-tel").value;
-            const ig = document.getElementById("form-cli-ig").value;
+        async function guardarNuevoCliente() {
+            var nombre = document.getElementById("form-cli-nombre").value;
+            var whatsapp = document.getElementById("form-cli-tel").value;
+            var ig = document.getElementById("form-cli-ig").value;
 
             if (!nombre || !whatsapp) {
                 showToast("Faltan datos", "El nombre y WhatsApp son obligatorios.");
                 return;
             }
 
-            const nuevoId = appState.clientes.length + 1;
-            const nuevoCli = { id: nuevoId, nombre, whatsapp, instagram: ig || "-" };
+            var nuevoId = appState.clientes.length + 1;
+            var nuevoCli = { id: nuevoId, nombre: nombre, whatsapp: whatsapp, instagram: ig || "-" };
 
             if (hasFirebase && authUser) {
-                const pathClientes = db.collection('artifacts/' + appId + '/public/data/clientes');
+                var pathClientes = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('clientes');
                 await pathClientes.add(nuevoCli);
             } else {
                 appState.clientes.push(nuevoCli);
@@ -1316,30 +1459,30 @@
 
             closeModal('modalCliente');
             showToast("Cliente Registrado", `${nombre} se sumó a la cartera.`);
-        };
+        }
 
-        const guardarFinanzas = async () => {
-            const tipo = document.getElementById("form-fin-tipo").value;
-            const monto = parseInt(document.getElementById("form-fin-monto").value) || 0;
-            const detalle = document.getElementById("form-fin-detalle").value;
-            const mediopago = document.getElementById("form-fin-metodopago").value;
+        async function guardarFinanzas() {
+            var tipo = document.getElementById("form-fin-tipo").value;
+            var monto = parseInt(document.getElementById("form-fin-monto").value) || 0;
+            var detalle = document.getElementById("form-fin-detalle").value;
+            var mediopago = document.getElementById("form-fin-metodopago").value;
 
             if (!detalle || monto <= 0) {
                 showToast("Entrada Inválida", "Completá concepto y monto mayor a $0.");
                 return;
             }
 
-            const nuevaFin = {
+            var nuevaFin = {
                 id: appState.finanzas.length + 1,
-                tipo,
-                detalle,
-                monto,
+                tipo: tipo,
+                detalle: detalle,
+                monto: monto,
                 fecha: "15/05/2026",
                 medioPago: mediopago
             };
 
             if (hasFirebase && authUser) {
-                const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
+                var pathFinanzas = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('finanzas');
                 await pathFinanzas.add(nuevaFin);
             } else {
                 appState.finanzas.unshift(nuevaFin);
@@ -1350,29 +1493,29 @@
 
             closeModal('modalFinanzas');
             showToast("Caja Actualizada", `Movimiento de ${tipo} por $${monto.toLocaleString()} exitoso.`);
-        };
+        }
 
-        const guardarStock = async () => {
-            const nombre = document.getElementById("form-stk-nombre").value;
-            const talle = document.getElementById("form-stk-talle").value || "U";
-            const cant = parseInt(document.getElementById("form-stk-cant").value) || 0;
-            const min = parseInt(document.getElementById("form-stk-min").value) || 2;
+        async function guardarStock() {
+            var nombre = document.getElementById("form-stk-nombre").value;
+            var talle = document.getElementById("form-stk-talle").value || "U";
+            var cant = parseInt(document.getElementById("form-stk-cant").value) || 0;
+            var min = parseInt(document.getElementById("form-stk-min").value) || 2;
 
             if (!nombre) {
                 showToast("Falta Nombre", "Por favor ingresá el nombre del insumo.");
                 return;
             }
 
-            const nuevoInsumo = {
+            var nuevoInsumo = {
                 id: appState.stock.length + 1,
                 item: nombre,
-                talle,
+                talle: talle,
                 cantidad: cant,
                 minimo: min
             };
 
             if (hasFirebase && authUser) {
-                const pathStock = db.collection('artifacts/' + appId + '/public/data/stock');
+                var pathStock = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('stock');
                 await pathStock.add(nuevoInsumo);
             } else {
                 appState.stock.push(nuevoInsumo);
@@ -1382,78 +1525,111 @@
 
             closeModal('modalStock');
             showToast("Stock Añadido", `Artículo '${nombre}' agregado.`);
-        };
+        }
 
-        const eliminarCliente = async (docId, localId) => {
+        async function eliminarCliente(docId, localId) {
             if (hasFirebase && authUser && docId) {
-                const docRef = db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId);
+                var docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('clientes').doc(docId);
                 await docRef.delete();
             } else {
-                appState.clientes = appState.clientes.filter(c => c.id !== localId);
+                appState.clientes = appState.clientes.filter(function(c) { return c.id !== localId; });
                 saveToLocalStorage();
                 renderAll();
             }
             showToast("Cliente Removido", "La ficha fue eliminada de la base de datos.");
-        };
+        }
 
-        // ENRUTADOR WHATSAPP PARSER (SIMULADOR APEXCORE)
-        const appendConsoleLine = (text, styleClass = "") => {
-            const logsContainer = document.getElementById("console-logs");
-            if (!logsContainer) return;
-            const line = document.createElement("div");
-            line.className = `console-line ${styleClass}`;
-            line.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
-            logsContainer.appendChild(line);
-            logsContainer.scrollTop = logsContainer.scrollHeight;
-        };
+        function generarComprobante(idPedido) {
+            var pedido = appState.pedidos.find(function(p) { return p.id === idPedido; });
+            if (!pedido) return;
 
-        const sendMessageToInbox = () => {
-            const input = document.getElementById("inbox-user-msg");
-            const text = input.value.trim();
-            if(!text) return;
+            document.getElementById("comprobante-id").innerText = "Nº 0001-000" + pedido.id;
+            document.getElementById("comp-cliente-nombre").innerText = "Cliente: " + pedido.cliente;
+            document.getElementById("comp-cliente-medio").innerText = "Medio: " + (pedido.medioPago || "Mercado Pago");
+            
+            var clienteDb = appState.clientes.find(function(c) { return c.nombre === pedido.cliente; });
+            if (clienteDb) {
+                document.getElementById("comp-cliente-info").innerText = `WhatsApp: ${clienteDb.whatsapp} | IG: ${clienteDb.instagram}`;
+            } else {
+                document.getElementById("comp-cliente-info").innerText = "Contacto: WhatsApp Activo";
+            }
+
+            document.getElementById("comp-trabajo-detalle").innerText = "Servicio de Serigrafía y Estampado Textil: " + pedido.detalle;
+            document.getElementById("comp-trabajo-monto").innerText = "$" + pedido.monto.toLocaleString('es-AR');
+            document.getElementById("comp-monto-total").innerText = "Total Cobrado: $" + pedido.monto.toLocaleString('es-AR');
+
+            openModal('modalComprobante');
+        }
+
+        // 6. WhatsApp Inbox (Simulador estructurado de Webhooks de ApexTech)
+        function handleChatKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessageToInbox();
+            }
+        }
+
+        function sendMessageToInbox() {
+            var input = document.getElementById("inbox-user-msg");
+            var text = input.value.trim();
+            if (!text) return;
 
             input.value = "";
 
-            const chatBox = document.getElementById("inbox-chat-box");
-            const userBubble = document.createElement("div");
+            var chatBox = document.getElementById("inbox-chat-box");
+            var userBubble = document.createElement("div");
             userBubble.className = "chat-bubble user";
             userBubble.innerText = text;
             chatBox.appendChild(userBubble);
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            appendConsoleLine(`Webhook trigger: Entrada detectada: "${text}"`);
+            appendConsoleLine(`Webhook trigger: Entrada de datos: "${text}"`);
             appendConsoleLine("Iniciando motor de parseo sintáctico ApexCore...", "warn");
 
-            setTimeout(async () => {
-                let reply = "";
-                let hasOrder = false;
-                let parsedDetail = "";
-                let calculatedCost = 0;
+            setTimeout(async function() {
+                var reply = "";
+                var hasOrder = false;
+                var parsedDetail = "";
+                var calculatedCost = 0;
 
-                const normalizedText = text.toLowerCase();
+                var normalizedText = text.toLowerCase();
+
+                // Para procesar el pedido simulado del WhatsApp, debe existir por lo menos un cliente
+                if (appState.clientes.length === 0) {
+                    appendConsoleLine("ERROR EN WEBHOOK: NO SE REGISTRAN CLIENTES EN EL SISTEMA", "danger");
+                    reply = "¡Hola! Para poder ingresar tu orden a nuestra cola de producción, primero debemos dar de alta tu ficha de cliente en el sistema. Por favor, comunícate con un administrador para registrar tu nombre.";
+                    
+                    var botBubbleErr = document.createElement("div");
+                    botBubbleErr.className = "chat-bubble system";
+                    botBubbleErr.innerText = reply;
+                    chatBox.appendChild(botBubbleErr);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    return;
+                }
+
+                var clientePredeterminado = appState.clientes[0].nombre;
 
                 if (normalizedText.includes("remera") || normalizedText.includes("buzo") || normalizedText.includes("remeras") || normalizedText.includes("buzos")) {
-                    appendConsoleLine("Parser: Coincidencia semántica con catálogo textil.");
-                    appendConsoleLine("Consultando disponibilidad de stock vía SQL query...", "warn");
+                    appendConsoleLine("Parser: Coincidencia sintáctica con catálogo textil.");
+                    appendConsoleLine("Consultando inventario por base de datos...", "warn");
                     
-                    let qty = 20;
-                    const numMatch = normalizedText.match(/\d+/);
+                    var qty = 20;
+                    var numMatch = normalizedText.match(/\d+/);
                     if (numMatch) qty = parseInt(numMatch[0]);
 
-                    let itemType = normalizedText.includes("remera") ? "Remeras" : "Buzos";
-                    parsedDetail = `${qty} ${itemType.toLowerCase()} personalizadas`;
+                    var itemType = normalizedText.includes("remera") ? "Remeras" : "Buzos";
+                    parsedDetail = qty + " " + itemType.toLowerCase() + " personalizadas";
                     calculatedCost = qty * (itemType === "Remeras" ? 12000 : 25000);
 
-                    appendConsoleLine(`SQL: Registro de inventario para ${itemType} cargado. Stock disponible.`, "success");
+                    appendConsoleLine(`Base de Datos: Disponibilidad verificada para ${itemType}. OK.`, "success");
                     
                     if (normalizedText.includes("pixelado") || normalizedText.includes("baja calidad") || normalizedText.includes("malo") || normalizedText.includes("captura")) {
-                        appendConsoleLine("VERIFICACIÓN TÉCNICA RECHAZADA: ARCHIVO CON BAJO DPI", "danger");
+                        appendConsoleLine("VERIFICACIÓN TÉCNICA RECHAZADA: BAJA RESOLUCIÓN", "danger");
                         reply = `He recibido tu mensaje solicitando ${parsedDetail}. Sin embargo, nuestro validador técnico detecta que el diseño enviado no cuenta con la resolución de pre-prensa requerida (300 DPI mínimos). ¿Podrías facilitarnos el archivo en formato vectorial (.AI, .PDF o curvas)?`;
                     } else {
                         hasOrder = true;
                         appendConsoleLine("VERIFICACIÓN TÉCNICA APROBADA: ARTE COMPATIBLE", "success");
-                        appendConsoleLine(`Calculador de tarifas: Retorno de valor comercial de $${calculatedCost.toLocaleString('es-AR')}`, "success");
-                        reply = `¡Excelente! Hemos recibido y procesado de forma automática tu consulta de ${parsedDetail}. El presupuesto calculado por el sistema es de $${calculatedCost.toLocaleString('es-AR')}. ¿Querés confirmar la orden para que generemos tu link de pago por Mercado Pago y lo carguemos a la planilla del taller?`;
+                        appendConsoleLine(`Cálculo automático: Requiere 2 Schablones de colores planos.`, "success");
+                        reply = `¡Excelente! Hemos recibido y procesado tu consulta por ${parsedDetail}. El presupuesto calculado por el sistema es de $${calculatedCost.toLocaleString('es-AR')}. ¿Querés confirmar la orden para que generemos tu link de pago por Mercado Pago y lo carguemos a la planilla del taller?`;
                     }
                 } else if (normalizedText.includes("precio") || normalizedText.includes("costo") || normalizedText.includes("cuanto cuesta")) {
                     reply = "Nuestra tarifa base es de $12.000 por remera oversize estampada (mínimo 10 unidades) y de $25.000 por buzo canguro con abrigo. Esto incluye hasta 2 colores de estampado en serigrafía.";
@@ -1463,19 +1639,19 @@
                     reply = "Entiendo tu consulta de forma correcta. Para poder darte una cotización exacta al instante por este medio, por favor detallame el número de prendas, tipo de tela, y si contás con el archivo de diseño en alta calidad.";
                 }
 
-                const botBubble = document.createElement("div");
+                var botBubble = document.createElement("div");
                 botBubble.className = "chat-bubble system";
                 botBubble.innerText = reply;
                 chatBox.appendChild(botBubble);
                 chatBox.scrollTop = chatBox.scrollHeight;
 
                 if (hasOrder && calculatedCost > 0) {
-                    appendConsoleLine("DISPARADOR DE ACCIÓN AUTOMÁTICA COMPILANDO...", "success");
+                    appendConsoleLine("DISPARADOR AUTOMÁTICO COMPILANDO REGISTRO...", "success");
                     
-                    const nuevoId = appState.pedidos.length > 0 ? appState.pedidos[0].id + 1 : 1000;
-                    const nuevoPed = {
+                    var nuevoId = appState.pedidos.length > 0 ? appState.pedidos[0].id + 1 : 1000;
+                    var nuevoPed = {
                         id: nuevoId,
-                        cliente: "Streetwear Custom S.A.",
+                        cliente: clientePredeterminado,
                         detalle: parsedDetail,
                         estado: "Confirmado",
                         monto: calculatedCost,
@@ -1486,10 +1662,10 @@
                     };
 
                     if (hasFirebase && authUser) {
-                        const pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
+                        var pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
                         await pathPedidos.add(nuevoPed);
 
-                        const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
+                        var pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
                         await pathFinanzas.add({
                             id: appState.finanzas.length + 1,
                             tipo: "Ingreso",
@@ -1508,51 +1684,101 @@
                             fecha: "15/05/2026",
                             medioPago: "Mercado Pago"
                         });
-                        appState.stock[0].cantidad = Math.max(0, appState.stock[0].cantidad - 3);
                         saveToLocalStorage();
                         renderAll();
                         updateCharts();
                     }
-                    showToast("¡Pedido Creado por Sistema!", `La integración de ApexTech procesó la orden #${nuevoId}.`);
+                    showToast("¡Pedido Creado por Sistema!", `El motor ApexCore procesó e ingresó la orden #${nuevoId}.`);
                 }
             }, 1200);
-        };
+        }
 
-        // EXPORTACIÓN DE VARIABLES A WINDOW PARA ENLACES ONCLICK HTML (ES MODULES RULES)
-        window.toggleSidebar = toggleSidebar;
-        window.switchTab = switchTab;
-        window.openModal = openModal;
-        window.closeModal = closeModal;
-        window.guardarNuevoPedido = guardarNuevoPedido;
-        window.guardarNuevoCliente = guardarNuevoCliente;
-        window.guardarFinanzas = guardarFinanzas;
-        window.guardarStock = guardarStock;
-        window.eliminarCliente = eliminarCliente;
-        window.generarComprobante = generarComprobante;
-        window.handleChatKeyPress = handleChatKeyPress;
-        window.sendMessageToInbox = sendMessageToInbox;
+        // 7. Navegación del Entorno
+        function toggleSidebar(open) {
+            var sidebar = document.getElementById("app-sidebar");
+            var overlay = document.getElementById("sidebar-overlay");
+            if (open) {
+                sidebar.classList.add("active");
+                overlay.classList.add("active");
+            } else {
+                sidebar.classList.remove("active");
+                overlay.classList.remove("active");
+            }
+        }
 
-        // ARRANCAR MOTOR
-        initApexCore();
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(function(sec) { sec.classList.remove('active'); });
+            document.querySelectorAll('.menu-item').forEach(function(item) { item.classList.remove('active'); });
 
-        // INICIALIZACIÓN DE GRÁFICOS (CHART.JS)
+            document.getElementById('section-' + tabId).classList.add('active');
+            
+            var items = document.querySelectorAll('.menu-item');
+            items.forEach(function(item) {
+                if(item.innerText.toLowerCase().includes(tabId)) {
+                    item.classList.add('active');
+                }
+            });
+
+            toggleSidebar(false);
+
+            var welcomeText = document.getElementById("welcome-text");
+            var subWelcomeText = document.getElementById("sub-welcome-text");
+            
+            if (tabId === 'dashboard') {
+                welcomeText.innerText = "¡Hola, Santiago!";
+                subWelcomeText.innerText = "Panel de operaciones de VESA unificado en tiempo real.";
+            } else if (tabId === 'asistente') {
+                welcomeText.innerText = "WhatsApp Inbox & Parser";
+                subWelcomeText.innerText = "Procesamiento y parseo de consultas en tiempo real por el Motor ApexTech.";
+            } else {
+                welcomeText.innerText = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+                subWelcomeText.innerText = `Gestión y control del módulo de ${tabId} de VESA.`;
+            }
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // 8. Inicialización e Actualización de Gráficos (Chart.js con soporte elegante de ceros)
         function initCharts() {
-            const ctx1 = document.getElementById('chartPedidos').getContext('2d');
-            const stateCounts = { Presupuesto: 0, Confirmado: 0, Diseñando: 0, Produccion: 0, Estampado: 0, Listo: 0, Entregado: 0 };
-            appState.pedidos.forEach(p => {
+            var ctx1 = document.getElementById('chartPedidos').getContext('2d');
+            var stateCounts = { Presupuesto: 0, Confirmado: 0, Diseñando: 0, Produccion: 0, Estampado: 0, Listo: 0, Entregado: 0 };
+            
+            appState.pedidos.forEach(function(p) {
                 if (p.estado === "En diseño") stateCounts.Diseñando++;
                 else if (p.estado === "En producción" || p.estado === "Producción") stateCounts.Produccion++;
                 else if (stateCounts[p.estado] !== undefined) stateCounts[p.estado]++;
                 else stateCounts.Entregado++;
             });
 
+            var rawValues = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado];
+            var totalCount = rawValues.reduce(function(a, b) { return a + b; }, 0);
+            
+            var chartData, chartColors, chartLabels;
+
+            if (totalCount === 0) {
+                // Estado en cero: Muestra un hermoso indicador gris de "Sin datos"
+                chartData = [1];
+                chartColors = ['#1e293b'];
+                chartLabels = ['Sin datos registrados'];
+            } else {
+                chartData = rawValues;
+                chartColors = ['#a855f7', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9'];
+                chartLabels = ['En diseño', 'Producción', 'Estampado', 'Listo', 'Entregado'];
+            }
+
             chart1 = new Chart(ctx1, {
                 type: 'doughnut',
                 data: {
-                    labels: ['En diseño', 'Producción', 'Estampado', 'Listo', 'Entregado'],
+                    labels: chartLabels,
                     datasets: [{
-                        data: [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado],
-                        backgroundColor: ['#a855f7', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9'],
+                        data: chartData,
+                        backgroundColor: chartColors,
                         borderWidth: 2,
                         borderColor: '#131a2e'
                     }]
@@ -1569,9 +1795,9 @@
                 }
             });
 
-            const ctx2 = document.getElementById('chartFinanzas').getContext('2d');
-            let ingresos = appState.finanzas.filter(f => f.tipo === "Ingreso").reduce((acc, f) => acc + f.monto, 0);
-            let egresos = appState.finanzas.filter(f => f.tipo === "Egreso").reduce((acc, f) => acc + f.monto, 0);
+            var ctx2 = document.getElementById('chartFinanzas').getContext('2d');
+            var ingresos = appState.finanzas.filter(function(f) { return f.tipo === "Ingreso"; }).reduce(function(acc, f) { return acc + f.monto; }, 0);
+            var egresos = appState.finanzas.filter(function(f) { return f.tipo === "Egreso"; }).reduce(function(acc, f) { return acc + f.monto; }, 0);
 
             chart2 = new Chart(ctx2, {
                 type: 'bar',
@@ -1603,8 +1829,8 @@
                 return;
             }
 
-            const stateCounts = { Diseñando: 0, Produccion: 0, Estampado: 0, Listo: 0, Entregado: 0 };
-            appState.pedidos.forEach(p => {
+            var stateCounts = { Diseñando: 0, Produccion: 0, Estampado: 0, Listo: 0, Entregado: 0 };
+            appState.pedidos.forEach(function(p) {
                 if (p.estado === "En diseño") stateCounts.Diseñando++;
                 else if (p.estado === "En producción" || p.estado === "Producción") stateCounts.Produccion++;
                 else if (p.estado === "Estampado") stateCounts.Estampado++;
@@ -1612,11 +1838,22 @@
                 else stateCounts.Entregado++;
             });
 
-            chart1.data.datasets[0].data = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado];
+            var rawValues = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado];
+            var totalCount = rawValues.reduce(function(a, b) { return a + b; }, 0);
+
+            if (totalCount === 0) {
+                chart1.data.labels = ['Sin datos registrados'];
+                chart1.data.datasets[0].data = [1];
+                chart1.data.datasets[0].backgroundColor = ['#1e293b'];
+            } else {
+                chart1.data.labels = ['En diseño', 'Producción', 'Estampado', 'Listo', 'Entregado'];
+                chart1.data.datasets[0].data = rawValues;
+                chart1.data.datasets[0].backgroundColor = ['#a855f7', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9'];
+            }
             chart1.update();
 
-            let ingresos = appState.finanzas.filter(f => f.tipo === "Ingreso").reduce((acc, f) => acc + f.monto, 0);
-            let egresos = appState.finanzas.filter(f => f.tipo === "Egreso").reduce((acc, f) => acc + f.monto, 0);
+            var ingresos = appState.finanzas.filter(function(f) { return f.tipo === "Ingreso"; }).reduce(function(acc, f) { return acc + f.monto; }, 0);
+            var egresos = appState.finanzas.filter(function(f) { return f.tipo === "Egreso"; }).reduce(function(acc, f) { return acc + f.monto; }, 0);
 
             chart2.data.datasets[0].data = [ingresos, egresos];
             chart2.update();

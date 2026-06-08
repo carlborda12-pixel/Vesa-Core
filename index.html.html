@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VESA Core OS - Responsive Dashboard</title>
+    <!-- Fuentes e Iconos importados de forma limpia -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Librería de gráficos Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SDK de Firebase en versión de compatibilidad (Apto para doble clic local / file://) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* Definición de Paleta de Colores de ApexTech (Dark Mode Premium) */
+        :root {
+            --bg-main: #090d16;
+            --bg-sidebar: #0f1422;
+            --bg-card: #131a2e;
+            --bg-card-hover: #1b243f;
+            --border-color: #1e293b;
+            --color-accent: #00f2ff;
+            --color-text-primary: #ffffff;
+            --color-text-secondary: #94a3b8;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-purple: #a855f7;
+            --color-blue: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--color-text-primary); display: flex; height: 100vh; overflow: hidden; }
+
+        /* HEADER MÓVIL (Solo visible en pantallas chicas) */
+        .mobile-navbar {
+            display: none;
+            width: 100%;
+            height: 60px;
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 50;
+            padding: 0 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .mobile-logo { font-size: 20px; font-weight: 800; letter-spacing: 2px; }
+        .mobile-logo span { color: var(--color-accent); }
+        .menu-toggle-btn { background: none; border: none; color: var(--color-text-primary); font-size: 24px; cursor: pointer; display: flex; align-items: center; }
+
+        /* Menú Lateral (Sidebar) - Adaptado para ser Responsivo */
+        .sidebar { 
+            width: 260px; 
+            background-color: var(--bg-sidebar); 
+            border-right: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            padding: 24px; 
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .logo-section h2 { font-size: 26px; font-weight: 800; letter-spacing: 3px; margin-bottom: 12px; color: var(--color-text-primary); display: flex; align-items: center; gap: 8px; }
+        .logo-section h2 span { color: var(--color-accent); }
+        .brand-sub { font-size: 11px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 1px; margin-bottom: 24px; display: block; }
+        
+        .sidebar-close-btn { display: none; background: none; border: none; color: var(--color-text-secondary); font-size: 24px; position: absolute; top: 20px; right: 20px; cursor: pointer; }
+
+        .menu-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--color-text-secondary); text-decoration: none; border-radius: 12px; font-weight: 500; font-size: 14px; transition: all 0.2s ease; cursor: pointer; }
+        .menu-item:hover, .menu-item.active { background-color: var(--bg-card-hover); color: var(--color-text-primary); }
+        .menu-item.active { border-left: 3px solid var(--color-accent); padding-left: 13px; }
+        .user-profile { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 20px; }
+        .avatar { width: 44px; height: 44px; background: linear-gradient(135deg, var(--color-accent), var(--color-blue)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #000000; font-size: 18px; }
+
+        /* Capa de fondo oscura al abrir menú móvil */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(5, 8, 16, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 90;
+        }
+        .sidebar-overlay.active { display: block; }
+
+        /* Contenedor Principal de la App */
+        .app-container { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; }
+        .main-content { flex: 1; padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+        
+        /* Cabecera superior */
+        .header-app { display: flex; justify-content: space-between; align-items: center; }
+        .header-app h1 { font-size: 28px; font-weight: 700; }
+        .header-app p { color: var(--color-text-secondary); font-size: 14px; margin-top: 4px; }
+
+        /* Status Badge */
+        .db-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); }
+        .db-status.online i { color: var(--color-accent); animation: pulse 2s infinite; }
+        .db-status.local i { color: var(--color-warning); }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* Grid de Tarjetas de Métricas */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .metric-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+        .metric-title { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-title i { font-size: 16px; color: var(--color-accent); }
+        .metric-value { font-size: 32px; font-weight: 800; color: var(--color-text-primary); }
+        .metric-subtext { font-size: 12px; margin-top: 8px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+        .text-green { color: var(--color-success); }
+        .text-red { color: var(--color-danger); }
+
+        /* Layouts de las Secciones */
+        .view-section { display: none; flex-direction: column; gap: 24px; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estructura Flexible para Dashboard en Distintas Pantallas */
+        .dashboard-row-1 { display: grid; grid-template-columns: 1.2fr 1.6fr 1.2fr; gap: 24px; }
+        .dashboard-row-2 { display: grid; grid-template-columns: 2.2fr 1fr; gap: 24px; }
+        
+        .panel-block { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; }
+        .panel-header h3 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .panel-header h3 i { color: var(--color-accent); }
+
+        /* Estilos de Tablas */
+        .table-wrapper { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
+        th { color: var(--color-text-secondary); font-size: 13px; font-weight: 600; padding: 14px 12px; border-bottom: 1px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 16px 12px; font-size: 14px; border-bottom: 1px solid var(--border-color); color: var(--color-text-primary); white-space: nowrap; }
+        tr:hover td { background-color: rgba(255,255,255,0.01); }
+
+        /* Badges de Estado */
+        .badge { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
+        .badge-presupuesto { background-color: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+        .badge-confirmado { background-color: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+        .badge-diseno { background-color: rgba(168, 85, 247, 0.15); color: #e9d5ff; }
+        .badge-produccion { background-color: rgba(236, 72, 153, 0.15); color: #fbcfe8; }
+        .badge-estampado { background-color: rgba(245, 158, 11, 0.15); color: #fde68a; }
+        .badge-listo { background-color: rgba(16, 185, 129, 0.15); color: #a7f3d0; }
+        .badge-entregado { background-color: rgba(14, 165, 233, 0.15); color: #bae6fd; }
+
+        /* Alertas importantes */
+        .alerts-container { display: flex; flex-direction: column; gap: 12px; }
+        .alert-item { display: flex; align-items: start; gap: 14px; padding: 14px; background-color: rgba(255,255,255,0.02); border-radius: 12px; border-left: 4px solid var(--color-warning); font-size: 13px; }
+        .alert-item.danger { border-left-color: var(--color-danger); }
+        .alert-item.success { border-left-color: var(--color-success); }
+        .alert-icon { font-size: 16px; margin-top: 2px; }
+        .alert-icon.danger { color: var(--color-danger); }
+        .alert-icon.warning { color: var(--color-warning); }
+        .alert-text h4 { font-weight: 700; color: var(--color-text-primary); margin-bottom: 2px; }
+        .alert-text p { color: var(--color-text-secondary); font-size: 12px; }
+
+        /* Monitoreo de Stock Rápido */
+        .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .stock-info h5 { font-size: 14px; font-weight: 600; }
+        .stock-info p { font-size: 12px; color: var(--color-text-secondary); }
+        .stock-qty { font-weight: 700; font-size: 14px; }
+        .stock-qty.low { color: var(--color-danger); }
+
+        /* Botonera inferior / Acciones globales */
+        .bottom-actions { display: flex; gap: 16px; padding: 20px 32px; background-color: var(--bg-sidebar); border-top: 1px solid var(--border-color); justify-content: flex-start; z-index: 40; }
+        .btn { background-color: var(--bg-card); color: var(--color-text-primary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; user-select: none; }
+        .btn:hover { background-color: var(--bg-card-hover); border-color: var(--color-accent); }
+        .btn-primary { background-color: var(--color-accent); color: #000000; border: none; }
+        .btn-primary:hover { background-color: #00d2dd; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 242, 255, 0.3); }
+        .btn-danger { background-color: var(--color-danger); color: white; border: none; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-small { padding: 8px 14px; font-size: 12px; border-radius: 8px; }
+
+        /* Canvas para Gráficos */
+        .chart-container { position: relative; width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; }
+
+        /* Chat Simulador de Respuestas Automatizadas */
+        .chat-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; height: 500px; max-height: 70vh; }
+        .chat-box-area { background-color: #0b0f19; border: 1px solid var(--border-color); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+        .chat-bubble { max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
+        .chat-bubble.system { background-color: var(--bg-card); border-bottom-left-radius: 4px; align-self: flex-start; border: 1px solid var(--border-color); }
+        .chat-bubble.user { background-color: var(--color-blue); border-bottom-right-radius: 4px; align-self: flex-end; color: white; }
+        .chat-input-area { display: flex; padding: 14px; background-color: var(--bg-sidebar); border-top: 1px solid var(--border-color); gap: 12px; }
+        .chat-input { flex: 1; background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 16px; color: white; outline: none; font-size: 14px; }
+        
+        .integration-console { background-color: #050810; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #38bdf8; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .console-line { line-height: 1.4; }
+        .console-line.header { color: var(--color-accent); font-weight: bold; }
+        .console-line.success { color: var(--color-success); }
+        .console-line.warn { color: var(--color-warning); }
+
+        /* Modales Interactivos */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(5, 8, 16, 0.85); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(8px); animation: fadeIn 0.2s ease; overflow-y: auto; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; width: 500px; max-width: 100%; padding: 24px; display: flex; flex-direction: column; gap: 20px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; }
+        .modal-header h3 { font-size: 18px; font-weight: 700; color: var(--color-accent); }
+        .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; }
+        .modal-close:hover { color: var(--color-danger); }
+        
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
+        .form-control { background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; color: white; font-size: 16px; outline: none; transition: border 0.2s; -webkit-appearance: none; }
+        .form-control:focus { border-color: var(--color-accent); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* Custom Notification Toast */
+        .notification-toast { display: none; position: fixed; bottom: 24px; right: 24px; left: 24px; md:left: auto; max-width: 350px; background-color: var(--bg-sidebar); border: 1px solid var(--color-accent); border-radius: 14px; padding: 16px 24px; color: white; gap: 12px; align-items: center; z-index: 300; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .notification-toast.active { display: flex; }
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Remito/Factura Visual de VESA (PDF Simulado) */
+        .voucher-box { background-color: white; color: #1e293b; padding: 32px; border-radius: 16px; width: 600px; max-width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; font-family: 'Inter', sans-serif; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+        .voucher-header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; }
+        .voucher-header h2 { font-weight: 800; font-size: 20px; color: #0f172a; }
+        .voucher-details { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 12px; }
+        .voucher-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .voucher-table th { background-color: #f1f5f9; color: #475569; padding: 10px; font-size: 11px; border: 1px solid #cbd5e1; }
+        .voucher-table td { color: #1e293b; padding: 10px; font-size: 12px; border: 1px solid #cbd5e1; white-space: normal; }
+        .voucher-total { text-align: right; font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 16px; border-top: 2px dashed #cbd5e1; padding-top: 10px; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
+
+        /* ==========================================
+           RESPONSIVE MEDIA QUERIES (ADAPTACIÓN MÓVIL)
+           ========================================== */
+        @media (max-width: 1024px) {
+            .dashboard-row-1 { grid-template-columns: 1fr; }
+            .dashboard-row-2 { grid-template-columns: 1fr; }
+            .chat-layout { grid-template-columns: 1fr; height: auto; max-height: none; }
+            .integration-console { height: 250px; }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; padding-top: 60px; }
+            .mobile-navbar { display: flex; }
+            
+            /* Sidebar transformado en cajón deslizable */
+            .sidebar { 
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                bottom: 0; 
+                height: 100%; 
+                transform: translateX(-100%); 
+                z-index: 1000;
+                box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+            }
+            .sidebar.active { transform: translateX(0); }
+            .sidebar-close-btn { display: block; }
+
+            .main-content { padding: 16px; gap: 20px; }
+            .header-app { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .header-app h1 { font-size: 24px; }
+            
+            .metrics-grid { grid-template-columns: 1fr; gap: 14px; }
+            .metric-card { padding: 16px; }
+            
+            .panel-block { padding: 16px; gap: 14px; }
+            .bottom-actions { 
+                position: sticky; 
+                bottom: 0; 
+                padding: 12px 16px; 
+                gap: 10px; 
+                width: 100%; 
+                overflow-x: auto;
+                background-color: var(--bg-sidebar);
+            }
+            .btn { padding: 10px 18px; border-radius: 10px; font-size: 13px; }
+            .modal-box { padding: 20px; }
+            .form-row { grid-template-columns: 1fr; gap: 12px; }
+            
+            /* Ajustar modal del comprobante */
+            .voucher-box { padding: 16px; }
+            .voucher-details { grid-template-columns: 1fr; gap: 12px; }
+            
+            /* Toast en móviles */
+            .notification-toast { right: 16px; left: 16px; bottom: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MENÚ SUPERIOR DE ACCESO MÓVIL -->
+    <div class="mobile-navbar">
+        <div class="mobile-logo">VESA<span>.</span></div>
+        <button class="menu-toggle-btn" id="sidebar-toggle" onclick="toggleSidebar(true)">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- SIDEBAR DE NAVEGACIÓN (DRAWER MÓVIL) -->
+    <div class="sidebar" id="app-sidebar">
+        <button class="sidebar-close-btn" onclick="toggleSidebar(false)">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        
+        <div class="logo-section">
+            <h2>VESA<span>.</span></h2>
+            <span class="brand-sub">Streetwear & Custom</span>
+            
+            <ul class="menu-list">
+                <li><a class="menu-item active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+                <li><a class="menu-item" onclick="switchTab('pedidos')"><i class="fa-solid fa-box-open"></i> Pedidos</a></li>
+                <li><a class="menu-item" onclick="switchTab('clientes')"><i class="fa-solid fa-users"></i> Clientes</a></li>
+                <li><a class="menu-item" onclick="switchTab('stock')"><i class="fa-solid fa-layer-group"></i> Stock</a></li>
+                <li><a class="menu-item" onclick="switchTab('finanzas')"><i class="fa-solid fa-wallet"></i> Finanzas</a></li>
+                <li><a class="menu-item" onclick="switchTab('entregas')"><i class="fa-solid fa-truck"></i> Entregas</a></li>
+                <li><a class="menu-item" onclick="switchTab('asistente')"><i class="fa-solid fa-envelope-open-text"></i> WhatsApp Inbox <span class="badge" style="background-color: var(--color-accent); color: black; padding: 2px 6px; font-size: 8px;">INTEGRACIÓN</span></a></li>
+            </ul>
+        </div>
+        
+        <div class="user-profile">
+            <div class="avatar">T</div>
+            <div>
+                <h4 style="font-size: 14px; font-weight: 700;">Tomás</h4>
+                <p style="font-size: 12px; color: var(--color-text-secondary);">Administrador</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CAPA OSCURA DE SOBREPOSICIÓN MÓVIL -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="app-container">
+        
+        <!-- SECCIÓN 1: VISTA DASHBOARD -->
+        <div class="main-content">
+            
+            <div class="header-app">
+                <div>
+                    <h1 id="welcome-text">¡Hola, Tomás!</h1>
+                    <p id="sub-welcome-text">Panel de operaciones de VESA unificado en tiempo real.</p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                    <div class="db-status local" id="status-badge">
+                        <i class="fa-solid fa-circle"></i> <span id="status-text">Cargando base de datos...</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 600;">
+                        <i class="fa-regular fa-calendar" style="color: var(--color-accent); margin-right: 4px;"></i> 15 de Mayo de 2026
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARJETAS DE MÉTRICAS -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-title">Pedidos Pendientes <i class="fa-solid fa-basket-shopping"></i></div>
+                    <div class="metric-value" id="val-pendientes">12</div>
+                    <div class="metric-subtext" id="val-produccion-sub" style="color: var(--color-text-secondary);">5 en producción</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Ventas del Mes <i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="metric-value" id="val-ventas">$2.450.000</div>
+                    <div class="metric-subtext text-green"><i class="fa-solid fa-caret-up"></i> 18% vs mes anterior</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Ganancia Estimada <i class="fa-solid fa-wallet"></i></div>
+                    <div class="metric-value" id="val-ganancias">$980.000</div>
+                    <div class="metric-subtext text-green"><i class="fa-solid fa-caret-up"></i> 22% vs mes anterior</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Stock Bajo <i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="metric-value" id="val-stock" style="color: var(--color-danger);">7</div>
+                    <div class="metric-subtext" style="color: var(--color-danger);">Falta reponer</div>
+                </div>
+            </div>
+
+            <!-- VISTA ACTIVA DINÁMICA: DASHBOARD -->
+            <div id="section-dashboard" class="view-section active">
+                <div class="dashboard-row-1">
+                    <!-- Gráfico Pedidos por Estado -->
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-chart-pie"></i> Estado de Pedidos</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartPedidos"></canvas>
+                        </div>
+                    </div>
+                    <!-- Gráfico de Finanzas -->
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-chart-column"></i> Ingresos vs Egresos</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartFinanzas"></canvas>
+                        </div>
+                    </div>
+                    <!-- Alertas importantes -->
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-circle-exclamation"></i> Alertas Críticas</h3>
+                        </div>
+                        <div class="alerts-container" id="dash-alerts">
+                            <!-- Inyectado dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-row-2">
+                    <!-- Tabla últimos pedidos -->
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-list"></i> Últimos Pedidos</h3>
+                            <button class="btn btn-small" onclick="switchTab('pedidos')">Ver todos</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Cliente</th>
+                                        <th>Detalle</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dash-pedidos-tbody">
+                                    <!-- Inyectado dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Stock Crítico -->
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-triangle-exclamation"></i> Stock Crítico</h3>
+                            <button class="btn btn-small" onclick="switchTab('stock')">Reponer</button>
+                        </div>
+                        <div id="dash-stock-list">
+                            <!-- Inyectado dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA ACTIVA DINÁMICA: PEDIDOS -->
+            <div id="section-pedidos" class="view-section">
+                <div class="panel-block">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-box-open"></i> Control General de Pedidos</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Detalle</th>
+                                    <th>Estado</th>
+                                    <th>Monto</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pedidos-tbody">
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA ACTIVA DINÁMICA: CLIENTES -->
+            <div id="section-clientes" class="view-section">
+                <div class="panel-block">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-users"></i> Listado de Clientes de VESA</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre del Cliente</th>
+                                    <th>WhatsApp de contacto</th>
+                                    <th>Instagram</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientes-tbody">
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA ACTIVA DINÁMICA: STOCK -->
+            <div id="section-stock" class="view-section">
+                <div class="panel-block">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-layer-group"></i> Gestión de Inventario</h3>
+                        <button class="btn btn-primary btn-small" onclick="openModal('modalStock')"><i class="fa-solid fa-plus"></i> Añadir Insumo</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Artículo / Insumo</th>
+                                    <th>Talle / Medida</th>
+                                    <th>Cantidad Disponible</th>
+                                    <th>Mínimo Requerido</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-tbody">
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA ACTIVA DINÁMICA: FINANZAS -->
+            <div id="section-finanzas" class="view-section">
+                <div class="panel-block">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-wallet"></i> Historial de Transacciones de Caja</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Detalle</th>
+                                    <th>Monto</th>
+                                    <th>Medio de Pago</th>
+                                </tr>
+                            </thead>
+                            <tbody id="finanzas-tbody">
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA ACTIVA DINÁMICA: ENTREGAS -->
+            <div id="section-entregas" class="view-section">
+                <div class="panel-block">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-truck"></i> Planificación de Entregas para Hoy</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th># Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Detalle</th>
+                                    <th>Método</th>
+                                    <th>Hora Programada</th>
+                                </tr>
+                            </thead>
+                            <tbody id="entregas-tbody">
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA ACTIVA DINÁMICA: WHATSAPP INBOX (MÓDULO DE INTEGRACIÓN DE APEXTECH) -->
+            <div id="section-asistente" class="view-section">
+                <div class="panel-block">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-envelope-open-text"></i> WhatsApp API Inbox & Cotizador Automatizado</h3>
+                        <p style="font-size: 12px; color: var(--color-text-secondary);">Modulo simulado de automatización de mensajería comercial y cálculo de matrices de pre-prensa.</p>
+                    </div>
+                    
+                    <div class="chat-layout">
+                        <!-- Chat Estilo WhatsApp -->
+                        <div class="chat-box-area">
+                            <div class="chat-messages" id="inbox-chat-box">
+                                <div class="chat-bubble system">
+                                    ¡Hola! Bienvenido al canal automatizado de Taller VESA. ¿Qué trabajo textil o personalizado necesitas presupuestar hoy?
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" class="chat-input" id="inbox-user-msg" placeholder="Escribí tu pedido acá (ej: 30 remeras con logo)..." onkeypress="handleChatKeyPress(event)">
+                                <button class="btn btn-primary" onclick="sendMessageToInbox()" style="padding: 12px 18px;"><i class="fa-solid fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Consola de Desarrollo e Integraciones ApexTech -->
+                        <div class="integration-console">
+                            <div class="console-line header">[APEXTECH INTEGRATION ENGINE - LOGS EN VIVO]</div>
+                            <div class="console-line">Esperando entrada de datos desde Webhook de WhatsApp...</div>
+                            <div id="console-logs"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BOTONERA INFERIOR (ACCIONES RÁPIDAS) -->
+        <div class="bottom-actions">
+            <button class="btn btn-primary" onclick="openModal('modalPedido')"><i class="fa-solid fa-plus"></i> Nuevo Pedido</button>
+            <button class="btn" onclick="openModal('modalCliente')"><i class="fa-solid fa-user-plus"></i> Nuevo Cliente</button>
+            <button class="btn" onclick="openModal('modalFinanzas')"><i class="fa-solid fa-cash-register"></i> Movimiento Caja</button>
+        </div>
+    </div>
+
+    <!-- MODALES INTERACTIVOS -->
+    
+    <!-- Modal 1: Nuevo Pedido -->
+    <div class="modal-overlay" id="modalPedido">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Crear Nuevo Pedido para VESA</h3>
+                <button class="modal-close" onclick="closeModal('modalPedido')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Cliente</label>
+                <select class="form-control" id="form-ped-cliente">
+                    <!-- Llenado dinámicamente -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Detalle del Pedido / Prendas</label>
+                <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: 15 remeras oversize custom L">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Monto Total ($)</label>
+                    <input type="number" class="form-control" id="form-ped-monto" placeholder="Ej: 350000">
+                </div>
+                <div class="form-group">
+                    <label>Estado Inicial</label>
+                    <select class="form-control" id="form-ped-estado">
+                        <option value="Presupuesto">Presupuesto</option>
+                        <option value="Confirmado" selected>Confirmado</option>
+                        <option value="En diseño">En diseño</option>
+                        <option value="Producción">Producción</option>
+                        <option value="Estampado">Estampado</option>
+                        <option value="Listo">Listo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Medio de Pago</label>
+                    <select class="form-control" id="form-ped-metodopago">
+                        <option value="Mercado Pago" selected>Mercado Pago</option>
+                        <option value="Transferencia">Transferencia Bancaria</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta de Crédito</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Forma de Entrega</label>
+                    <select class="form-control" id="form-ped-entrega">
+                        <option value="Retiro en local">Retiro en local</option>
+                        <option value="Envío">Envío por correo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Hora pautada</label>
+                <input type="text" class="form-control" id="form-ped-hora" placeholder="Ej: 16:30 hs">
+            </div>
+            <button class="btn btn-primary" onclick="guardarNuevoPedido()">Confirmar Pedido</button>
+        </div>
+    </div>
+
+    <!-- Modal 2: Nuevo Cliente -->
+    <div class="modal-overlay" id="modalCliente">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Registrar Nuevo Cliente</h3>
+                <button class="modal-close" onclick="closeModal('modalCliente')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Nombre Completo / Marca</label>
+                <input type="text" class="form-control" id="form-cli-nombre" placeholder="Ej: Gym Alvear">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp</label>
+                <input type="text" class="form-control" id="form-cli-tel" placeholder="Ej: +54 376 4123456">
+            </div>
+            <div class="form-group">
+                <label>Instagram</label>
+                <input type="text" class="form-control" id="form-cli-ig" placeholder="Ej: @gym.alvear">
+            </div>
+            <button class="btn btn-primary" onclick="guardarNuevoCliente()">Guardar Cliente</button>
+        </div>
+    </div>
+
+    <!-- Modal 3: Finanzas (Ingresos/Egresos) -->
+    <div class="modal-overlay" id="modalFinanzas">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Nueva Transacción de Caja</h3>
+                <button class="modal-close" onclick="closeModal('modalFinanzas')">&times;</button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo de Transacción</label>
+                    <select class="form-control" id="form-fin-tipo">
+                        <option value="Ingreso">Ingreso (+)</option>
+                        <option value="Egreso">Egreso (-)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Monto ($)</label>
+                    <input type="number" class="form-control" id="form-fin-monto" placeholder="Ej: 85000">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Medio de Pago</label>
+                    <select class="form-control" id="form-fin-metodopago">
+                        <option value="Mercado Pago" selected>Mercado Pago</option>
+                        <option value="Transferencia">Transferencia Bancaria</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta de Crédito</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Detalle / Concepto</label>
+                    <input type="text" class="form-control" id="form-fin-detalle" placeholder="Ej: Compra de tintas">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="guardarFinanzas()">Registrar Movimiento</button>
+        </div>
+    </div>
+
+    <!-- Modal 4: Añadir Stock -->
+    <div class="modal-overlay" id="modalStock">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Agregar Artículo al Inventario</h3>
+                <button class="modal-close" onclick="closeModal('modalStock')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Nombre del Artículo o Insumo</label>
+                <input type="text" class="form-control" id="form-stk-nombre" placeholder="Ej: Remera Oversize Gris">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Talle / Formato</label>
+                    <input type="text" class="form-control" id="form-stk-talle" placeholder="Ej: M">
+                </div>
+                <div class="form-group">
+                    <label>Cantidad Disponible</label>
+                    <input type="number" class="form-control" id="form-stk-cant" placeholder="Ej: 15">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Mínimo Crítico para Alertas</label>
+                <input type="number" class="form-control" id="form-stk-min" placeholder="Ej: 5">
+            </div>
+            <button class="btn btn-primary" onclick="guardarStock()">Añadir Insumo</button>
+        </div>
+    </div>
+
+    <!-- Modal 5: Comprobante PDF de Pago (Remito) -->
+    <div class="modal-overlay" id="modalComprobante">
+        <div class="voucher-box" id="print-area">
+            <div style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: -15px;">
+                <button class="modal-close" onclick="closeModal('modalComprobante')" style="color:#0f172a; font-weight:bold;"><i class="fa-solid fa-xmark"></i> Cerrar</button>
+            </div>
+            <div class="voucher-header">
+                <div>
+                    <h2>TALLER VESA</h2>
+                    <p style="color:#64748b; font-size: 13px;">Streetwear & Custom Impresiones</p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="font-weight: 700; color: #0f172a;">COMPROBANTE DIGITAL</p>
+                    <p style="color:#64748b;" id="comprobante-id">Nº 0001-0001027</p>
+                    <p style="color:#64748b; font-size:12px;">Fecha: 15/05/2026</p>
+                </div>
+            </div>
+            <div class="voucher-details">
+                <div>
+                    <h4 style="font-weight: 700; margin-bottom: 4px;">Detalles del Cliente:</h4>
+                    <p id="comp-cliente-nombre">Cliente: Los Ángeles FC</p>
+                    <p id="comp-cliente-info">Contacto: WhatsApp Activo</p>
+                </div>
+                <div style="text-align: right;">
+                    <h4 style="font-weight: 700; margin-bottom: 4px;">Método Operación:</h4>
+                    <p id="comp-cliente-medio">Medio: Mercado Pago</p>
+                    <p>Estado Operativo: Registrado</p>
+                </div>
+            </div>
+            <table class="voucher-table">
+                <thead>
+                    <tr>
+                        <th>Descripción del Trabajo</th>
+                        <th style="text-align: right;">Total Parcial</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="comp-trabajo-detalle">Servicio de Serigrafía y Estampado Textil</td>
+                        <td style="text-align: right; font-weight:700;" id="comp-trabajo-monto">$0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="voucher-total" id="comp-monto-total">
+                Total Cobrado: $0
+            </div>
+            <div style="text-align: center; font-size:11px; color:#64748b; margin-top:20px; border-top:1px solid #e2e8f0; padding-top:12px;">
+                ¡Gracias por confiar en VESA! Este remito avala la carga del pedido en nuestros sistemas.
+            </div>
+            <button class="btn btn-primary" onclick="window.print()" style="margin-top:16px; width:100%; justify-content:center;"><i class="fa-solid fa-print"></i> Imprimir o Guardar como PDF</button>
+        </div>
+    </div>
+
+    <!-- NOTIFICACIÓN EN TIEMPO REAL -->
+    <div class="notification-toast" id="toast">
+        <i class="fa-solid fa-circle-check" style="color: var(--color-accent); font-size: 20px;"></i>
+        <div>
+            <h4 style="font-size: 14px; font-weight: 700;" id="toast-title">Operación Exitosa</h4>
+            <p style="font-size: 12px; color: var(--color-text-secondary);" id="toast-desc">Los datos fueron grabados al sistema de VESA.</p>
+        </div>
+    </div>
+
+    <!-- INTEGRACIÓN FIREBASE & APEXCORE STACK ENGINE (Compatibilidad para file:// sin módulos) -->
+    <script>
+        // Comprobación de disponibilidad de Firebase en el entorno de ApexTech
+        const hasFirebase = typeof __firebase_config !== 'undefined';
+        let db, auth, authUser = null;
+        let appId = "vesa-core-os";
+
+        // Estructuras de Datos Iniciales (Por si el entorno es local/vacío)
+        const defaultState = {
+            pedidos: [
+                { id: 1027, cliente: "Los Ángeles FC", detalle: "3 remeras oversize", estado: "En producción", monto: 320000, fecha: "15/05/2026", tipoEntrega: "Retiro en local", horaEntrega: "14:00 hs", medioPago: "Mercado Pago" },
+                { id: 1026, cliente: "Básquet Alvear", detalle: "12 camisetas", estado: "En diseño", monto: 450000, fecha: "14/05/2026", tipoEntrega: "Envío", horaEntrega: "15:30 hs", medioPago: "Transferencia" },
+                { id: 1025, cliente: "Juan N.", detalle: "2 buzos canguro", estado: "Estampado", monto: 850000, fecha: "13/05/2026", tipoEntrega: "Retiro en local", horaEntrega: "17:00 hs", medioPago: "Efectivo" },
+                { id: 1024, cliente: "Energy Gym", detalle: "15 musculosas M", estado: "Listo", monto: 120000, fecha: "12/05/2026", tipoEntrega: "Envío", horaEntrega: "10:00 hs", medioPago: "Tarjeta" },
+                { id: 1023, cliente: "Fede", detalle: "1 remera básica S", estado: "Entregado", monto: 60000, fecha: "11/05/2026", tipoEntrega: "Retiro en local", horaEntrega: "12:00 hs", medioPago: "Mercado Pago" }
+            ],
+            clientes: [
+                { id: 1, nombre: "Los Ángeles FC", whatsapp: "+54 376 4112233", instagram: "@losangelesfc" },
+                { id: 2, nombre: "Básquet Alvear", whatsapp: "+54 376 4556677", instagram: "@basquetalvear" },
+                { id: 3, nombre: "Juan N.", whatsapp: "+54 376 4889900", instagram: "@juann" },
+                { id: 4, nombre: "Energy Gym", whatsapp: "+54 376 4223344", instagram: "@energygym" },
+                { id: 5, nombre: "Fede", whatsapp: "+54 376 4778899", instagram: "@fede_wear" }
+            ],
+            stock: [
+                { id: 1, item: "Remera Oversize Negra", talle: "XL", cantidad: 3, minimo: 10 },
+                { id: 2, item: "Remera Básica Blanca", talle: "L", cantidad: 4, minimo: 10 },
+                { id: 3, item: "Buzo Canguro Gris", talle: "M", cantidad: 2, minimo: 5 },
+                { id: 4, item: "Film DTF 33cm x 100m", talle: "U", cantidad: 1, minimo: 2 }
+            ],
+            finanzas: [
+                { id: 1, tipo: "Ingreso", detalle: "Seña Los Ángeles FC", monto: 160000, fecha: "15/05/2026", medioPago: "Mercado Pago" },
+                { id: 2, tipo: "Egreso", detalle: "Compra Film DTF", monto: 45000, fecha: "14/05/2026", medioPago: "Efectivo" },
+                { id: 3, tipo: "Ingreso", detalle: "Saldo Básquet Alvear", monto: 450000, fecha: "15/05/2026", medioPago: "Transferencia" }
+            ]
+        };
+
+        // Estado en memoria dinámico de la App
+        let appState = { pedidos: [], clientes: [], stock: [], finanzas: [] };
+        let chart1 = null, chart2 = null;
+
+        // INICIALIZACIÓN POR FLUJO DE CONEXIÓN
+        const initApexCore = async () => {
+            const statusBadge = document.getElementById("status-badge");
+            const statusText = document.getElementById("status-text");
+
+            if (hasFirebase) {
+                try {
+                    // Inicializar Firebase Compat en la Nube VESA
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    firebase.initializeApp(firebaseConfig);
+                    auth = firebase.auth();
+                    db = firebase.firestore();
+                    appId = typeof __app_id !== 'undefined' ? __app_id : 'vesa-core-os';
+
+                    // Autenticación segura de extremo a extremo
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await auth.signInWithCustomToken(__initial_auth_token);
+                    } else {
+                        await auth.signInAnonymously();
+                    }
+
+                    auth.onAuthStateChanged((user) => {
+                        if (user) {
+                            authUser = user;
+                            statusBadge.className = "db-status online";
+                            statusText.innerText = "Nube VESA En Línea";
+                            bindFirebaseCollections();
+                        }
+                    });
+                } catch (err) {
+                    console.error("Fallo de conexión a la nube, conmutando a persistencia local...", err);
+                    setupLocalStorageFallback();
+                }
+            } else {
+                // Fallback automático local (Perfecto para demo offline)
+                setupLocalStorageFallback();
+            }
+        };
+
+        // Escuchar colecciones en tiempo real (Firebase Compat Rules)
+        const bindFirebaseCollections = () => {
+            const pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
+            const pathClientes = db.collection('artifacts/' + appId + '/public/data/clientes');
+            const pathStock = db.collection('artifacts/' + appId + '/public/data/stock');
+            const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
+
+            pathPedidos.onSnapshot((snapshot) => {
+                let list = [];
+                snapshot.forEach(doc => list.push({ docId: doc.id, ...doc.data() }));
+                appState.pedidos = list.sort((a,b) => b.id - a.id);
+                if (list.length === 0) seedDatabase();
+                renderAll();
+                updateCharts();
+            }, (error) => console.error("Error en Snapshot Pedidos: ", error));
+
+            pathClientes.onSnapshot((snapshot) => {
+                let list = [];
+                snapshot.forEach(doc => list.push({ docId: doc.id, ...doc.data() }));
+                appState.clientes = list.sort((a,b) => b.id - a.id);
+                renderAll();
+            }, (error) => console.error("Error en Snapshot Clientes: ", error));
+
+            pathStock.onSnapshot((snapshot) => {
+                let list = [];
+                snapshot.forEach(doc => list.push({ docId: doc.id, ...doc.data() }));
+                appState.stock = list.sort((a,b) => a.id - b.id);
+                renderAll();
+                updateCharts();
+            }, (error) => console.error("Error en Snapshot Stock: ", error));
+
+            pathFinanzas.onSnapshot((snapshot) => {
+                let list = [];
+                snapshot.forEach(doc => list.push({ docId: doc.id, ...doc.data() }));
+                appState.finanzas = list.sort((a,b) => b.id - a.id);
+                renderAll();
+                updateCharts();
+            }, (error) => console.error("Error en Snapshot Finanzas: ", error));
+        };
+
+        // Sembrar datos de demostración en bases de datos vacías en producción
+        const seedDatabase = async () => {
+            if (!authUser) return;
+            appendConsoleLine("Iniciando carga de esquemas iniciales...", "warn");
+            
+            const pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
+            const pathClientes = db.collection('artifacts/' + appId + '/public/data/clientes');
+            const pathStock = db.collection('artifacts/' + appId + '/public/data/stock');
+            const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
+
+            for (let p of defaultState.pedidos) { await pathPedidos.add(p); }
+            for (let c of defaultState.clientes) { await pathClientes.add(c); }
+            for (let s of defaultState.stock) { await pathStock.add(s); }
+            for (let f of defaultState.finanzas) { await pathFinanzas.add(f); }
+            appendConsoleLine("Base de datos de producción sincronizada con éxito.", "success");
+        };
+
+        // Base de Datos Local de Resguardo (Cero caídas, funciona directo con doble clic)
+        const setupLocalStorageFallback = () => {
+            const statusBadge = document.getElementById("status-badge");
+            const statusText = document.getElementById("status-text");
+            statusBadge.className = "db-status local";
+            statusText.innerText = "Local Protegido";
+
+            const localPed = localStorage.getItem("vesa_pedidos");
+            const localCli = localStorage.getItem("vesa_clientes");
+            const localStk = localStorage.getItem("vesa_stock");
+            const localFin = localStorage.getItem("vesa_finanzas");
+
+            if (localPed && localCli && localStk && localFin) {
+                appState.pedidos = JSON.parse(localPed);
+                appState.clientes = JSON.parse(localCli);
+                appState.stock = JSON.parse(localStk);
+                appState.finanzas = JSON.parse(localFin);
+            } else {
+                appState.pedidos = [...defaultState.pedidos];
+                appState.clientes = [...defaultState.clientes];
+                appState.stock = [...defaultState.stock];
+                appState.finanzas = [...defaultState.finanzas];
+                saveToLocalStorage();
+            }
+            renderAll();
+            initCharts();
+        };
+
+        const saveToLocalStorage = () => {
+            localStorage.setItem("vesa_pedidos", JSON.stringify(appState.pedidos));
+            localStorage.setItem("vesa_clientes", JSON.stringify(appState.clientes));
+            localStorage.setItem("vesa_stock", JSON.stringify(appState.stock));
+            localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
+        };
+
+        // CONTROLADORES DE RENDERIZADO VISUAL
+        const renderAll = () => {
+            renderMetrics();
+            renderDashboardAlerts();
+            renderDashboardOrders();
+            renderDashboardStock();
+            renderPedidosTable();
+            renderClientesTable();
+            renderStockTable();
+            renderFinanzasTable();
+            renderEntregasTable();
+            populateClientDropdown();
+        };
+
+        const renderMetrics = () => {
+            const pendientes = appState.pedidos.filter(p => p.estado !== "Entregado");
+            document.getElementById("val-pendientes").innerText = pendientes.length;
+            
+            const produccion = appState.pedidos.filter(p => p.estado === "Producción" || p.estado === "En producción").length;
+            document.getElementById("val-produccion-sub").innerText = `${produccion} en producción`;
+
+            const ventasTotal = appState.pedidos.reduce((acc, p) => acc + p.monto, 0);
+            document.getElementById("val-ventas").innerText = `$${ventasTotal.toLocaleString('es-AR')}`;
+
+            const ganancia = Math.round(ventasTotal * 0.4);
+            document.getElementById("val-ganancias").innerText = `$${ganancia.toLocaleString('es-AR')}`;
+
+            const stockBajoCount = appState.stock.filter(s => s.cantidad <= s.minimo).length;
+            const stockValElement = document.getElementById("val-stock");
+            stockValElement.innerText = stockBajoCount;
+            stockValElement.style.color = stockBajoCount > 0 ? "var(--color-danger)" : "var(--color-success)";
+        };
+
+        const renderDashboardAlerts = () => {
+            const container = document.getElementById("dash-alerts");
+            container.innerHTML = "";
+
+            const stockBajo = appState.stock.filter(s => s.cantidad <= s.minimo);
+            const atrasados = appState.pedidos.filter(p => p.estado === "En diseño" || p.estado === "Confirmado").length;
+
+            if (atrasados > 0) {
+                container.innerHTML += `
+                    <div class="alert-item danger">
+                        <div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
+                        <div class="alert-text">
+                            <h4>${atrasados} trabajos demorados</h4>
+                            <p>Revisá las fases de pre-prensa y schablones.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (stockBajo.length > 0) {
+                container.innerHTML += `
+                    <div class="alert-item">
+                        <div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="alert-text">
+                            <h4>${stockBajo.length} insumos con stock bajo</h4>
+                            <p>Artículos críticos por debajo del mínimo.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML += `
+                <div class="alert-item success" style="border-left-color: var(--color-success);">
+                    <div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div>
+                    <div class="alert-text">
+                        <h4>Finanzas del mes saludables</h4>
+                        <p>Los cobros superan el costo fijo mensual.</p>
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderDashboardOrders = () => {
+            const tbody = document.getElementById("dash-pedidos-tbody");
+            tbody.innerHTML = "";
+            const ultimos = appState.pedidos.slice(0, 4);
+            ultimos.forEach(p => {
+                const badgeClass = `badge-${p.estado.toLowerCase().replace(" ", "")}`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${p.id}</td>
+                        <td style="font-weight:700;">${p.cliente}</td>
+                        <td style="color: var(--color-text-secondary);">${p.detalle}</td>
+                        <td><span class="badge ${badgeClass}">${p.estado}</span></td>
+                        <td><button class="btn btn-primary btn-small" onclick="generarComprobante(${p.id})"><i class="fa-solid fa-file-pdf"></i> PDF</button></td>
+                    </tr>
+                `;
+            });
+        };
+
+        const renderDashboardStock = () => {
+            const container = document.getElementById("dash-stock-list");
+            container.innerHTML = "";
+            appState.stock.forEach(s => {
+                const isLow = s.cantidad <= s.minimo;
+                const qtyClass = isLow ? "stock-qty low" : "stock-qty";
+                container.innerHTML += `
+                    <div class="stock-item">
+                        <div class="stock-info">
+                            <h5>${s.item}</h5>
+                            <p>Talle/Formato: ${s.talle}</p>
+                        </div>
+                        <div class="${qtyClass}">${s.cantidad} un.</div>
+                    </div>
+                `;
+            });
+        };
+
+        const renderPedidosTable = () => {
+            const tbody = document.getElementById("pedidos-tbody");
+            tbody.innerHTML = "";
+            appState.pedidos.forEach(p => {
+                const badgeClass = `badge-${p.estado.toLowerCase().replace(" ", "")}`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${p.id}</td>
+                        <td>${p.fecha}</td>
+                        <td style="font-weight:700;">${p.cliente}</td>
+                        <td style="color: var(--color-text-secondary);">${p.detalle}</td>
+                        <td><span class="badge ${badgeClass}">${p.estado}</span></td>
+                        <td style="font-weight:700; color: var(--color-accent);">$${p.monto.toLocaleString('es-AR')}</td>
+                        <td><button class="btn btn-primary btn-small" onclick="generarComprobante(${p.id})"><i class="fa-solid fa-file-pdf"></i> Comprobante</button></td>
+                    </tr>
+                `;
+            });
+        };
+
+        const renderClientesTable = () => {
+            const tbody = document.getElementById("clientes-tbody");
+            tbody.innerHTML = "";
+            appState.clientes.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${c.id}</td>
+                        <td style="font-weight:700;">${c.nombre}</td>
+                        <td style="color: var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${c.whatsapp}</td>
+                        <td style="color: var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${c.instagram}</td>
+                        <td><button class="btn btn-small btn-danger" style="padding:6px 12px;" onclick="eliminarCliente('${c.docId}', ${c.id})"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>
+                `;
+            });
+        };
+
+        const renderStockTable = () => {
+            const tbody = document.getElementById("stock-tbody");
+            tbody.innerHTML = "";
+            appState.stock.forEach(s => {
+                const isLow = s.cantidad <= s.minimo;
+                const statusBadge = isLow ? `<span class="badge" style="background-color:rgba(239, 68, 68, 0.15); color: var(--color-danger);">Stock Bajo</span>` : `<span class="badge" style="background-color:rgba(16, 185, 129, 0.15); color: var(--color-success);">Suficiente</span>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${s.id}</td>
+                        <td style="font-weight:700;">${s.item}</td>
+                        <td>${s.talle}</td>
+                        <td style="font-weight:700; color:${isLow ? 'var(--color-danger)' : 'white'}">${s.cantidad} unidades</td>
+                        <td style="color: var(--color-text-secondary);">${s.minimo} unidades</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            });
+        };
+
+        const renderFinanzasTable = () => {
+            const tbody = document.getElementById("finanzas-tbody");
+            tbody.innerHTML = "";
+            appState.finanzas.forEach(f => {
+                const classMonto = f.tipo === "Ingreso" ? "color: var(--color-success); font-weight:700;" : "color: var(--color-danger); font-weight:700;";
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${f.fecha}</td>
+                        <td><span class="badge" style="background-color:${f.tipo === 'Ingreso' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color:${f.tipo === 'Ingreso' ? 'var(--color-success)' : 'var(--color-danger)'}">${f.tipo}</span></td>
+                        <td>${f.detalle}</td>
+                        <td style="${classMonto}">${f.tipo === 'Ingreso' ? '+' : '-'}$${f.monto.toLocaleString('es-AR')}</td>
+                        <td><i class="fa-solid fa-wallet" style="color: var(--color-accent); margin-right: 6px;"></i> ${f.medioPago || "Mercado Pago"}</td>
+                    </tr>
+                `;
+            });
+        };
+
+        const renderEntregasTable = () => {
+            const tbody = document.getElementById("entregas-tbody");
+            tbody.innerHTML = "";
+            const entregasHoy = appState.pedidos.filter(p => p.estado !== "Entregado");
+            entregasHoy.forEach(e => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${e.id}</td>
+                        <td style="font-weight:700;">${e.cliente}</td>
+                        <td style="color: var(--color-text-secondary);">${e.detalle}</td>
+                        <td><span class="badge" style="background-color:rgba(0,242,255,0.15); color:var(--color-accent);">${e.tipoEntrega}</span></td>
+                        <td style="font-weight:700; color: var(--color-warning);"><i class="fa-regular fa-clock"></i> ${e.horaEntrega}</td>
+                    </tr>
+                `;
+            });
+        };
+
+        const populateClientDropdown = () => {
+            const select = document.getElementById("form-ped-cliente");
+            if (!select) return;
+            select.innerHTML = "";
+            appState.clientes.forEach(c => {
+                select.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
+            });
+        };
+
+        // ACCIONES DE GUARDADO DE DATOS (NUBE / LOCAL)
+        const guardarNuevoPedido = async () => {
+            const cliente = document.getElementById("form-ped-cliente").value;
+            const detalle = document.getElementById("form-ped-detalle").value;
+            const monto = parseInt(document.getElementById("form-ped-monto").value) || 0;
+            const estado = document.getElementById("form-ped-estado").value;
+            const mediopago = document.getElementById("form-ped-metodopago").value;
+            const entrega = document.getElementById("form-ped-entrega").value;
+            const hora = document.getElementById("form-ped-hora").value || "A coordinar";
+
+            if (!detalle) {
+                showToast("Falta descripción", "Completá el detalle de las prendas.");
+                return;
+            }
+
+            const nuevoId = appState.pedidos.length > 0 ? appState.pedidos[0].id + 1 : 1000;
+            const nuevoPed = {
+                id: nuevoId,
+                cliente: cliente,
+                detalle: detalle,
+                estado: estado,
+                monto: monto,
+                fecha: "15/05/2026",
+                tipoEntrega: entrega,
+                horaEntrega: hora,
+                medioPago: mediopago
+            };
+
+            if (hasFirebase && authUser) {
+                const pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
+                await pathPedidos.add(nuevoPed);
+
+                if (estado !== "Presupuesto") {
+                    const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
+                    await pathFinanzas.add({
+                        id: appState.finanzas.length + 1,
+                        tipo: "Ingreso",
+                        detalle: `Pago/Seña Pedido #${nuevoId} (${cliente})`,
+                        monto: monto,
+                        fecha: "15/05/2026",
+                        medioPago: mediopago
+                    });
+                }
+            } else {
+                appState.pedidos.unshift(nuevoPed);
+                if (estado !== "Presupuesto") {
+                    appState.finanzas.unshift({
+                        id: appState.finanzas.length + 1,
+                        tipo: "Ingreso",
+                        detalle: `Pago/Seña Pedido #${nuevoId} (${cliente})`,
+                        monto: monto,
+                        fecha: "15/05/2026",
+                        medioPago: mediopago
+                    });
+                }
+                saveToLocalStorage();
+                renderAll();
+                updateCharts();
+            }
+
+            closeModal('modalPedido');
+            showToast("Pedido Registrado", `Pedido #${nuevoId} cargado correctamente.`);
+        };
+
+        const guardarNuevoCliente = async () => {
+            const nombre = document.getElementById("form-cli-nombre").value;
+            const whatsapp = document.getElementById("form-cli-tel").value;
+            const ig = document.getElementById("form-cli-ig").value;
+
+            if (!nombre || !whatsapp) {
+                showToast("Faltan datos", "El nombre y WhatsApp son obligatorios.");
+                return;
+            }
+
+            const nuevoId = appState.clientes.length + 1;
+            const nuevoCli = { id: nuevoId, nombre, whatsapp, instagram: ig || "-" };
+
+            if (hasFirebase && authUser) {
+                const pathClientes = db.collection('artifacts/' + appId + '/public/data/clientes');
+                await pathClientes.add(nuevoCli);
+            } else {
+                appState.clientes.push(nuevoCli);
+                saveToLocalStorage();
+                renderAll();
+            }
+
+            closeModal('modalCliente');
+            showToast("Cliente Registrado", `${nombre} se sumó a la cartera.`);
+        };
+
+        const guardarFinanzas = async () => {
+            const tipo = document.getElementById("form-fin-tipo").value;
+            const monto = parseInt(document.getElementById("form-fin-monto").value) || 0;
+            const detalle = document.getElementById("form-fin-detalle").value;
+            const mediopago = document.getElementById("form-fin-metodopago").value;
+
+            if (!detalle || monto <= 0) {
+                showToast("Entrada Inválida", "Completá concepto y monto mayor a $0.");
+                return;
+            }
+
+            const nuevaFin = {
+                id: appState.finanzas.length + 1,
+                tipo,
+                detalle,
+                monto,
+                fecha: "15/05/2026",
+                medioPago: mediopago
+            };
+
+            if (hasFirebase && authUser) {
+                const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
+                await pathFinanzas.add(nuevaFin);
+            } else {
+                appState.finanzas.unshift(nuevaFin);
+                saveToLocalStorage();
+                renderAll();
+                updateCharts();
+            }
+
+            closeModal('modalFinanzas');
+            showToast("Caja Actualizada", `Movimiento de ${tipo} por $${monto.toLocaleString()} exitoso.`);
+        };
+
+        const guardarStock = async () => {
+            const nombre = document.getElementById("form-stk-nombre").value;
+            const talle = document.getElementById("form-stk-talle").value || "U";
+            const cant = parseInt(document.getElementById("form-stk-cant").value) || 0;
+            const min = parseInt(document.getElementById("form-stk-min").value) || 2;
+
+            if (!nombre) {
+                showToast("Falta Nombre", "Por favor ingresá el nombre del insumo.");
+                return;
+            }
+
+            const nuevoInsumo = {
+                id: appState.stock.length + 1,
+                item: nombre,
+                talle,
+                cantidad: cant,
+                minimo: min
+            };
+
+            if (hasFirebase && authUser) {
+                const pathStock = db.collection('artifacts/' + appId + '/public/data/stock');
+                await pathStock.add(nuevoInsumo);
+            } else {
+                appState.stock.push(nuevoInsumo);
+                saveToLocalStorage();
+                renderAll();
+            }
+
+            closeModal('modalStock');
+            showToast("Stock Añadido", `Artículo '${nombre}' agregado.`);
+        };
+
+        const eliminarCliente = async (docId, localId) => {
+            if (hasFirebase && authUser && docId) {
+                const docRef = db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId);
+                await docRef.delete();
+            } else {
+                appState.clientes = appState.clientes.filter(c => c.id !== localId);
+                saveToLocalStorage();
+                renderAll();
+            }
+            showToast("Cliente Removido", "La ficha fue eliminada de la base de datos.");
+        };
+
+        // ENRUTADOR WHATSAPP PARSER (SIMULADOR APEXCORE)
+        const appendConsoleLine = (text, styleClass = "") => {
+            const logsContainer = document.getElementById("console-logs");
+            if (!logsContainer) return;
+            const line = document.createElement("div");
+            line.className = `console-line ${styleClass}`;
+            line.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
+            logsContainer.appendChild(line);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        };
+
+        const sendMessageToInbox = () => {
+            const input = document.getElementById("inbox-user-msg");
+            const text = input.value.trim();
+            if(!text) return;
+
+            input.value = "";
+
+            const chatBox = document.getElementById("inbox-chat-box");
+            const userBubble = document.createElement("div");
+            userBubble.className = "chat-bubble user";
+            userBubble.innerText = text;
+            chatBox.appendChild(userBubble);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            appendConsoleLine(`Webhook trigger: Entrada detectada: "${text}"`);
+            appendConsoleLine("Iniciando motor de parseo sintáctico ApexCore...", "warn");
+
+            setTimeout(async () => {
+                let reply = "";
+                let hasOrder = false;
+                let parsedDetail = "";
+                let calculatedCost = 0;
+
+                const normalizedText = text.toLowerCase();
+
+                if (normalizedText.includes("remera") || normalizedText.includes("buzo") || normalizedText.includes("remeras") || normalizedText.includes("buzos")) {
+                    appendConsoleLine("Parser: Coincidencia semántica con catálogo textil.");
+                    appendConsoleLine("Consultando disponibilidad de stock vía SQL query...", "warn");
+                    
+                    let qty = 20;
+                    const numMatch = normalizedText.match(/\d+/);
+                    if (numMatch) qty = parseInt(numMatch[0]);
+
+                    let itemType = normalizedText.includes("remera") ? "Remeras" : "Buzos";
+                    parsedDetail = `${qty} ${itemType.toLowerCase()} personalizadas`;
+                    calculatedCost = qty * (itemType === "Remeras" ? 12000 : 25000);
+
+                    appendConsoleLine(`SQL: Registro de inventario para ${itemType} cargado. Stock disponible.`, "success");
+                    
+                    if (normalizedText.includes("pixelado") || normalizedText.includes("baja calidad") || normalizedText.includes("malo") || normalizedText.includes("captura")) {
+                        appendConsoleLine("VERIFICACIÓN TÉCNICA RECHAZADA: ARCHIVO CON BAJO DPI", "danger");
+                        reply = `He recibido tu mensaje solicitando ${parsedDetail}. Sin embargo, nuestro validador técnico detecta que el diseño enviado no cuenta con la resolución de pre-prensa requerida (300 DPI mínimos). ¿Podrías facilitarnos el archivo en formato vectorial (.AI, .PDF o curvas)?`;
+                    } else {
+                        hasOrder = true;
+                        appendConsoleLine("VERIFICACIÓN TÉCNICA APROBADA: ARTE COMPATIBLE", "success");
+                        appendConsoleLine(`Calculador de tarifas: Retorno de valor comercial de $${calculatedCost.toLocaleString('es-AR')}`, "success");
+                        reply = `¡Excelente! Hemos recibido y procesado de forma automática tu consulta de ${parsedDetail}. El presupuesto calculado por el sistema es de $${calculatedCost.toLocaleString('es-AR')}. ¿Querés confirmar la orden para que generemos tu link de pago por Mercado Pago y lo carguemos a la planilla del taller?`;
+                    }
+                } else if (normalizedText.includes("precio") || normalizedText.includes("costo") || normalizedText.includes("cuanto cuesta")) {
+                    reply = "Nuestra tarifa base es de $12.000 por remera oversize estampada (mínimo 10 unidades) y de $25.000 por buzo canguro con abrigo. Esto incluye hasta 2 colores de estampado en serigrafía.";
+                } else if (normalizedText.includes("hola") || normalizedText.includes("buen") || normalizedText.includes("tarde") || normalizedText.includes("dia")) {
+                    reply = "¡Hola! ¿Cómo estás? Contame, ¿qué prendas de indumentaria urbana (oversize, hoodies, remeras clásicas) querés estampar o presupuestar en Taller VESA?";
+                } else {
+                    reply = "Entiendo tu consulta de forma correcta. Para poder darte una cotización exacta al instante por este medio, por favor detallame el número de prendas, tipo de tela, y si contás con el archivo de diseño en alta calidad.";
+                }
+
+                const botBubble = document.createElement("div");
+                botBubble.className = "chat-bubble system";
+                botBubble.innerText = reply;
+                chatBox.appendChild(botBubble);
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                if (hasOrder && calculatedCost > 0) {
+                    appendConsoleLine("DISPARADOR DE ACCIÓN AUTOMÁTICA COMPILANDO...", "success");
+                    
+                    const nuevoId = appState.pedidos.length > 0 ? appState.pedidos[0].id + 1 : 1000;
+                    const nuevoPed = {
+                        id: nuevoId,
+                        cliente: "Streetwear Custom S.A.",
+                        detalle: parsedDetail,
+                        estado: "Confirmado",
+                        monto: calculatedCost,
+                        fecha: "15/05/2026",
+                        tipoEntrega: "Retiro en local",
+                        horaEntrega: "18:00 hs",
+                        medioPago: "Mercado Pago"
+                    };
+
+                    if (hasFirebase && authUser) {
+                        const pathPedidos = db.collection('artifacts/' + appId + '/public/data/pedidos');
+                        await pathPedidos.add(nuevoPed);
+
+                        const pathFinanzas = db.collection('artifacts/' + appId + '/public/data/finanzas');
+                        await pathFinanzas.add({
+                            id: appState.finanzas.length + 1,
+                            tipo: "Ingreso",
+                            detalle: `Seña Transaccional Pedido #${nuevoId}`,
+                            monto: Math.round(calculatedCost * 0.5),
+                            fecha: "15/05/2026",
+                            medioPago: "Mercado Pago"
+                        });
+                    } else {
+                        appState.pedidos.unshift(nuevoPed);
+                        appState.finanzas.unshift({
+                            id: appState.finanzas.length + 1,
+                            tipo: "Ingreso",
+                            detalle: `Seña Transaccional Pedido #${nuevoId}`,
+                            monto: Math.round(calculatedCost * 0.5),
+                            fecha: "15/05/2026",
+                            medioPago: "Mercado Pago"
+                        });
+                        appState.stock[0].cantidad = Math.max(0, appState.stock[0].cantidad - 3);
+                        saveToLocalStorage();
+                        renderAll();
+                        updateCharts();
+                    }
+                    showToast("¡Pedido Creado por Sistema!", `La integración de ApexTech procesó la orden #${nuevoId}.`);
+                }
+            }, 1200);
+        };
+
+        // EXPORTACIÓN DE VARIABLES A WINDOW PARA ENLACES ONCLICK HTML (ES MODULES RULES)
+        window.toggleSidebar = toggleSidebar;
+        window.switchTab = switchTab;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.guardarNuevoPedido = guardarNuevoPedido;
+        window.guardarNuevoCliente = guardarNuevoCliente;
+        window.guardarFinanzas = guardarFinanzas;
+        window.guardarStock = guardarStock;
+        window.eliminarCliente = eliminarCliente;
+        window.generarComprobante = generarComprobante;
+        window.handleChatKeyPress = handleChatKeyPress;
+        window.sendMessageToInbox = sendMessageToInbox;
+
+        // ARRANCAR MOTOR
+        initApexCore();
+
+        // INICIALIZACIÓN DE GRÁFICOS (CHART.JS)
+        function initCharts() {
+            const ctx1 = document.getElementById('chartPedidos').getContext('2d');
+            const stateCounts = { Presupuesto: 0, Confirmado: 0, Diseñando: 0, Produccion: 0, Estampado: 0, Listo: 0, Entregado: 0 };
+            appState.pedidos.forEach(p => {
+                if (p.estado === "En diseño") stateCounts.Diseñando++;
+                else if (p.estado === "En producción" || p.estado === "Producción") stateCounts.Produccion++;
+                else if (stateCounts[p.estado] !== undefined) stateCounts[p.estado]++;
+                else stateCounts.Entregado++;
+            });
+
+            chart1 = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['En diseño', 'Producción', 'Estampado', 'Listo', 'Entregado'],
+                    datasets: [{
+                        data: [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado],
+                        backgroundColor: ['#a855f7', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9'],
+                        borderWidth: 2,
+                        borderColor: '#131a2e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('chartFinanzas').getContext('2d');
+            let ingresos = appState.finanzas.filter(f => f.tipo === "Ingreso").reduce((acc, f) => acc + f.monto, 0);
+            let egresos = appState.finanzas.filter(f => f.tipo === "Egreso").reduce((acc, f) => acc + f.monto, 0);
+
+            chart2 = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Ingresos', 'Egresos'],
+                    datasets: [{
+                        label: 'Pesos ($)',
+                        data: [ingresos, egresos],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!chart1 || !chart2) {
+                initCharts();
+                return;
+            }
+
+            const stateCounts = { Diseñando: 0, Produccion: 0, Estampado: 0, Listo: 0, Entregado: 0 };
+            appState.pedidos.forEach(p => {
+                if (p.estado === "En diseño") stateCounts.Diseñando++;
+                else if (p.estado === "En producción" || p.estado === "Producción") stateCounts.Produccion++;
+                else if (p.estado === "Estampado") stateCounts.Estampado++;
+                else if (p.estado === "Listo") stateCounts.Listo++;
+                else stateCounts.Entregado++;
+            });
+
+            chart1.data.datasets[0].data = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado];
+            chart1.update();
+
+            let ingresos = appState.finanzas.filter(f => f.tipo === "Ingreso").reduce((acc, f) => acc + f.monto, 0);
+            let egresos = appState.finanzas.filter(f => f.tipo === "Egreso").reduce((acc, f) => acc + f.monto, 0);
+
+            chart2.data.datasets[0].data = [ingresos, egresos];
+            chart2.update();
+        }
+    </script>
+</body>
+</html>

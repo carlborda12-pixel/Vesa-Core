@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VESA Core OS - Responsive Dashboard</title>
+    <!-- Fuentes e Iconos importados de forma limpia -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Librería de gráficos Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <!-- SDK de Firebase en versión de compatibilidad (Apto para doble clic local / file://) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -351,6 +354,7 @@
 </head>
 <body>
 
+    <!-- MENÚ SUPERIOR DE ACCESO MÓVIL Y TABLET -->
     <div class="mobile-navbar">
         <div class="mobile-logo">VESA<span>.</span></div>
         <button class="menu-toggle-btn" id="sidebar-toggle" onclick="toggleSidebar(true)">
@@ -358,6 +362,7 @@
         </button>
     </div>
 
+    <!-- SIDEBAR DE NAVEGACIÓN (DRAWER MÓVIL Y TABLET) -->
     <div class="sidebar" id="app-sidebar">
         <button class="sidebar-close-btn" onclick="toggleSidebar(false)">
             <i class="fa-solid fa-xmark"></i>
@@ -387,10 +392,13 @@
         </div>
     </div>
 
+    <!-- CAPA OSCURA DE SOBREPOSICIÓN MÓVIL Y TABLET -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
 
+    <!-- CONTENEDOR PRINCIPAL -->
     <div class="app-container">
         
+        <!-- SECCIÓN 1: VISTA DASHBOARD -->
         <div class="main-content">
             
             <div class="header-app">
@@ -408,6 +416,7 @@
                 </div>
             </div>
 
+            <!-- TARJETAS DE MÉTRICAS -->
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-title">Pedidos Pendientes <i class="fa-solid fa-basket-shopping"></i></div>
@@ -431,8 +440,10 @@
                 </div>
             </div>
 
+            <!-- VISTA ACTIVA DINÁMICA: DASHBOARD -->
             <div id="section-dashboard" class="view-section active">
                 <div class="dashboard-row-1">
+                    <!-- Gráfico Pedidos por Estado -->
                     <div class="panel-block">
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-chart-pie"></i> Estado de Pedidos</h3>
@@ -441,6 +452,7 @@
                             <canvas id="chartPedidos"></canvas>
                         </div>
                     </div>
+                    <!-- Gráfico de Finanzas -->
                     <div class="panel-block">
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-chart-column"></i> Ingresos vs Egresos</h3>
@@ -449,16 +461,19 @@
                             <canvas id="chartFinanzas"></canvas>
                         </div>
                     </div>
+                    <!-- Alertas importantes -->
                     <div class="panel-block">
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-circle-exclamation"></i> Alertas Críticas</h3>
                         </div>
                         <div class="alerts-container" id="dash-alerts">
-                            </div>
+                            <!-- Inyectado dinámicamente -->
+                        </div>
                     </div>
                 </div>
 
                 <div class="dashboard-row-2">
+                    <!-- Tabla últimos pedidos -->
                     <div class="panel-block">
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-list"></i> Últimos Pedidos</h3>
@@ -476,22 +491,26 @@
                                     </tr>
                                 </thead>
                                 <tbody id="dash-pedidos-tbody">
-                                    </tbody>
+                                    <!-- Inyectado dinámicamente -->
+                                </tbody>
                             </table>
                         </div>
                     </div>
 
+                    <!-- Stock Crítico -->
                     <div class="panel-block">
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-triangle-exclamation"></i> Stock Crítico</h3>
                             <button class="btn btn-small" onclick="switchTab('stock')">Reponer</button>
                         </div>
                         <div id="dash-stock-list">
-                            </div>
+                            <!-- Inyectado dinámicamente -->
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- VISTA ACTIVA DINÁMICA: PEDIDOS -->
             <div id="section-pedidos" class="view-section">
                 <div class="panel-block">
                     <div class="panel-header">
@@ -511,12 +530,14 @@
                                 </tr>
                             </thead>
                             <tbody id="pedidos-tbody">
-                                </tbody>
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- VISTA ACTIVA DINÁMICA: CLIENTES -->
             <div id="section-clientes" class="view-section">
                 <div class="panel-block">
                     <div class="panel-header">
@@ -534,12 +555,14 @@
                                 </tr>
                             </thead>
                             <tbody id="clientes-tbody">
-                                </tbody>
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- VISTA ACTIVA DINÁMICA: STOCK -->
             <div id="section-stock" class="view-section">
                 <div class="panel-block">
                     <div class="panel-header">
@@ -559,12 +582,14 @@
                                 </tr>
                             </thead>
                             <tbody id="stock-tbody">
-                                </tbody>
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- VISTA ACTIVA DINÁMICA: FINANZAS -->
             <div id="section-finanzas" class="view-section">
                 <div class="panel-block">
                     <div class="panel-header">
@@ -582,12 +607,14 @@
                                 </tr>
                             </thead>
                             <tbody id="finanzas-tbody">
-                                </tbody>
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- VISTA ACTIVA DINÁMICA: ENTREGAS -->
             <div id="section-entregas" class="view-section">
                 <div class="panel-block">
                     <div class="panel-header">
@@ -605,12 +632,14 @@
                                 </tr>
                             </thead>
                             <tbody id="entregas-tbody">
-                                </tbody>
+                                <!-- Inyectado dinámicamente -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- VISTA ACTIVA DINÁMICA: WHATSAPP INBOX (MÓDULO DE INTEGRACIÓN DE APEXTECH) -->
             <div id="section-asistente" class="view-section">
                 <div class="panel-block">
                     <div class="panel-header">
@@ -619,6 +648,7 @@
                     </div>
                     
                     <div class="chat-layout">
+                        <!-- Chat Estilo WhatsApp -->
                         <div class="chat-box-area">
                             <div class="chat-messages" id="inbox-chat-box">
                                 <div class="chat-bubble system">
@@ -631,6 +661,7 @@
                             </div>
                         </div>
 
+                        <!-- Consola de Desarrollo e Integraciones ApexTech -->
                         <div class="integration-console">
                             <div class="console-line header">[APEXTECH INTEGRATION ENGINE - LOGS EN VIVO]</div>
                             <div class="console-line">Esperando entrada de datos desde Webhook de WhatsApp...</div>
@@ -642,6 +673,7 @@
 
         </div>
 
+        <!-- BOTONERA INFERIOR (ACCIONES RÁPIDAS) -->
         <div class="bottom-actions">
             <button class="btn btn-primary" onclick="openModal('modalPedido')"><i class="fa-solid fa-plus"></i> Nuevo Pedido</button>
             <button class="btn" onclick="openModal('modalCliente')"><i class="fa-solid fa-user-plus"></i> Nuevo Cliente</button>
@@ -649,6 +681,9 @@
         </div>
     </div>
 
+    <!-- MODALES INTERACTIVOS -->
+    
+    <!-- Modal 1: Nuevo Pedido -->
     <div class="modal-overlay" id="modalPedido">
         <div class="modal-box">
             <div class="modal-header">
@@ -658,7 +693,8 @@
             <div class="form-group">
                 <label>Cliente</label>
                 <select class="form-control" id="form-ped-cliente">
-                    </select>
+                    <!-- Llenado dinámicamente -->
+                </select>
             </div>
             <div class="form-group">
                 <label>Detalle del Pedido / Prendas</label>
@@ -707,6 +743,7 @@
         </div>
     </div>
 
+    <!-- Modal 2: Nuevo Cliente -->
     <div class="modal-overlay" id="modalCliente">
         <div class="modal-box">
             <div class="modal-header">
@@ -729,6 +766,7 @@
         </div>
     </div>
 
+    <!-- Modal 3: Finanzas (Ingresos/Egresos) -->
     <div class="modal-overlay" id="modalFinanzas">
         <div class="modal-box">
             <div class="modal-header">
@@ -767,6 +805,7 @@
         </div>
     </div>
 
+    <!-- Modal 4: Añadir Stock -->
     <div class="modal-overlay" id="modalStock">
         <div class="modal-box">
             <div class="modal-header">
@@ -795,6 +834,7 @@
         </div>
     </div>
 
+    <!-- Modal 5: Comprobante PDF de Pago (Remito) -->
     <div class="modal-overlay" id="modalComprobante">
         <div class="voucher-box" id="print-area">
             <div style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: -15px;">
@@ -847,6 +887,7 @@
         </div>
     </div>
 
+    <!-- Modal 6: Configuración Firebase Custom -->
     <div class="modal-overlay" id="modalConfigFirebase">
         <div class="modal-box">
             <div class="modal-header">
@@ -887,6 +928,7 @@
         </div>
     </div>
 
+    <!-- NOTIFICACIÓN EN TIEMPO REAL -->
     <div class="notification-toast" id="toast">
         <i class="fa-solid fa-circle-check" style="color: var(--color-accent); font-size: 20px;"></i>
         <div>
@@ -895,6 +937,7 @@
         </div>
     </div>
 
+    <!-- LOGICA E INTEGRACIÓN CORE DE APEXTECH (SIN CRASHES POR HOISTING EN VARIABLES GLOBALES) -->
     <script>
         // Configuración y variables de estado del motor de datos de VESA
         var hasFirebase = false;
@@ -968,6 +1011,18 @@
                     firebase.initializeApp(firebaseConfig);
                     auth = firebase.auth();
                     db = firebase.firestore();
+
+                    // --- ACTIVACIÓN DEL ESCUDO ANTI-CAÍDAS (Persistencia Offline de Firestore) ---
+                    // Esto le asegura a Santiago que puede registrar datos sin conexión.
+                    // Firestore almacena los cambios localmente en IndexedDB y los sincroniza
+                    // de forma autónoma con los servidores de Google apenas vuelve el Wi-Fi.
+                    db.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
+                        if (err.code == 'failed-precondition') {
+                            console.warn("La persistencia offline falló: múltiple pestañas abiertas simultáneamente.");
+                        } else if (err.code == 'unimplemented') {
+                            console.warn("Este navegador no soporta persistencia offline en IndexedDB.");
+                        }
+                    });
 
                     // AUTENTICACIÓN ASÍNCRONA PRIMERO (Regla 3)
                     var token = null;

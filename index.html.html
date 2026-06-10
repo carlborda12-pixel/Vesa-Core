@@ -2366,18 +2366,29 @@
             }, 1500);
         }
 
-        // Motor de Voz (TTS - Text to Speech) de ApexTech
+        // Motor de Voz (TTS - Text to Speech) de ApexTech - Estilo "Jarvis"
         function playVoiceReport(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); // Detener audios previos si los hay
                 var msg = new SpeechSynthesisUtterance();
                 msg.text = text;
-                msg.lang = 'es-AR'; // Intenta usar voz de Argentina/Latinoamérica
-                msg.rate = 1.05; // Velocidad dinámica
-                msg.pitch = 1.0;
+                msg.lang = 'es-ES'; // Español general para asegurar compatibilidad de voces
+                msg.rate = 1.0; // Velocidad constante y segura
+                msg.pitch = 0.6; // Tono más grave (Efecto "Jarvis" / IA Masculina)
                 
                 var voices = window.speechSynthesis.getVoices();
-                var preferredVoice = voices.find(function(v) { return v.lang === 'es-AR' || v.lang === 'es-ES' || v.lang.includes('es'); });
+                
+                // Intenta forzar una voz masculina o "profunda" disponible en el sistema (Pablo, Diego, Jorge, male)
+                var preferredVoice = voices.find(function(v) { 
+                    var vName = v.name.toLowerCase();
+                    return v.lang.includes('es') && (vName.includes('male') || vName.includes('hombre') || vName.includes('pablo') || vName.includes('diego') || vName.includes('jorge')); 
+                });
+                
+                // Fallback si no encuentra una voz masculina específica
+                if (!preferredVoice) {
+                    preferredVoice = voices.find(function(v) { return v.lang.includes('es'); });
+                }
+                
                 if (preferredVoice) {
                     msg.voice = preferredVoice;
                 }
@@ -2402,7 +2413,7 @@
 
             // Lógica inteligente: Si todo está perfecto, mostramos el mensaje reconfortante
             if (stockBajo.length === 0 && atrasados.length === 0 && entregasHoy.length === 0) {
-                voiceText = "Buen día, Santiago. ¡Todo al día! No tenés pedidos atrasados, entregas pendientes para hoy, ni faltantes de stock. Excelente trabajo, el taller está operando de manera impecable.";
+                voiceText = "Buen día, Santiago. Los sistemas están en línea. No se registran anomalías. No tenés pedidos atrasados, entregas pendientes para hoy, ni faltantes de stock. Excelente trabajo, el taller está operando a máxima capacidad.";
                 container.innerHTML = `
                     <div class="alert-item success" style="border-left-color: var(--color-success); background-color: rgba(16, 185, 129, 0.05);">
                         <div class="alert-icon" style="color: var(--color-success); font-size: 20px;"><i class="fa-solid fa-champagne-glasses"></i></div>
@@ -2413,11 +2424,11 @@
                     </div>
                 `;
             } else {
-                voiceText = "Buen día, Santiago. Este es el estado operativo de tu taller para el día de hoy. ";
+                voiceText = "Buen día, Santiago. Los sistemas están en línea. Este es el estado operativo de tu taller para el día de hoy. ";
 
                 // Lógica de advertencias si hay algo pendiente
                 if (atrasados.length > 0) {
-                    voiceText += "Atención, tenés " + atrasados.length + " pedidos demorados que están estancados en diseño o pre-prensa. ";
+                    voiceText += "Atención, se detectan " + atrasados.length + " pedidos demorados que están estancados en fase de diseño o pre-prensa. ";
                     container.innerHTML += `
                         <div class="alert-item danger">
                             <div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
@@ -2430,7 +2441,7 @@
                 }
 
                 if (entregasHoy.length > 0) {
-                    voiceText += "Además, hay " + entregasHoy.length + " entregas programadas para despachar hoy. ";
+                    voiceText += "Además, el cronograma marca " + entregasHoy.length + " entregas programadas para despachar hoy. ";
                     container.innerHTML += `
                         <div class="alert-item" style="border-left-color: var(--color-blue);">
                             <div class="alert-icon" style="color: var(--color-blue);"><i class="fa-solid fa-truck-fast"></i></div>
@@ -2443,7 +2454,7 @@
                 }
 
                 if (stockBajo.length > 0) {
-                    voiceText += "Por último, registramos " + stockBajo.length + " insumos en estado crítico que requieren reposición inmediata en el almacén. ";
+                    voiceText += "Finalmente, la base de datos reporta " + stockBajo.length + " insumos en estado crítico. Se requiere reponer el almacén de forma inmediata. ";
                     container.innerHTML += `
                         <div class="alert-item warning">
                             <div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -2603,6 +2614,7 @@
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
         window.allowDrop = allowDrop;
         window.drop = drop;
+        window.playVoiceReport = playVoiceReport;
     </script>
 </body>
 </html>

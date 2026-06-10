@@ -579,6 +579,7 @@
                                     <th>Cantidad Disponible</th>
                                     <th>Mínimo Requerido</th>
                                     <th>Estado</th>
+                                    <th>Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="stock-tbody">
@@ -604,6 +605,7 @@
                                     <th>Detalle</th>
                                     <th>Monto</th>
                                     <th>Medio de Pago</th>
+                                    <th>Acción</th>
                                 </tr>
                             </thead>
                             <tbody id="finanzas-tbody">
@@ -703,8 +705,14 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Monto Total ($)</label>
-                    <input type="number" class="form-control" id="form-ped-monto" placeholder="Ej: 350000">
+                    <input type="number" class="form-control" id="form-ped-monto" placeholder="Ej: 350000" oninput="document.getElementById('form-ped-sena').value = this.value">
                 </div>
+                <div class="form-group">
+                    <label>Pago Inicial / Seña ($)</label>
+                    <input type="number" class="form-control" id="form-ped-sena" placeholder="Vacío = Paga el 100%">
+                </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label>Estado Inicial</label>
                     <select class="form-control" id="form-ped-estado">
@@ -831,6 +839,78 @@
                 <input type="number" class="form-control" id="form-stk-min" placeholder="Ej: 5">
             </div>
             <button class="btn btn-primary" onclick="guardarStock()">Añadir Insumo</button>
+        </div>
+    </div>
+
+    <!-- Modal Editar Stock -->
+    <div class="modal-overlay" id="modalEditStock">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Insumo</h3>
+                <button class="modal-close" onclick="closeModal('modalEditStock')">&times;</button>
+            </div>
+            <input type="hidden" id="edit-stk-id-doc">
+            <input type="hidden" id="edit-stk-id-local">
+            <div class="form-group">
+                <label>Nombre del Artículo o Insumo</label>
+                <input type="text" class="form-control" id="edit-stk-nombre">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Talle / Formato</label>
+                    <input type="text" class="form-control" id="edit-stk-talle">
+                </div>
+                <div class="form-group">
+                    <label>Cantidad Disponible</label>
+                    <input type="number" class="form-control" id="edit-stk-cant">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Mínimo Crítico para Alertas</label>
+                <input type="number" class="form-control" id="edit-stk-min">
+            </div>
+            <button class="btn btn-primary" onclick="guardarEdicionStock()">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <!-- Modal Editar Finanzas -->
+    <div class="modal-overlay" id="modalEditFinanzas">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Transacción</h3>
+                <button class="modal-close" onclick="closeModal('modalEditFinanzas')">&times;</button>
+            </div>
+            <input type="hidden" id="edit-fin-id-doc">
+            <input type="hidden" id="edit-fin-id-local">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo de Transacción</label>
+                    <select class="form-control" id="edit-fin-tipo">
+                        <option value="Ingreso">Ingreso (+)</option>
+                        <option value="Egreso">Egreso (-)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Monto ($)</label>
+                    <input type="number" class="form-control" id="edit-fin-monto">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Medio de Pago</label>
+                    <select class="form-control" id="edit-fin-metodopago">
+                        <option value="Mercado Pago">Mercado Pago</option>
+                        <option value="Transferencia">Transferencia Bancaria</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta de Crédito</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Detalle / Concepto</label>
+                    <input type="text" class="form-control" id="edit-fin-detalle">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="guardarEdicionFinanzas()">Guardar Cambios</button>
         </div>
     </div>
 
@@ -1295,11 +1375,12 @@
             var ultimos = appState.pedidos.slice(0, 4);
             ultimos.forEach(function(p) {
                 var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
+                var saldoInfo = (p.saldo > 0) ? ` <small style="color:var(--color-warning);">(-$${p.saldo.toLocaleString('es-AR')})</small>` : '';
                 tbody.innerHTML += `
                     <tr>
                         <td>#${p.id}</td>
                         <td style="font-weight:700;">${p.cliente}</td>
-                        <td style="color: var(--color-text-secondary);">${p.detalle}</td>
+                        <td style="color: var(--color-text-secondary);">${p.detalle}${saldoInfo}</td>
                         <td><span class="badge ${badgeClass}">${p.estado}</span></td>
                         <td><button class="btn btn-primary btn-small" onclick="generarComprobante(${p.id})"><i class="fa-solid fa-file-pdf"></i> PDF</button></td>
                     </tr>
@@ -1356,6 +1437,7 @@
 
             appState.pedidos.forEach(function(p) {
                 var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
+                var saldoInfo = (p.saldo > 0) ? `<br><small style="color:var(--color-warning); font-size:10px;">Resta: $${p.saldo.toLocaleString('es-AR')}</small>` : '';
                 tbody.innerHTML += `
                     <tr>
                         <td>#${p.id}</td>
@@ -1363,7 +1445,7 @@
                         <td style="font-weight:700;">${p.cliente}</td>
                         <td style="color: var(--color-text-secondary);">${p.detalle}</td>
                         <td><span class="badge ${badgeClass}">${p.estado}</span></td>
-                        <td style="font-weight:700; color: var(--color-accent);">$${p.monto.toLocaleString('es-AR')}</td>
+                        <td style="font-weight:700; color: var(--color-accent);">$${p.monto.toLocaleString('es-AR')} ${saldoInfo}</td>
                         <td><button class="btn btn-primary btn-small" onclick="generarComprobante(${p.id})"><i class="fa-solid fa-file-pdf"></i> Comprobante</button></td>
                     </tr>
                 `;
@@ -1408,7 +1490,7 @@
             if (appState.stock.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="empty-placeholder">
+                        <td colspan="7" class="empty-placeholder">
                             <i class="fa-solid fa-layer-group"></i>
                             El depósito está vacío. Agregá insumos o prendas base con el botón "Añadir Insumo".
                         </td>
@@ -1428,6 +1510,39 @@
                         <td style="font-weight:700; color:${isLow ? 'var(--color-danger)' : 'white'}">${s.cantidad} unidades</td>
                         <td style="color: var(--color-text-secondary);">${s.minimo} unidades</td>
                         <td>${statusBadge}</td>
+                        <td><button class="btn btn-small" style="padding:6px 12px; background-color: rgba(255,255,255,0.05);" onclick="abrirEditarStock('${s.docId || ''}', ${s.id})"><i class="fa-solid fa-pen"></i></button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderFinanzasTable() {
+            var tbody = document.getElementById("finanzas-tbody");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            if (appState.finanzas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-placeholder">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                            No se registran movimientos de caja diariaria para este período.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            appState.finanzas.forEach(function(f) {
+                var classMonto = f.tipo === "Ingreso" ? "color: var(--color-success); font-weight:700;" : "color: var(--color-danger); font-weight:700;";
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${f.fecha}</td>
+                        <td><span class="badge" style="background-color:${f.tipo === 'Ingreso' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color:${f.tipo === 'Ingreso' ? 'var(--color-success)' : 'var(--color-danger)'}">${f.tipo}</span></td>
+                        <td>${f.detalle}</td>
+                        <td style="${classMonto}">${f.tipo === 'Ingreso' ? '+' : '-'}$${f.monto.toLocaleString('es-AR')}</td>
+                        <td><i class="fa-solid fa-wallet" style="color: var(--color-accent); margin-right: 6px;"></i> ${f.medioPago || "Mercado Pago"}</td>
+                        <td><button class="btn btn-small" style="padding:6px 12px; background-color: rgba(255,255,255,0.05);" onclick="abrirEditarFinanzas('${f.docId || ''}', ${f.id})"><i class="fa-solid fa-pen"></i></button></td>
                     </tr>
                 `;
             });
@@ -1517,6 +1632,8 @@
             var cliente = clienteSelect.value;
             var detalle = document.getElementById("form-ped-detalle").value;
             var monto = parseInt(document.getElementById("form-ped-monto").value) || 0;
+            var rawSena = parseInt(document.getElementById("form-ped-sena").value);
+            var sena = isNaN(rawSena) ? monto : rawSena;
             var estado = document.getElementById("form-ped-estado").value;
             var mediopago = document.getElementById("form-ped-metodopago").value;
             var entrega = document.getElementById("form-ped-entrega").value;
@@ -1539,6 +1656,8 @@
                 detalle: detalle,
                 estado: estado,
                 monto: monto,
+                sena: sena,
+                saldo: Math.max(0, monto - sena),
                 fecha: "15/05/2026",
                 tipoEntrega: entrega,
                 horaEntrega: hora,
@@ -1548,24 +1667,24 @@
             var success = await dbAdd('pedidos', nuevoPed);
 
             if (success) {
-                if (estado !== "Presupuesto") {
+                if (estado !== "Presupuesto" && sena > 0) {
                     await dbAdd('finanzas', {
                         id: appState.finanzas.length + 1,
                         tipo: "Ingreso",
                         detalle: `Pago/Seña Pedido #${nuevoId} (${cliente})`,
-                        monto: monto,
+                        monto: sena,
                         fecha: "15/05/2026",
                         medioPago: mediopago
                     });
                 }
             } else {
                 appState.pedidos.unshift(nuevoPed);
-                if (estado !== "Presupuesto") {
+                if (estado !== "Presupuesto" && sena > 0) {
                     appState.finanzas.unshift({
                         id: appState.finanzas.length + 1,
                         tipo: "Ingreso",
                         detalle: `Pago/Seña Pedido #${nuevoId} (${cliente})`,
-                        monto: monto,
+                        monto: sena,
                         fecha: "15/05/2026",
                         medioPago: mediopago
                     });
@@ -1665,6 +1784,94 @@
             showToast("Stock Añadido", `Artículo '${nombre}' agregado.`);
         }
 
+        function abrirEditarStock(docId, localId) {
+            var s = appState.stock.find(function(x) { return x.id === localId; });
+            if (!s) return;
+            document.getElementById("edit-stk-id-doc").value = docId;
+            document.getElementById("edit-stk-id-local").value = localId;
+            document.getElementById("edit-stk-nombre").value = s.item;
+            document.getElementById("edit-stk-talle").value = s.talle;
+            document.getElementById("edit-stk-cant").value = s.cantidad;
+            document.getElementById("edit-stk-min").value = s.minimo;
+            openModal('modalEditStock');
+        }
+
+        async function guardarEdicionStock() {
+            var docId = document.getElementById("edit-stk-id-doc").value;
+            var localId = parseInt(document.getElementById("edit-stk-id-local").value);
+            var nombre = document.getElementById("edit-stk-nombre").value;
+            var talle = document.getElementById("edit-stk-talle").value;
+            var cant = parseInt(document.getElementById("edit-stk-cant").value) || 0;
+            var min = parseInt(document.getElementById("edit-stk-min").value) || 0;
+
+            if (!nombre) {
+                showToast("Falta Nombre", "Por favor ingresá el nombre del insumo.");
+                return;
+            }
+
+            var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min };
+
+            if (hasFirebase && authUser && docId) {
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('stock').doc(docId).update(updatedData);
+                } catch(e) { console.error("Error editando stock", e); }
+            } else {
+                var idx = appState.stock.findIndex(function(x) { return x.id === localId; });
+                if (idx !== -1) {
+                    appState.stock[idx] = { ...appState.stock[idx], ...updatedData };
+                    saveToLocalStorage();
+                    renderAll();
+                    updateCharts();
+                }
+            }
+            closeModal('modalEditStock');
+            showToast("Stock Actualizado", `Insumo guardado correctamente.`);
+        }
+
+        function abrirEditarFinanzas(docId, localId) {
+            var f = appState.finanzas.find(function(x) { return x.id === localId; });
+            if (!f) return;
+            document.getElementById("edit-fin-id-doc").value = docId;
+            document.getElementById("edit-fin-id-local").value = localId;
+            document.getElementById("edit-fin-tipo").value = f.tipo;
+            document.getElementById("edit-fin-monto").value = f.monto;
+            document.getElementById("edit-fin-metodopago").value = f.medioPago;
+            document.getElementById("edit-fin-detalle").value = f.detalle;
+            openModal('modalEditFinanzas');
+        }
+
+        async function guardarEdicionFinanzas() {
+            var docId = document.getElementById("edit-fin-id-doc").value;
+            var localId = parseInt(document.getElementById("edit-fin-id-local").value);
+            var tipo = document.getElementById("edit-fin-tipo").value;
+            var monto = parseInt(document.getElementById("edit-fin-monto").value) || 0;
+            var mediopago = document.getElementById("edit-fin-metodopago").value;
+            var detalle = document.getElementById("edit-fin-detalle").value;
+
+            if (!detalle || monto <= 0) {
+                showToast("Entrada Inválida", "Completá concepto y monto mayor a $0.");
+                return;
+            }
+
+            var updatedData = { tipo: tipo, monto: monto, detalle: detalle, medioPago: mediopago };
+
+            if (hasFirebase && authUser && docId) {
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('finanzas').doc(docId).update(updatedData);
+                } catch(e) { console.error("Error editando finanzas", e); }
+            } else {
+                var idx = appState.finanzas.findIndex(function(x) { return x.id === localId; });
+                if (idx !== -1) {
+                    appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData };
+                    saveToLocalStorage();
+                    renderAll();
+                    updateCharts();
+                }
+            }
+            closeModal('modalEditFinanzas');
+            showToast("Caja Actualizada", `Movimiento guardado correctamente.`);
+        }
+
         async function eliminarCliente(docId, localId) {
             var success = false;
             if (hasFirebase && authUser && docId) {
@@ -1695,7 +1902,12 @@
 
             document.getElementById("comp-trabajo-detalle").innerText = "Servicio de Serigrafía y Estampado Textil: " + pedido.detalle;
             document.getElementById("comp-trabajo-monto").innerText = "$" + pedido.monto.toLocaleString('es-AR');
-            document.getElementById("comp-monto-total").innerText = "Total Cobrado: $" + pedido.monto.toLocaleString('es-AR');
+            
+            var textoTotal = "Total Cobrado: $" + pedido.monto.toLocaleString('es-AR');
+            if (pedido.sena !== undefined && pedido.sena < pedido.monto) {
+                textoTotal = `Seña Abonada: $${pedido.sena.toLocaleString('es-AR')} | Saldo Pendiente: $${pedido.saldo.toLocaleString('es-AR')}`;
+            }
+            document.getElementById("comp-monto-total").innerText = textoTotal;
 
             openModal('modalComprobante');
         }
@@ -1788,12 +2000,15 @@
                     appendConsoleLine("DISPARADOR AUTOMÁTICO COMPILANDO REGISTRO...", "success");
                     
                     var nuevoId = appState.pedidos.length > 0 ? Math.max(...appState.pedidos.map(p => p.id)) + 1 : 1000;
+                    var senaAsistente = Math.round(calculatedCost * 0.5);
                     var nuevoPed = {
                         id: nuevoId,
                         cliente: clientePredeterminado,
                         detalle: parsedDetail,
                         estado: "Confirmado",
                         monto: calculatedCost,
+                        sena: senaAsistente,
+                        saldo: calculatedCost - senaAsistente,
                         fecha: "15/05/2026",
                         tipoEntrega: "Retiro en local",
                         horaEntrega: "18:00 hs",
@@ -1806,7 +2021,7 @@
                             id: appState.finanzas.length + 1,
                             tipo: "Ingreso",
                             detalle: `Seña Transaccional Pedido #${nuevoId}`,
-                            monto: Math.round(calculatedCost * 0.5),
+                            monto: senaAsistente,
                             fecha: "15/05/2026",
                             medioPago: "Mercado Pago"
                         });
@@ -1816,7 +2031,7 @@
                             id: appState.finanzas.length + 1,
                             tipo: "Ingreso",
                             detalle: `Seña Transaccional Pedido #${nuevoId}`,
-                            monto: Math.round(calculatedCost * 0.5),
+                            monto: senaAsistente,
                             fecha: "15/05/2026",
                             medioPago: "Mercado Pago"
                         });
@@ -2069,6 +2284,10 @@
         window.guardarNuevoCliente = guardarNuevoCliente;
         window.guardarFinanzas = guardarFinanzas;
         window.guardarStock = guardarStock;
+        window.abrirEditarStock = abrirEditarStock;
+        window.guardarEdicionStock = guardarEdicionStock;
+        window.abrirEditarFinanzas = abrirEditarFinanzas;
+        window.guardarEdicionFinanzas = guardarEdicionFinanzas;
         window.eliminarCliente = eliminarCliente;
         window.generarComprobante = generarComprobante;
         window.handleChatKeyPress = handleChatKeyPress;

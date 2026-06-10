@@ -194,6 +194,22 @@
         .btn-danger:hover { background-color: #dc2626; }
         .btn-small { padding: 8px 14px; font-size: 12px; border-radius: 8px; }
 
+        /* Estilos del Tablero Kanban */
+        .kanban-board { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; align-items: stretch; min-height: 500px;}
+        .kanban-column { background-color: rgba(255,255,255,0.02); border-radius: 14px; min-width: 280px; flex: 1; display: flex; flex-direction: column; border: 1px dashed var(--border-color); transition: background-color 0.2s; }
+        .kanban-column.drag-over { background-color: rgba(0, 242, 255, 0.05); border-color: var(--color-accent); }
+        .kanban-header { padding: 16px; border-bottom: 1px solid var(--border-color); font-weight: 700; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .kanban-cards { padding: 12px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; }
+        .kanban-card { background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; cursor: grab; display: flex; flex-direction: column; gap: 8px; transition: transform 0.2s, box-shadow 0.2s; }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-color: #3b82f6; }
+        .kanban-card:active { cursor: grabbing; opacity: 0.8; }
+        .k-card-title { font-weight: 700; color: var(--color-text-primary); font-size: 14px; display: flex; justify-content: space-between;}
+        .k-card-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
+        .k-card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+
+        /* Curva de talles grid */
+        .talles-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+
         /* Canvas para Gráficos */
         .chart-container { position: relative; width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; }
 
@@ -327,6 +343,9 @@
             .modal-box .btn { width: 100%; justify-content: center; }
             .form-row { grid-template-columns: 1fr; gap: 12px; }
             
+            /* Ajustes curva de talles móvil */
+            .talles-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
             .voucher-box { padding: 16px; gap: 14px; }
             .voucher-details { grid-template-columns: 1fr; gap: 12px; }
             
@@ -356,6 +375,7 @@
             
             <ul class="menu-list">
                 <li><a class="menu-item active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+                <li><a class="menu-item" onclick="switchTab('kanban')"><i class="fa-solid fa-table-columns"></i> Tablero Producción</a></li>
                 <li><a class="menu-item" onclick="switchTab('pedidos')"><i class="fa-solid fa-box-open"></i> Pedidos</a></li>
                 <li><a class="menu-item" onclick="switchTab('clientes')"><i class="fa-solid fa-users"></i> Clientes</a></li>
                 <li><a class="menu-item" onclick="switchTab('stock')"><i class="fa-solid fa-layer-group"></i> Stock</a></li>
@@ -492,6 +512,43 @@
                 </div>
             </div>
 
+            <!-- VISTA ACTIVA DINÁMICA: KANBAN DE PRODUCCIÓN -->
+            <div id="section-kanban" class="view-section">
+                <div class="panel-block" style="background-color: transparent; border: none; padding: 0;">
+                    <div class="kanban-board">
+                        
+                        <div class="kanban-column" ondrop="drop(event, 'En diseño')" ondragover="allowDrop(event)">
+                            <div class="kanban-header">En Diseño <span class="badge badge-diseno" id="kb-count-diseno">0</span></div>
+                            <div class="kanban-cards" id="kanban-diseno">
+                                <!-- Cards Inyectadas JS -->
+                            </div>
+                        </div>
+
+                        <div class="kanban-column" ondrop="drop(event, 'Producción')" ondragover="allowDrop(event)">
+                            <div class="kanban-header">Producción <span class="badge badge-produccion" id="kb-count-produccion">0</span></div>
+                            <div class="kanban-cards" id="kanban-produccion">
+                                <!-- Cards Inyectadas JS -->
+                            </div>
+                        </div>
+
+                        <div class="kanban-column" ondrop="drop(event, 'Estampado')" ondragover="allowDrop(event)">
+                            <div class="kanban-header">Estampado <span class="badge badge-estampado" id="kb-count-estampado">0</span></div>
+                            <div class="kanban-cards" id="kanban-estampado">
+                                <!-- Cards Inyectadas JS -->
+                            </div>
+                        </div>
+
+                        <div class="kanban-column" ondrop="drop(event, 'Listo')" ondragover="allowDrop(event)">
+                            <div class="kanban-header">Listo para Entregar <span class="badge badge-listo" id="kb-count-listo">0</span></div>
+                            <div class="kanban-cards" id="kanban-listo">
+                                <!-- Cards Inyectadas JS -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
             <!-- VISTA ACTIVA DINÁMICA: PEDIDOS -->
             <div id="section-pedidos" class="view-section">
                 <div class="panel-block">
@@ -505,7 +562,7 @@
                                     <th>#</th>
                                     <th>Fecha</th>
                                     <th>Cliente</th>
-                                    <th>Detalle</th>
+                                    <th>Detalle / Talles</th>
                                     <th>Estado</th>
                                     <th>Monto</th>
                                     <th>Acción</th>
@@ -674,16 +731,37 @@
                 <h3>Crear Nuevo Pedido para VESA</h3>
                 <button class="modal-close" onclick="closeModal('modalPedido')">&times;</button>
             </div>
-            <div class="form-group">
-                <label>Cliente</label>
-                <select class="form-control" id="form-ped-cliente">
-                    <!-- Llenado dinámicamente -->
-                </select>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <select class="form-control" id="form-ped-cliente">
+                        <!-- Llenado dinámicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Link del Diseño / Arte (Opcional)</label>
+                    <input type="url" class="form-control" id="form-ped-arte" placeholder="Google Drive, WeTransfer, etc.">
+                </div>
             </div>
+
             <div class="form-group">
-                <label>Detalle del Pedido / Prendas</label>
-                <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: 15 remeras oversize custom L">
+                <label>Artículo / Prenda Base</label>
+                <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: Remeras oversize algodón negro">
             </div>
+
+            <div class="form-group">
+                <label>Curva de Talles a Estampar</label>
+                <div class="talles-grid">
+                    <input type="number" class="form-control" id="form-ped-talle-xs" placeholder="XS" min="0">
+                    <input type="number" class="form-control" id="form-ped-talle-s" placeholder="S" min="0">
+                    <input type="number" class="form-control" id="form-ped-talle-m" placeholder="M" min="0">
+                    <input type="number" class="form-control" id="form-ped-talle-l" placeholder="L" min="0">
+                    <input type="number" class="form-control" id="form-ped-talle-xl" placeholder="XL" min="0">
+                    <input type="number" class="form-control" id="form-ped-talle-xxl" placeholder="XXL" min="0">
+                </div>
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label>Monto Total ($)</label>
@@ -694,16 +772,17 @@
                     <input type="number" class="form-control" id="form-ped-sena" placeholder="Vacío = Paga el 100%">
                 </div>
             </div>
+            
             <div class="form-row">
                 <div class="form-group">
                     <label>Estado Inicial</label>
                     <select class="form-control" id="form-ped-estado">
                         <option value="Presupuesto">Presupuesto</option>
-                        <option value="Confirmado" selected>Confirmado</option>
+                        <option value="Confirmado" selected>Confirmado (Pasa a Diseño)</option>
                         <option value="En diseño">En diseño</option>
                         <option value="Producción">Producción</option>
                         <option value="Estampado">Estampado</option>
-                        <option value="Listo">Listo</option>
+                        <option value="Listo">Listo para Entrega</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -729,7 +808,7 @@
                     <input type="text" class="form-control" id="form-ped-hora" placeholder="Ej: 16:30 hs">
                 </div>
             </div>
-            <button class="btn btn-primary" onclick="guardarNuevoPedido()">Confirmar Pedido</button>
+            <button class="btn btn-primary" onclick="guardarNuevoPedido()">Generar y Confirmar Pedido</button>
         </div>
     </div>
 
@@ -994,8 +1073,11 @@
     <div class="modal-overlay" id="modalWelcomeAlert">
         <div class="modal-box" style="border-top: 4px solid var(--color-accent);">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-bell" style="color: var(--color-accent); margin-right: 8px;"></i> Resumen Operativo Diario</h3>
-                <button class="modal-close" onclick="closeModal('modalWelcomeAlert')">&times;</button>
+                <h3 style="display: flex; align-items: center;">
+                    <i class="fa-solid fa-bell" style="color: var(--color-accent); margin-right: 8px;"></i> Resumen Operativo 
+                    <button onclick="playVoiceReport(window.lastReportText)" style="background:none; border:none; color:var(--color-accent); margin-left:10px; cursor:pointer;" title="Escuchar reporte en voz alta"><i class="fa-solid fa-volume-high"></i></button>
+                </h3>
+                <button class="modal-close" onclick="closeModal('modalWelcomeAlert'); if(window.speechSynthesis) window.speechSynthesis.cancel();">&times;</button>
             </div>
             <p style="font-size: 14px; color: var(--color-text-primary); line-height: 1.5; margin-bottom: 10px;">
                 ¡Buen día, Santiago! Este es el estado operativo de tu taller para el día de hoy:
@@ -1005,7 +1087,7 @@
                 <!-- Se inyecta dinámicamente con JS -->
             </div>
 
-            <button class="btn btn-primary" onclick="closeModal('modalWelcomeAlert')" style="margin-top: 10px; width: 100%; justify-content: center;">Comenzar a trabajar</button>
+            <button class="btn btn-primary" onclick="closeModal('modalWelcomeAlert'); if(window.speechSynthesis) window.speechSynthesis.cancel();" style="margin-top: 10px; width: 100%; justify-content: center;">Comenzar a trabajar</button>
         </div>
     </div>
 
@@ -1044,6 +1126,14 @@
         var chart1 = null;
         var chart2 = null;
         var welcomeShown = sessionStorage.getItem("vesa_welcome_shown");
+        var lastReportText = "";
+
+        // Inicialización de Voces para TTS
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = function() {
+                window.speechSynthesis.getVoices();
+            };
+        }
 
         // Disparador del arranque de ApexCore al cargar el DOM del Navegador
         document.addEventListener('DOMContentLoaded', function() {
@@ -1075,13 +1165,9 @@
                 }
             }
 
-            // Rellenar los campos del modal de config con lo que ya exista guardado
             prefillFirebaseConfigFields();
-
-            // Arrancar el motor de la base de datos
             initApexCore();
 
-            // Ejecutar el Resumen Diario Inteligente (con retraso para asegurar carga de datos)
             setTimeout(function() {
                 showWelcomeSummary();
             }, 2000);
@@ -1094,7 +1180,6 @@
 
             if (firebaseConfig) {
                 try {
-                    // Inicializar Firebase Compat en la Nube VESA
                     firebase.initializeApp(firebaseConfig);
                     auth = firebase.auth();
                     db = firebase.firestore();
@@ -1108,7 +1193,6 @@
                         }
                     });
 
-                    // AUTENTICACIÓN ASÍNCRONA PRIMERO (Regla 3)
                     var token = null;
                     try {
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -1124,7 +1208,6 @@
                         authUser = authResult.user;
                     }
 
-                    // Proteger operaciones Firebase con el guard de autenticación exitosa (Regla 3)
                     if (authUser) {
                         hasFirebase = true;
                         statusBadge.className = "db-status online";
@@ -1180,7 +1263,6 @@
 
         // 3. Enlazar colecciones de Firebase en tiempo real
         function bindFirebaseCollections() {
-            // Rutas estrictas: /artifacts/{appId}/public/data/{collectionName}
             var pathPedidos = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pedidos');
             var pathClientes = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('clientes');
             var pathStock = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('stock');
@@ -1218,17 +1300,25 @@
             }, function(error) { console.error("Error en Snapshot Finanzas: ", error); });
         }
 
-        // Abstracciones de base de datos seguras para simplificar lecturas/escrituras (Regla 3)
+        // Abstracciones de base de datos seguras
         async function dbAdd(collectionName, data) {
             if (hasFirebase && authUser) {
                 try {
                     var path = db.collection('artifacts').doc(appId).collection('public').doc('data').collection(collectionName);
                     await path.add(data);
                     return true;
-                } catch (e) {
-                    console.error("Error escribiendo en Firestore", e);
-                    return false;
-                }
+                } catch (e) { console.error("Error escribiendo en Firestore", e); return false; }
+            }
+            return false;
+        }
+
+        async function dbUpdate(collectionName, docId, data) {
+            if (hasFirebase && authUser && docId) {
+                try {
+                    var docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection(collectionName).doc(docId);
+                    await docRef.update(data);
+                    return true;
+                } catch (e) { console.error("Error actualizando Firestore", e); return false; }
             }
             return false;
         }
@@ -1239,10 +1329,7 @@
                     var docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection(collectionName).doc(docId);
                     await docRef.delete();
                     return true;
-                } catch (e) {
-                    console.error("Error eliminando de Firestore", e);
-                    return false;
-                }
+                } catch (e) { console.error("Error eliminando de Firestore", e); return false; }
             }
             return false;
         }
@@ -1258,6 +1345,7 @@
             renderStockTable();
             renderFinanzasTable();
             renderEntregasTable();
+            renderKanbanBoard();
             populateClientDropdown();
         }
 
@@ -1268,15 +1356,12 @@
             var produccion = appState.pedidos.filter(function(p) { return p.estado === "Producción" || p.estado === "En producción"; }).length;
             document.getElementById("val-produccion-sub").innerText = produccion + " en producción";
 
-            // Ventas mes actual
             var ventasTotal = appState.pedidos.reduce(function(acc, p) { return acc + p.monto; }, 0);
             document.getElementById("val-ventas").innerText = "$" + ventasTotal.toLocaleString('es-AR');
 
-            // Ganancias mes actual (estimación 40%)
             var ganancia = Math.round(ventasTotal * 0.4);
             document.getElementById("val-ganancias").innerText = "$" + ganancia.toLocaleString('es-AR');
 
-            // --- CÁLCULO DE CRECIMIENTO MATEMÁTICO REAL ---
             var ventasTrendEl = document.getElementById("val-ventas-trend");
             var gananciasTrendEl = document.getElementById("val-ganancias-trend");
 
@@ -1380,11 +1465,13 @@
             ultimos.forEach(function(p) {
                 var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
                 var saldoInfo = (p.saldo !== undefined && p.saldo > 0) ? ` <small style="color:var(--color-warning);">(-$${p.saldo.toLocaleString('es-AR')})</small>` : '';
+                var arteEnlace = (p.arte) ? ` <a href="${p.arte}" target="_blank" style="color:var(--color-accent); font-size:11px; text-decoration:none; margin-left: 5px;" title="Ver Arte"><i class="fa-solid fa-link"></i></a>` : '';
+                
                 tbody.innerHTML += `
                     <tr>
                         <td>#${p.id}</td>
                         <td style="font-weight:700;">${p.cliente}</td>
-                        <td style="color: var(--color-text-secondary);">${p.detalle}${saldoInfo}</td>
+                        <td style="color: var(--color-text-secondary);">${p.detalle}${saldoInfo}${arteEnlace}</td>
                         <td><span class="badge ${badgeClass}">${p.estado}</span></td>
                         <td><button class="btn btn-primary btn-small" onclick="generarComprobante(${p.id})"><i class="fa-solid fa-file-pdf"></i> PDF</button></td>
                     </tr>
@@ -1442,12 +1529,14 @@
             appState.pedidos.forEach(function(p) {
                 var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
                 var saldoInfo = (p.saldo !== undefined && p.saldo > 0) ? `<br><small style="color:var(--color-warning); font-size:10px;">Resta: $${p.saldo.toLocaleString('es-AR')}</small>` : '';
+                var arteEnlace = (p.arte) ? `<br><a href="${p.arte}" target="_blank" style="color:var(--color-accent); font-size:11px; text-decoration:none;"><i class="fa-solid fa-palette"></i> Ver Arte Adjunto</a>` : '';
+
                 tbody.innerHTML += `
                     <tr>
                         <td>#${p.id}</td>
                         <td>${p.fecha}</td>
                         <td style="font-weight:700;">${p.cliente}</td>
-                        <td style="color: var(--color-text-secondary);">${p.detalle}</td>
+                        <td style="color: var(--color-text-secondary);">${p.detalle}${arteEnlace}</td>
                         <td><span class="badge ${badgeClass}">${p.estado}</span></td>
                         <td style="font-weight:700; color: var(--color-accent);">$${p.monto.toLocaleString('es-AR')} ${saldoInfo}</td>
                         <td><button class="btn btn-primary btn-small" onclick="generarComprobante(${p.id})"><i class="fa-solid fa-file-pdf"></i> Comprobante</button></td>
@@ -1584,6 +1673,115 @@
             });
         }
 
+        function renderKanbanBoard() {
+            var cols = {
+                "En diseño": document.getElementById("kanban-diseno"),
+                "Confirmado": document.getElementById("kanban-diseno"), // Confirmado mapea a "En diseño" en el tablero
+                "Producción": document.getElementById("kanban-produccion"),
+                "Estampado": document.getElementById("kanban-estampado"),
+                "Listo": document.getElementById("kanban-listo")
+            };
+
+            var counts = { "En diseño": 0, "Producción": 0, "Estampado": 0, "Listo": 0 };
+
+            // Limpiar columnas
+            if(cols["En diseño"]) cols["En diseño"].innerHTML = '';
+            if(cols["Producción"]) cols["Producción"].innerHTML = '';
+            if(cols["Estampado"]) cols["Estampado"].innerHTML = '';
+            if(cols["Listo"]) cols["Listo"].innerHTML = '';
+
+            appState.pedidos.forEach(function(p) {
+                var colStatus = p.estado === "Confirmado" ? "En diseño" : p.estado;
+                var col = cols[colStatus];
+                
+                if (!col) return; // Ignoramos "Presupuesto" y "Entregado" del Kanban
+
+                counts[colStatus]++;
+
+                var card = document.createElement('div');
+                card.className = 'kanban-card';
+                card.draggable = true;
+                card.id = 'kcard-' + p.id;
+                
+                card.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', p.id);
+                });
+
+                var arteHtml = p.arte ? `<a href="${p.arte}" target="_blank" style="color:var(--color-accent); text-decoration: none; font-size: 11px;"><i class="fa-solid fa-palette"></i> Ver Arte</a>` : '<span></span>';
+
+                card.innerHTML = `
+                    <div class="k-card-title"><span>#${p.id}</span> <span>${p.cliente}</span></div>
+                    <div class="k-card-desc">${p.detalle}</div>
+                    <div class="k-card-meta">
+                        ${arteHtml}
+                        <span style="font-weight: 700; color: #fff; font-size: 12px;">$${p.monto.toLocaleString('es-AR')}</span>
+                    </div>
+                `;
+                col.appendChild(card);
+            });
+
+            // Actualizar contadores
+            if (document.getElementById("kb-count-diseno")) document.getElementById("kb-count-diseno").innerText = counts["En diseño"];
+            if (document.getElementById("kb-count-produccion")) document.getElementById("kb-count-produccion").innerText = counts["Producción"];
+            if (document.getElementById("kb-count-estampado")) document.getElementById("kb-count-estampado").innerText = counts["Estampado"];
+            if (document.getElementById("kb-count-listo")) document.getElementById("kb-count-listo").innerText = counts["Listo"];
+        }
+
+        // Lógica Drag and Drop para Kanban
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add("drag-over");
+        }
+
+        function drop(ev, nuevoEstado) {
+            ev.preventDefault();
+            
+            // Remover clase de highlight visual en todas las columnas
+            document.querySelectorAll('.kanban-column').forEach(function(col) {
+                col.classList.remove('drag-over');
+            });
+
+            var idStr = ev.dataTransfer.getData("text/plain");
+            if(!idStr) return;
+            
+            var id = parseInt(idStr);
+            cambiarEstadoPedido(id, nuevoEstado);
+        }
+
+        async function cambiarEstadoPedido(id, nuevoEstado) {
+            var pedido = appState.pedidos.find(function(p) { return p.id === id; });
+            if (!pedido) return;
+            if (pedido.estado === nuevoEstado) return;
+
+            var oldStatus = pedido.estado;
+
+            if (hasFirebase && authUser && pedido.docId) {
+                try {
+                    await dbUpdate('pedidos', pedido.docId, { estado: nuevoEstado });
+                    showToast("Estado Actualizado", `El pedido #${id} avanzó a ${nuevoEstado}.`);
+                } catch(e) { console.error("Error moviendo tarjeta", e); }
+            } else {
+                pedido.estado = nuevoEstado;
+                saveToLocalStorage();
+                renderAll();
+                updateCharts();
+                showToast("Estado Actualizado", `El pedido #${id} avanzó a ${nuevoEstado}.`);
+            }
+        }
+
+        // Fix de limpieza visual drag-leave
+        document.addEventListener('dragend', function(e) {
+             document.querySelectorAll('.kanban-column').forEach(function(col) {
+                col.classList.remove('drag-over');
+            });
+        });
+
+        document.addEventListener('dragleave', function(e) {
+            if(e.target.classList && e.target.classList.contains('kanban-column')) {
+                e.target.classList.remove('drag-over');
+            }
+        });
+
         function populateClientDropdown() {
             var select = document.getElementById("form-ped-cliente");
             if (!select) return;
@@ -1603,7 +1801,28 @@
         async function guardarNuevoPedido() {
             var clienteSelect = document.getElementById("form-ped-cliente");
             var cliente = clienteSelect.value;
-            var detalle = document.getElementById("form-ped-detalle").value;
+            
+            // Construcción del detalle inteligente (Curva de Talles)
+            var articulo = document.getElementById("form-ped-detalle").value.trim();
+            var xs = parseInt(document.getElementById("form-ped-talle-xs").value) || 0;
+            var s = parseInt(document.getElementById("form-ped-talle-s").value) || 0;
+            var m = parseInt(document.getElementById("form-ped-talle-m").value) || 0;
+            var l = parseInt(document.getElementById("form-ped-talle-l").value) || 0;
+            var xl = parseInt(document.getElementById("form-ped-talle-xl").value) || 0;
+            var xxl = parseInt(document.getElementById("form-ped-talle-xxl").value) || 0;
+
+            var tallesArray = [];
+            if(xs > 0) tallesArray.push(xs + " XS");
+            if(s > 0) tallesArray.push(s + " S");
+            if(m > 0) tallesArray.push(m + " M");
+            if(l > 0) tallesArray.push(l + " L");
+            if(xl > 0) tallesArray.push(xl + " XL");
+            if(xxl > 0) tallesArray.push(xxl + " XXL");
+
+            var stringTalles = tallesArray.length > 0 ? " (" + tallesArray.join(", ") + ")" : "";
+            var detalleDefinitivo = articulo + stringTalles;
+
+            var arteLink = document.getElementById("form-ped-arte").value.trim();
             var monto = parseInt(document.getElementById("form-ped-monto").value) || 0;
             var rawSena = parseInt(document.getElementById("form-ped-sena").value);
             var sena = isNaN(rawSena) ? monto : rawSena;
@@ -1617,8 +1836,8 @@
                 return;
             }
 
-            if (!detalle) {
-                showToast("Falta descripción", "Completá el detalle de las prendas.");
+            if (!articulo) {
+                showToast("Falta Artículo", "Indicá el nombre de la prenda base a estampar.");
                 return;
             }
 
@@ -1626,7 +1845,8 @@
             var nuevoPed = {
                 id: nuevoId,
                 cliente: cliente,
-                detalle: detalle,
+                detalle: detalleDefinitivo,
+                arte: arteLink,
                 estado: estado,
                 monto: monto,
                 sena: sena,
@@ -1666,6 +1886,15 @@
                 renderAll();
                 updateCharts();
             }
+
+            // Limpiar Modal Visual
+            document.getElementById("form-ped-talle-xs").value = "";
+            document.getElementById("form-ped-talle-s").value = "";
+            document.getElementById("form-ped-talle-m").value = "";
+            document.getElementById("form-ped-talle-l").value = "";
+            document.getElementById("form-ped-talle-xl").value = "";
+            document.getElementById("form-ped-talle-xxl").value = "";
+            document.getElementById("form-ped-arte").value = "";
 
             closeModal('modalPedido');
             showToast("Pedido Registrado", `Pedido #${nuevoId} cargado correctamente.`);
@@ -1985,7 +2214,8 @@
                         fecha: "15/05/2026",
                         tipoEntrega: "Retiro en local",
                         horaEntrega: "18:00 hs",
-                        medioPago: "Mercado Pago"
+                        medioPago: "Mercado Pago",
+                        arte: "" // El Asistente en V1 no lee adjuntos de URL directo
                     };
 
                     var success = await dbAdd('pedidos', nuevoPed);
@@ -2051,6 +2281,9 @@
             if (tabId === 'dashboard') {
                 welcomeText.innerText = "¡Hola, Santiago!";
                 subWelcomeText.innerText = "Panel de operaciones de VESA unificado en tiempo real.";
+            } else if (tabId === 'kanban') {
+                welcomeText.innerText = "Tablero de Producción";
+                subWelcomeText.innerText = "Arrastrá y soltá las tarjetas para hacer avanzar los pedidos en el taller.";
             } else if (tabId === 'asistente') {
                 welcomeText.innerText = "WhatsApp Inbox & Parser";
                 subWelcomeText.innerText = "Procesamiento y parseo de consultas en tiempo real por el Motor ApexTech.";
@@ -2133,6 +2366,26 @@
             }, 1500);
         }
 
+        // Motor de Voz (TTS - Text to Speech) de ApexTech
+        function playVoiceReport(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Detener audios previos si los hay
+                var msg = new SpeechSynthesisUtterance();
+                msg.text = text;
+                msg.lang = 'es-AR'; // Intenta usar voz de Argentina/Latinoamérica
+                msg.rate = 1.05; // Velocidad dinámica
+                msg.pitch = 1.0;
+                
+                var voices = window.speechSynthesis.getVoices();
+                var preferredVoice = voices.find(function(v) { return v.lang === 'es-AR' || v.lang === 'es-ES' || v.lang.includes('es'); });
+                if (preferredVoice) {
+                    msg.voice = preferredVoice;
+                }
+                
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
         // Resumen Operativo de Bienvenida (ApexCore Assistant)
         function showWelcomeSummary() {
             // Si ya se mostró en esta sesión, no molestamos al usuario de nuevo
@@ -2145,9 +2398,11 @@
             var container = document.getElementById("welcome-alerts-container");
             if (!container) return;
             container.innerHTML = "";
+            var voiceText = "";
 
             // Lógica inteligente: Si todo está perfecto, mostramos el mensaje reconfortante
             if (stockBajo.length === 0 && atrasados.length === 0 && entregasHoy.length === 0) {
+                voiceText = "Buen día, Santiago. ¡Todo al día! No tenés pedidos atrasados, entregas pendientes para hoy, ni faltantes de stock. Excelente trabajo, el taller está operando de manera impecable.";
                 container.innerHTML = `
                     <div class="alert-item success" style="border-left-color: var(--color-success); background-color: rgba(16, 185, 129, 0.05);">
                         <div class="alert-icon" style="color: var(--color-success); font-size: 20px;"><i class="fa-solid fa-champagne-glasses"></i></div>
@@ -2158,8 +2413,11 @@
                     </div>
                 `;
             } else {
+                voiceText = "Buen día, Santiago. Este es el estado operativo de tu taller para el día de hoy. ";
+
                 // Lógica de advertencias si hay algo pendiente
                 if (atrasados.length > 0) {
+                    voiceText += "Atención, tenés " + atrasados.length + " pedidos demorados que están estancados en diseño o pre-prensa. ";
                     container.innerHTML += `
                         <div class="alert-item danger">
                             <div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
@@ -2172,6 +2430,7 @@
                 }
 
                 if (entregasHoy.length > 0) {
+                    voiceText += "Además, hay " + entregasHoy.length + " entregas programadas para despachar hoy. ";
                     container.innerHTML += `
                         <div class="alert-item" style="border-left-color: var(--color-blue);">
                             <div class="alert-icon" style="color: var(--color-blue);"><i class="fa-solid fa-truck-fast"></i></div>
@@ -2184,6 +2443,7 @@
                 }
 
                 if (stockBajo.length > 0) {
+                    voiceText += "Por último, registramos " + stockBajo.length + " insumos en estado crítico que requieren reposición inmediata en el almacén. ";
                     container.innerHTML += `
                         <div class="alert-item warning">
                             <div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -2196,9 +2456,15 @@
                 }
             }
 
+            window.lastReportText = voiceText;
             openModal('modalWelcomeAlert');
             sessionStorage.setItem("vesa_welcome_shown", "true");
             welcomeShown = "true";
+
+            // Disparador de Auto-Reproducción (Fallback seguro)
+            setTimeout(function() {
+                playVoiceReport(window.lastReportText);
+            }, 800);
         }
 
         // 9. Inicialización e Actualización de Gráficos (Chart.js con soporte elegante de ceros)
@@ -2335,6 +2601,8 @@
         window.sendMessageToInbox = sendMessageToInbox;
         window.guardarConfigFirebaseCustom = guardarConfigFirebaseCustom;
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
+        window.allowDrop = allowDrop;
+        window.drop = drop;
     </script>
 </body>
 </html>

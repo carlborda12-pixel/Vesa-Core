@@ -255,12 +255,10 @@
         /* ==========================================
            RESPONSIVE MEDIA QUERIES (ADAPTACIÓN MÓVIL Y TABLET/IPAD)
            ========================================== */
-        /* Breakpoint Unificado para iPads, Tablets y laptops chicas < 1024px */
         @media (max-width: 1024px) {
             body { flex-direction: column; padding-top: 60px; }
             .mobile-navbar { display: flex; }
             
-            /* Sidebar transformado en cajón deslizable */
             .sidebar { 
                 position: fixed; 
                 top: 0; 
@@ -275,38 +273,29 @@
             .sidebar-close-btn { display: block; }
             .sidebar-overlay { z-index: 1005; }
 
-            .main-content { padding: 24px; gap: 24px; padding-bottom: 100px; /* Previene bloqueo por botón inferior flotante */ }
+            .main-content { padding: 24px; gap: 24px; padding-bottom: 100px; }
             .header-app { flex-direction: row; align-items: center; justify-content: space-between; }
             
-            /* Reorganización de magnitudes en 2 columnas para Tablets */
             .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
             .metric-card { padding: 18px; }
             
-            /* Stacking optimizado para vistas de Dashboard */
             .dashboard-row-1 { grid-template-columns: 1fr; gap: 20px; }
             .dashboard-row-2 { grid-template-columns: 1fr; gap: 20px; }
             
             .chat-layout { grid-template-columns: 1fr; height: auto; max-height: none; gap: 16px; }
             .integration-console { height: 250px; }
 
-            .bottom-actions { 
-                padding: 16px 24px; 
-                gap: 12px; 
-            }
+            .bottom-actions { padding: 16px 24px; gap: 12px; }
         }
 
-        /* Ajustes específicos para móviles pequeños < 560px */
         @media (max-width: 560px) {
             .main-content { padding: 16px; gap: 16px; padding-bottom: 110px; }
             .header-app { flex-direction: column; align-items: flex-start; gap: 10px; }
             .header-app div:last-child { align-self: flex-end; align-items: flex-end; }
             
-            /* Columnas apiladas individuales para pantallas angostas de teléfonos */
             .metrics-grid { grid-template-columns: 1fr; gap: 12px; }
-            
             .panel-block { padding: 16px; gap: 14px; }
             
-            /* Grilla exacta de tres columnas idénticas sin desborde para celulares */
             .bottom-actions { 
                 position: fixed; 
                 bottom: 0; 
@@ -331,20 +320,13 @@
                 text-align: center;
                 width: 100%;
             }
-            .bottom-actions .btn i {
-                font-size: 12px;
-            }
-
-            .btn-small {
-                padding: 4px 10px;
-                font-size: 11px;
-            }
+            .bottom-actions .btn i { font-size: 12px; }
+            .btn-small { padding: 4px 10px; font-size: 11px; }
 
             .modal-box { padding: 20px; border-radius: 16px; }
-            .modal-box .btn { width: 100%; justify-content: center; } /* Botones de formulario al 100% */
+            .modal-box .btn { width: 100%; justify-content: center; }
             .form-row { grid-template-columns: 1fr; gap: 12px; }
             
-            /* Adaptación del remito digital */
             .voucher-box { padding: 16px; gap: 14px; }
             .voucher-details { grid-template-columns: 1fr; gap: 12px; }
             
@@ -362,7 +344,7 @@
         </button>
     </div>
 
-    <!-- SIDEBAR DE NAVEGACIÓN (DRAWER MÓVIL Y TABLET) -->
+    <!-- SIDEBAR DE NAVEGACIÓN -->
     <div class="sidebar" id="app-sidebar">
         <button class="sidebar-close-btn" onclick="toggleSidebar(false)">
             <i class="fa-solid fa-xmark"></i>
@@ -724,8 +706,6 @@
                         <option value="Listo">Listo</option>
                     </select>
                 </div>
-            </div>
-            <div class="form-row">
                 <div class="form-group">
                     <label>Medio de Pago</label>
                     <select class="form-control" id="form-ped-metodopago">
@@ -735,6 +715,8 @@
                         <option value="Tarjeta">Tarjeta de Crédito</option>
                     </select>
                 </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label>Forma de Entrega</label>
                     <select class="form-control" id="form-ped-entrega">
@@ -742,10 +724,10 @@
                         <option value="Envío">Envío por correo</option>
                     </select>
                 </div>
-            </div>
-            <div class="form-group">
-                <label>Hora pautada</label>
-                <input type="text" class="form-control" id="form-ped-hora" placeholder="Ej: 16:30 hs">
+                <div class="form-group">
+                    <label>Hora pautada</label>
+                    <input type="text" class="form-control" id="form-ped-hora" placeholder="Ej: 16:30 hs">
+                </div>
             </div>
             <button class="btn btn-primary" onclick="guardarNuevoPedido()">Confirmar Pedido</button>
         </div>
@@ -1008,6 +990,25 @@
         </div>
     </div>
 
+    <!-- Modal 7: Resumen Operativo Diario (Bienvenida) -->
+    <div class="modal-overlay" id="modalWelcomeAlert">
+        <div class="modal-box" style="border-top: 4px solid var(--color-accent);">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-bell" style="color: var(--color-accent); margin-right: 8px;"></i> Resumen Operativo Diario</h3>
+                <button class="modal-close" onclick="closeModal('modalWelcomeAlert')">&times;</button>
+            </div>
+            <p style="font-size: 14px; color: var(--color-text-primary); line-height: 1.5; margin-bottom: 10px;">
+                ¡Buen día, Santiago! Este es el estado operativo de tu taller para el día de hoy:
+            </p>
+            
+            <div class="alerts-container" id="welcome-alerts-container">
+                <!-- Se inyecta dinámicamente con JS -->
+            </div>
+
+            <button class="btn btn-primary" onclick="closeModal('modalWelcomeAlert')" style="margin-top: 10px; width: 100%; justify-content: center;">Comenzar a trabajar</button>
+        </div>
+    </div>
+
     <!-- NOTIFICACIÓN EN TIEMPO REAL -->
     <div class="notification-toast" id="toast">
         <i class="fa-solid fa-circle-check" style="color: var(--color-accent); font-size: 20px;"></i>
@@ -1017,7 +1018,7 @@
         </div>
     </div>
 
-    <!-- LOGICA E INTEGRACIÓN CORE DE APEXTECH (SIN CRASHES POR HOISTING EN VARIABLES GLOBALES) -->
+    <!-- LOGICA E INTEGRACIÓN CORE DE APEXTECH -->
     <script>
         // Configuración y variables de estado del motor de datos de VESA
         var hasFirebase = false;
@@ -1042,6 +1043,7 @@
         var appState = { pedidos: [], clientes: [], stock: [], finanzas: [] };
         var chart1 = null;
         var chart2 = null;
+        var welcomeShown = sessionStorage.getItem("vesa_welcome_shown");
 
         // Disparador del arranque de ApexCore al cargar el DOM del Navegador
         document.addEventListener('DOMContentLoaded', function() {
@@ -1078,6 +1080,11 @@
 
             // Arrancar el motor de la base de datos
             initApexCore();
+
+            // Ejecutar el Resumen Diario Inteligente (con retraso para asegurar carga de datos)
+            setTimeout(function() {
+                showWelcomeSummary();
+            }, 2000);
         });
 
         // 1. Inicializar el Core de la aplicación (asíncrono y seguro)
@@ -1093,9 +1100,6 @@
                     db = firebase.firestore();
 
                     // --- ACTIVACIÓN DEL ESCUDO ANTI-CAÍDAS (Persistencia Offline de Firestore) ---
-                    // Esto le asegura a Santiago que puede registrar datos sin conexión.
-                    // Firestore almacena los cambios localmente en IndexedDB y los sincroniza
-                    // de forma autónoma con los servidores de Google apenas vuelve el Wi-Fi.
                     db.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
                         if (err.code == 'failed-precondition') {
                             console.warn("La persistencia offline falló: múltiple pestañas abiertas simultáneamente.");
@@ -1174,7 +1178,7 @@
             localStorage.setItem("vesa_finanzas_clean_v3", JSON.stringify(appState.finanzas));
         }
 
-        // 3. Enlazar colecciones de Firebase en tiempo real (Sigue estricto Regla 1 e integras callbacks seguros)
+        // 3. Enlazar colecciones de Firebase en tiempo real
         function bindFirebaseCollections() {
             // Rutas estrictas: /artifacts/{appId}/public/data/{collectionName}
             var pathPedidos = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pedidos');
@@ -1236,7 +1240,7 @@
                     await docRef.delete();
                     return true;
                 } catch (e) {
-                    console.error("Error elminando de Firestore", e);
+                    console.error("Error eliminando de Firestore", e);
                     return false;
                 }
             }
@@ -1375,7 +1379,7 @@
             var ultimos = appState.pedidos.slice(0, 4);
             ultimos.forEach(function(p) {
                 var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
-                var saldoInfo = (p.saldo > 0) ? ` <small style="color:var(--color-warning);">(-$${p.saldo.toLocaleString('es-AR')})</small>` : '';
+                var saldoInfo = (p.saldo !== undefined && p.saldo > 0) ? ` <small style="color:var(--color-warning);">(-$${p.saldo.toLocaleString('es-AR')})</small>` : '';
                 tbody.innerHTML += `
                     <tr>
                         <td>#${p.id}</td>
@@ -1437,7 +1441,7 @@
 
             appState.pedidos.forEach(function(p) {
                 var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
-                var saldoInfo = (p.saldo > 0) ? `<br><small style="color:var(--color-warning); font-size:10px;">Resta: $${p.saldo.toLocaleString('es-AR')}</small>` : '';
+                var saldoInfo = (p.saldo !== undefined && p.saldo > 0) ? `<br><small style="color:var(--color-warning); font-size:10px;">Resta: $${p.saldo.toLocaleString('es-AR')}</small>` : '';
                 tbody.innerHTML += `
                     <tr>
                         <td>#${p.id}</td>
@@ -1543,37 +1547,6 @@
                         <td style="${classMonto}">${f.tipo === 'Ingreso' ? '+' : '-'}$${f.monto.toLocaleString('es-AR')}</td>
                         <td><i class="fa-solid fa-wallet" style="color: var(--color-accent); margin-right: 6px;"></i> ${f.medioPago || "Mercado Pago"}</td>
                         <td><button class="btn btn-small" style="padding:6px 12px; background-color: rgba(255,255,255,0.05);" onclick="abrirEditarFinanzas('${f.docId || ''}', ${f.id})"><i class="fa-solid fa-pen"></i></button></td>
-                    </tr>
-                `;
-            });
-        }
-
-        function renderFinanzasTable() {
-            var tbody = document.getElementById("finanzas-tbody");
-            if (!tbody) return;
-            tbody.innerHTML = "";
-
-            if (appState.finanzas.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="empty-placeholder">
-                            <i class="fa-solid fa-money-bill-transfer"></i>
-                            No se registran movimientos de caja diariaria para este período.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            appState.finanzas.forEach(function(f) {
-                var classMonto = f.tipo === "Ingreso" ? "color: var(--color-success); font-weight:700;" : "color: var(--color-danger); font-weight:700;";
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${f.fecha}</td>
-                        <td><span class="badge" style="background-color:${f.tipo === 'Ingreso' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; color:${f.tipo === 'Ingreso' ? 'var(--color-success)' : 'var(--color-danger)'}">${f.tipo}</span></td>
-                        <td>${f.detalle}</td>
-                        <td style="${classMonto}">${f.tipo === 'Ingreso' ? '+' : '-'}$${f.monto.toLocaleString('es-AR')}</td>
-                        <td><i class="fa-solid fa-wallet" style="color: var(--color-accent); margin-right: 6px;"></i> ${f.medioPago || "Mercado Pago"}</td>
                     </tr>
                 `;
             });
@@ -1835,7 +1808,7 @@
             document.getElementById("edit-fin-id-local").value = localId;
             document.getElementById("edit-fin-tipo").value = f.tipo;
             document.getElementById("edit-fin-monto").value = f.monto;
-            document.getElementById("edit-fin-metodopago").value = f.medioPago;
+            document.getElementById("edit-fin-metodopago").value = f.medioPago || "Mercado Pago";
             document.getElementById("edit-fin-detalle").value = f.detalle;
             openModal('modalEditFinanzas');
         }
@@ -2158,6 +2131,74 @@
             setTimeout(function() {
                 window.location.reload();
             }, 1500);
+        }
+
+        // Resumen Operativo de Bienvenida (ApexCore Assistant)
+        function showWelcomeSummary() {
+            // Si ya se mostró en esta sesión, no molestamos al usuario de nuevo
+            if (welcomeShown) return;
+
+            var stockBajo = appState.stock.filter(function(s) { return s.cantidad <= s.minimo; });
+            var atrasados = appState.pedidos.filter(function(p) { return p.estado === "En diseño" || p.estado === "Confirmado"; });
+            var entregasHoy = appState.pedidos.filter(function(p) { return p.estado === "Listo" || p.estado === "Estampado"; });
+
+            var container = document.getElementById("welcome-alerts-container");
+            if (!container) return;
+            container.innerHTML = "";
+
+            // Lógica inteligente: Si todo está perfecto, mostramos el mensaje reconfortante
+            if (stockBajo.length === 0 && atrasados.length === 0 && entregasHoy.length === 0) {
+                container.innerHTML = `
+                    <div class="alert-item success" style="border-left-color: var(--color-success); background-color: rgba(16, 185, 129, 0.05);">
+                        <div class="alert-icon" style="color: var(--color-success); font-size: 20px;"><i class="fa-solid fa-champagne-glasses"></i></div>
+                        <div class="alert-text">
+                            <h4 style="font-size: 15px;">¡Todo al día!</h4>
+                            <p style="font-size: 13px;">No tenés pedidos atrasados, entregas pendientes para hoy ni faltantes de stock. Excelente trabajo, el taller está operando de manera impecable.</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Lógica de advertencias si hay algo pendiente
+                if (atrasados.length > 0) {
+                    container.innerHTML += `
+                        <div class="alert-item danger">
+                            <div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
+                            <div class="alert-text">
+                                <h4>${atrasados.length} Pedidos Demorados</h4>
+                                <p>Hay trabajos estancados en diseño o pre-prensa.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (entregasHoy.length > 0) {
+                    container.innerHTML += `
+                        <div class="alert-item" style="border-left-color: var(--color-blue);">
+                            <div class="alert-icon" style="color: var(--color-blue);"><i class="fa-solid fa-truck-fast"></i></div>
+                            <div class="alert-text">
+                                <h4>${entregasHoy.length} Entregas para Hoy</h4>
+                                <p>Trabajos listos o en estampado final para despachar.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (stockBajo.length > 0) {
+                    container.innerHTML += `
+                        <div class="alert-item warning">
+                            <div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="alert-text">
+                                <h4>${stockBajo.length} Insumos en Crítico</h4>
+                                <p>Requieren reposición inmediata de almacén.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            openModal('modalWelcomeAlert');
+            sessionStorage.setItem("vesa_welcome_shown", "true");
+            welcomeShown = "true";
         }
 
         // 9. Inicialización e Actualización de Gráficos (Chart.js con soporte elegante de ceros)

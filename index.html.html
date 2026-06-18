@@ -1018,8 +1018,8 @@
             try { var parsed = new URL(url); if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.href; } catch (e) {} return '';
         }
 
-        var firebaseConfig = null;
         var hasFirebase = false;
+        var firebaseConfig = null;
         var db = null, auth = null, authUser = null, appId = "vesa-core-os";
         var chart1 = null, chart2 = null;
         var welcomeShown = sessionStorage.getItem("vesa_welcome_shown");
@@ -1089,6 +1089,7 @@
             openModal('modalWelcomeAlert'); 
             sessionStorage.setItem("vesa_welcome_shown", "true"); welcomeShown = "true";
             
+            // Intenta reproducir si el navegador lo permite
             setTimeout(function() { playVoiceReport(window.lastReportText); }, 800);
         }
 
@@ -1140,6 +1141,7 @@
             setTimeout(function() { window.location.reload(); }, 1500);
         }
 
+        // ARRANQUE DIRECTO LIMPIO Y CONEXIÓN
         window.addEventListener('DOMContentLoaded', () => {
             initApexCore(); 
         });
@@ -1148,6 +1150,7 @@
             var statusBadge = document.getElementById("status-badge");
             var statusText = document.getElementById("status-text");
 
+            // Recuperar configuración personalizada de Firebase si existe en el dispositivo
             var customConfigStr = localStorage.getItem("vesa_custom_firebase_config");
             var customAppIdStr = localStorage.getItem("vesa_custom_app_id");
             
@@ -1188,15 +1191,16 @@
                         }
                     });
                 } catch (err) { 
-                    console.error("Firebase Error:", err);
+                    console.error("Error Firebase:", err);
                     setupLocalStorageFallback(); 
                 }
             } else {
                 setupLocalStorageFallback();
             }
             
-            setTimeout(showWelcomeSummary, 800);
             prefillFirebaseConfigFields();
+            // Mostrar modal de bienvenida despues de que carga (0.8 segundos de delay)
+            setTimeout(showWelcomeSummary, 800);
         }
 
         function bindFirebaseCollections() {

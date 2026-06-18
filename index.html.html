@@ -1709,27 +1709,4 @@
 
         function initCharts() {
             var ctx1 = document.getElementById('chartPedidos').getContext('2d');
-            chart1 = new Chart(ctx1, { type: 'doughnut', data: { labels: ['En diseño', 'Producción', 'Estampado', 'Listo', 'Entregado'], datasets: [{ data: [1, 1, 1, 1, 1], backgroundColor: ['#a855f7', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9'], borderWidth: 2, borderColor: '#131a2e' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } } } } } });
-            var ctx2 = document.getElementById('chartFinanzas').getContext('2d');
-            chart2 = new Chart(ctx2, { type: 'bar', data: { labels: ['Ingresos', 'Egresos', 'Inversiones'], datasets: [{ label: 'Pesos ($)', data: [100, 50, 10], backgroundColor: ['#10b981', '#ef4444', '#a855f7'], borderRadius: 8, borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, x: { grid: { display: false }, ticks: { color: '#94a3b8' } } }, plugins: { legend: { display: false } } } });
-        }
-
-        function updateCharts() {
-            if (!chart1 || !chart2) { initCharts(); return; }
-            var stateCounts = { Diseñando: 0, Produccion: 0, Estampado: 0, Listo: 0, Entregado: 0 };
-            appState.pedidos.forEach(function(p) { if (p.estado === "En diseño") stateCounts.Diseñando++; else if (p.estado === "En producción" || p.estado === "Producción") stateCounts.Produccion++; else if (p.estado === "Estampado") stateCounts.Estampado++; else if (p.estado === "Listo") stateCounts.Listo++; else stateCounts.Entregado++; });
-            chart1.data.datasets[0].data = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado]; chart1.update();
-            var ingresos = appState.finanzas.filter(function(f){return f.tipo === "Ingreso";}).reduce(function(acc, f){return acc + f.monto;}, 0); var egresos = appState.finanzas.filter(function(f){return f.tipo === "Egreso";}).reduce(function(acc, f){return acc + f.monto;}, 0); var inversiones = appState.finanzas.filter(function(f){return f.tipo === "Inversion";}).reduce(function(acc, f){return acc + f.monto;}, 0);
-            chart2.data.datasets[0].data = [ingresos, egresos, inversiones]; chart2.update();
-        }
-
-        function showToast(title, desc) { document.getElementById("toast-title").innerText = title; document.getElementById("toast-desc").innerText = desc; var t = document.getElementById("toast"); t.classList.add("active"); setTimeout(function() { t.classList.remove("active"); }, 3000); }
-
-        // EXPORTACIÓN A WINDOW
-        window.toggleSidebar = toggleSidebar; window.switchTab = switchTab; window.openModal = openModal; window.closeModal = closeModal; window.guardarNuevoPedido = guardarNuevoPedido; window.guardarNuevoCliente = guardarNuevoCliente; window.guardarFinanzas = guardarFinanzas; window.guardarStock = guardarStock; window.eliminarCliente = eliminarCliente; window.generarComprobante = generarComprobante; window.handleChatKeyPress = handleChatKeyPress; window.sendMessageToInbox = sendMessageToInbox; window.cobrarDeuda = cobrarDeuda; window.abrirAgregarFinanzasRapido = abrirAgregarFinanzasRapido; window.abrirEditarPedido = abrirEditarPedido; window.guardarEdicionPedido = guardarEdicionPedido; window.abrirEditarCliente = abrirEditarCliente; window.guardarEdicionCliente = guardarEdicionCliente; window.abrirEditarStock = abrirEditarStock; window.guardarEdicionStock = guardarEdicionStock; window.abrirEditarFinanzas = abrirEditarFinanzas; window.guardarEdicionFinanzas = guardarEdicionFinanzas; window.eliminarPedido = eliminarPedido; window.eliminarStock = eliminarStock; window.eliminarFinanzas = eliminarFinanzas; window.allowDrop = allowDrop; window.drop = drop;
-        window.playVoiceReport = playVoiceReport;
-        window.guardarConfigFirebaseCustom = guardarConfigFirebaseCustom;
-        window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
-    </script>
-</body>
-</html>
+            

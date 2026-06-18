@@ -997,7 +997,7 @@
 
     <!-- NOTIFICACIÓN EN TIEMPO REAL -->
     <div class="notification-toast" id="toast">
-        <i class="fa-solid fa-circle-check" style="color: var(--color-accent); font-size: 20px;"></i>
+        <i class="fa-solid fa-circle-check" style="color: var(--color-accent); font-size: 20px;" id="toast-icon"></i>
         <div>
             <h4 style="font-size: 14px; font-weight: 700;" id="toast-title">Operación Exitosa</h4>
             <p style="font-size: 12px; color: var(--color-text-secondary);" id="toast-desc">Los datos fueron grabados al sistema.</p>
@@ -1008,6 +1008,22 @@
     <script>
         const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById("current-date-display").innerText = new Date().toLocaleDateString('es-AR', dateOptions);
+
+        // =========================================================================
+        // 🔴🔴 CONFIGURACIÓN AUTOMÁTICA DE FIREBASE (LLENAR ESTOS DATOS) 🔴🔴
+        // Pegá aquí los datos que te dio Firebase. Al subir esto a GitHub/Vercel,
+        // CUALQUIER dispositivo se conectará a la nube al instante.
+        // =========================================================================
+        const MI_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDzfpvdhpjqRE4rmVqR-0PtdLqGPhIzDpA",
+            authDomain: "vesa-core-os.firebaseapp.com",
+            projectId: "vesa-core-os",
+            storageBucket: "vesa-core-os.appspot.com",
+            messagingSenderId: "771153299932",
+            appId: "1:771153299932:web:6c6a94cada1a08403b6719"
+        };
+        const MI_SALA_ID = "vesa-core-os"; // Nombre de tu sala de base de datos
+        // =========================================================================
 
         function sanitizeHTML(str) {
             if (!str) return '';
@@ -1089,7 +1105,6 @@
             openModal('modalWelcomeAlert'); 
             sessionStorage.setItem("vesa_welcome_shown", "true"); welcomeShown = "true";
             
-            // Intenta reproducir si el navegador lo permite
             setTimeout(function() { playVoiceReport(window.lastReportText); }, 800);
         }
 
@@ -1120,7 +1135,7 @@
             var appIdSdk = document.getElementById("form-fb-appid-sdk").value.trim();
             
             if (!customAppId || !apiKey || !authDomain || !projectId || !appIdSdk) { 
-                showToast("Faltan datos", "Por favor completa todos los campos para iniciar conexión."); 
+                showToast("Faltan datos", "Por favor completa todos los campos para iniciar conexión.", true); 
                 return; 
             }
             
@@ -1141,7 +1156,6 @@
             setTimeout(function() { window.location.reload(); }, 1500);
         }
 
-        // ARRANQUE DIRECTO LIMPIO Y CONEXIÓN
         window.addEventListener('DOMContentLoaded', () => {
             initApexCore(); 
         });
@@ -1150,22 +1164,26 @@
             var statusBadge = document.getElementById("status-badge");
             var statusText = document.getElementById("status-text");
 
-            // Recuperar configuración personalizada de Firebase si existe en el dispositivo
             var customConfigStr = localStorage.getItem("vesa_custom_firebase_config");
             var customAppIdStr = localStorage.getItem("vesa_custom_app_id");
             
-            if (customConfigStr) {
-                firebaseConfig = JSON.parse(customConfigStr);
-                hasFirebase = true;
-            } else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                firebaseConfig = JSON.parse(__firebase_config);
+            // 1. Prioridad máxima: Configuración automática fija en el código
+            if (MI_FIREBASE_CONFIG && MI_FIREBASE_CONFIG.apiKey !== "TU_API_KEY_AQUI") {
+                firebaseConfig = MI_FIREBASE_CONFIG;
+                appId = MI_SALA_ID;
                 hasFirebase = true;
             }
-
-            if (customAppIdStr) {
-                appId = customAppIdStr;
-            } else if (typeof __app_id !== 'undefined' && __app_id) {
-                appId = __app_id;
+            // 2. Prioridad media: Configuración manual pegada en la ventanita
+            else if (customConfigStr) {
+                firebaseConfig = JSON.parse(customConfigStr);
+                hasFirebase = true;
+                if (customAppIdStr) appId = customAppIdStr;
+            } 
+            // 3. Entorno de fallback genérico
+            else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = JSON.parse(__firebase_config);
+                hasFirebase = true;
+                if (typeof __app_id !== 'undefined' && __app_id) appId = __app_id;
             }
 
             if (hasFirebase && firebaseConfig) {
@@ -1186,12 +1204,13 @@
                         if (user) {
                             authUser = user;
                             statusBadge.className = "db-status online"; 
-                            statusText.innerText = "Nube VESA En Línea";
+                            statusText.innerText = "Nube: " + appId; // Muestra el canal para verificar
                             bindFirebaseCollections();
                         }
                     });
                 } catch (err) { 
                     console.error("Error Firebase:", err);
+                    showToast("Fallo en Firebase", err.message, true);
                     setupLocalStorageFallback(); 
                 }
             } else {
@@ -1199,27 +1218,35 @@
             }
             
             prefillFirebaseConfigFields();
-            // Mostrar modal de bienvenida despues de que carga (0.8 segundos de delay)
             setTimeout(showWelcomeSummary, 800);
+        }
+
+        // CONTROLADOR DE ERRORES DE LECTURA (REGLAS DE FIREBASE)
+        function syncErrorHandler(error) {
+            console.error("Error Sincronización Firestore:", error);
+            showToast("Error de Permisos", "Firestore rechazó la conexión. Revisá las Reglas de Seguridad.", true);
         }
 
         function bindFirebaseCollections() {
             db.collection('artifacts/' + appId + '/public/data/pedidos').onSnapshot(function(snapshot) {
                 var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
                 appState.pedidos = list.sort(function(a,b) { return b.id - a.id; }); renderAll(); updateCharts();
-            });
+            }, syncErrorHandler);
+            
             db.collection('artifacts/' + appId + '/public/data/clientes').onSnapshot(function(snapshot) {
                 var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
                 appState.clientes = list.sort(function(a,b) { return b.id - a.id; }); renderAll();
-            });
+            }, syncErrorHandler);
+            
             db.collection('artifacts/' + appId + '/public/data/stock').onSnapshot(function(snapshot) {
                 var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
                 appState.stock = list.sort(function(a,b) { return a.id - b.id; }); renderAll(); updateCharts();
-            });
+            }, syncErrorHandler);
+            
             db.collection('artifacts/' + appId + '/public/data/finanzas').onSnapshot(function(snapshot) {
                 var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
                 appState.finanzas = list.sort(function(a,b) { return b.id - a.id; }); renderAll(); updateCharts();
-            });
+            }, syncErrorHandler);
         }
 
         function setupLocalStorageFallback() {
@@ -1434,7 +1461,6 @@
                 });
                 if (tbodyMain.innerHTML === "") tbodyMain.innerHTML = `<tr><td colspan="6" class="empty-placeholder"><i class="fa-solid fa-money-bill-transfer"></i>No hay transacciones registradas</td></tr>`;
             } else if (tbodyI && tbodyE && tbodyD && tbodyInv) {
-                // Compatibilidad con 4 columnas
                 tbodyI.innerHTML = ""; tbodyE.innerHTML = ""; tbodyD.innerHTML = ""; tbodyInv.innerHTML = "";
                 appState.finanzas.forEach(function(f) {
                     var docIdSegura = f.docId ? `'${f.docId}'` : 'null';
@@ -1510,7 +1536,7 @@
 
         async function cambiarEstadoPedido(id, nuevoEstado) {
             var pedido = appState.pedidos.find(function(p) { return p.id === id; }); if (!pedido || pedido.estado === nuevoEstado) return;
-            if (hasFirebase && authUser && pedido.docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ estado: nuevoEstado }); } catch(e) {} } 
+            if (hasFirebase && authUser && pedido.docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ estado: nuevoEstado }); } catch(e) { showToast("Error Firebase", e.message, true); } } 
             else { pedido.estado = nuevoEstado; saveToLocalStorage(); renderAll(); updateCharts(); }
             showToast("Estado Actualizado", `El pedido #${id} avanzó a ${nuevoEstado}.`);
         }
@@ -1520,14 +1546,16 @@
             var cliente = document.getElementById("form-ped-cliente").value; var detalle = document.getElementById("form-ped-detalle").value.trim();
             var monto = parseInt(document.getElementById("form-ped-monto").value) || 0; var estado = document.getElementById("form-ped-estado").value;
             var mediopago = document.getElementById("form-ped-metodopago").value; var entrega = document.getElementById("form-ped-entrega").value; var hora = document.getElementById("form-ped-hora").value || "A coordinar";
-            if (!detalle) { showToast("Falta descripción", "Completá el detalle."); return; }
+            if (!detalle) { showToast("Falta descripción", "Completá el detalle.", true); return; }
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             var nuevoId = appState.pedidos.length > 0 ? Math.max(...appState.pedidos.map(p=>p.id)) + 1 : 1000;
             var nuevoPed = { id: nuevoId, cliente: cliente, detalle: detalle, estado: estado, monto: monto, fecha: hoy, tipoEntrega: entrega, horaEntrega: hora, medioPago: mediopago };
 
             if (hasFirebase && authUser) {
-                await db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed);
-                if (estado !== "Presupuesto") await db.collection('artifacts/' + appId + '/public/data/finanzas').add({ id: appState.finanzas.length + 1, tipo: "Ingreso", detalle: `Seña Pedido #${nuevoId}`, monto: monto, fecha: hoy, medioPago: mediopago });
+                try {
+                    await db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed);
+                    if (estado !== "Presupuesto") await db.collection('artifacts/' + appId + '/public/data/finanzas').add({ id: appState.finanzas.length + 1, tipo: "Ingreso", detalle: `Seña Pedido #${nuevoId}`, monto: monto, fecha: hoy, medioPago: mediopago });
+                } catch(e) { showToast("Error Firebase", e.message, true); return; }
             } else {
                 appState.pedidos.unshift(nuevoPed);
                 if (estado !== "Presupuesto") appState.finanzas.unshift({ id: appState.finanzas.length + 1, tipo: "Ingreso", detalle: `Seña Pedido #${nuevoId}`, monto: monto, fecha: hoy, medioPago: mediopago });
@@ -1547,14 +1575,14 @@
             var cliente = document.getElementById("edit-ped-cliente").value; var arteLink = sanitizeUrl(document.getElementById("edit-ped-arte").value.trim()); var detalle = document.getElementById("edit-ped-detalle").value.trim(); var monto = parseInt(document.getElementById("edit-ped-monto").value) || 0; var sena = parseInt(document.getElementById("edit-ped-sena").value) || 0; var estado = document.getElementById("edit-ped-estado").value; var mediopago = document.getElementById("edit-ped-metodopago").value; var entrega = document.getElementById("edit-ped-entrega").value; var hora = document.getElementById("edit-ped-hora").value || "A coordinar";
             var updatedData = { cliente: cliente, detalle: detalle, estado: estado, monto: monto, tipoEntrega: entrega, horaEntrega: hora, medioPago: mediopago };
 
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).update(updatedData); } catch(e) {} } 
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).update(updatedData); } catch(e) { showToast("Error Firebase", e.message, true); return; } } 
             else { var idx = appState.pedidos.findIndex(function(x) { return x.id === localId; }); if (idx !== -1) { appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; saveToLocalStorage(); renderAll(); updateCharts(); } }
             closeModal('modalEditPedido'); showToast("Pedido Actualizado", `Guardado correctamente.`);
         }
 
         async function eliminarPedido(docId, localId) {
             if (!confirm("¿Estás seguro de ELIMINAR este pedido permanentemente? No se puede deshacer.")) return;
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete(); } catch(e) {} } 
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete(); } catch(e) { showToast("Error Firebase", e.message, true); return; } } 
             else { appState.pedidos = appState.pedidos.filter(function(p) { return p.id !== localId; }); saveToLocalStorage(); renderAll(); updateCharts(); }
             showToast("Pedido Eliminado", "La orden fue borrada del sistema.");
         }
@@ -1562,11 +1590,11 @@
         // --- CRUD CLIENTES ---
         async function guardarNuevoCliente() {
             var nombre = document.getElementById("form-cli-nombre").value; var whatsapp = document.getElementById("form-cli-tel").value; var ig = document.getElementById("form-cli-ig").value;
-            if (!nombre || !whatsapp) { showToast("Faltan datos", "Nombre y WhatsApp obligatorios."); return; }
+            if (!nombre || !whatsapp) { showToast("Faltan datos", "Nombre y WhatsApp obligatorios.", true); return; }
             var nuevoId = appState.clientes.length > 0 ? Math.max(...appState.clientes.map(c=>c.id)) + 1 : 1;
             var nuevoCli = { id: nuevoId, nombre: nombre, whatsapp: whatsapp, instagram: ig || "-" };
 
-            if (hasFirebase && authUser) { await db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli); } 
+            if (hasFirebase && authUser) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli); } catch(e){ showToast("Error Firebase", e.message, true); return; } } 
             else { appState.clientes.push(nuevoCli); saveToLocalStorage(); renderAll(); }
             closeModal('modalCliente'); showToast("Cliente Registrado", `${nombre} agregado.`);
         }
@@ -1583,14 +1611,14 @@
             var nombre = document.getElementById("edit-cli-nombre").value.trim(); var whatsapp = document.getElementById("edit-cli-tel").value.trim(); var ig = document.getElementById("edit-cli-ig").value.trim();
             var updatedData = { nombre: nombre, whatsapp: whatsapp, instagram: ig || "-" };
 
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).update(updatedData); } catch(e) {} } 
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).update(updatedData); } catch(e) { showToast("Error Firebase", e.message, true); return; } } 
             else { var idx = appState.clientes.findIndex(function(x) { return x.id === localId; }); if (idx !== -1) { var viejoNombre = appState.clientes[idx].nombre; appState.clientes[idx] = { ...appState.clientes[idx], ...updatedData }; appState.pedidos.forEach(function(p, pIdx) { if (p.cliente === viejoNombre) { appState.pedidos[pIdx].cliente = nombre; } }); saveToLocalStorage(); renderAll(); } }
             closeModal('modalEditCliente'); showToast("Cliente Actualizado", `Guardado correctamente.`);
         }
 
         async function eliminarCliente(docId, localId) {
             if (!confirm("¿Estás seguro de ELIMINAR este cliente permanentemente?")) return;
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).delete(); } catch(e){} } 
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).delete(); } catch(e){ showToast("Error Firebase", e.message, true); return; } } 
             else { appState.clientes = appState.clientes.filter(function(c){return c.id !== localId;}); saveToLocalStorage(); renderAll(); }
             showToast("Cliente Removido", "La ficha fue eliminada.");
         }
@@ -1600,11 +1628,11 @@
         
         async function guardarFinanzas() {
             var tipo = document.getElementById("form-fin-tipo").value; var monto = parseInt(document.getElementById("form-fin-monto").value) || 0; var detalle = document.getElementById("form-fin-detalle").value; var mediopago = document.getElementById("form-fin-metodopago").value;
-            if (!detalle || monto <= 0) { showToast("Entrada Inválida", "Completá concepto y monto mayor a $0."); return; }
+            if (!detalle || monto <= 0) { showToast("Entrada Inválida", "Completá concepto y monto mayor a $0.", true); return; }
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, fecha: hoy, medioPago: mediopago };
 
-            if (hasFirebase && authUser) { await db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFin); } 
+            if (hasFirebase && authUser) { try{ await db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFin); } catch(e){ showToast("Error Firebase", e.message, true); return; } } 
             else { appState.finanzas.unshift(nuevaFin); saveToLocalStorage(); renderAll(); updateCharts(); }
             closeModal('modalFinanzas'); showToast("Caja Actualizada", `Movimiento registrado.`);
         }
@@ -1621,14 +1649,14 @@
             var tipo = document.getElementById("edit-fin-tipo").value; var monto = parseInt(document.getElementById("edit-fin-monto").value) || 0; var mediopago = document.getElementById("edit-fin-metodopago").value; var detalle = document.getElementById("edit-fin-detalle").value;
             var updatedData = { tipo: tipo, monto: monto, detalle: detalle, medioPago: mediopago };
 
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData); } catch(e) {} } 
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData); } catch(e) { showToast("Error Firebase", e.message, true); return; } } 
             else { var idx = appState.finanzas.findIndex(function(x) { return x.id === localId; }); if (idx !== -1) { appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData }; saveToLocalStorage(); renderAll(); updateCharts(); } }
             closeModal('modalEditFinanzas'); showToast("Caja Actualizada", `Movimiento guardado.`);
         }
 
         async function eliminarFinanzas(docId, localId) {
             if (!confirm("¿Estás seguro de ELIMINAR este movimiento de caja? Alterará tus gráficos financieros.")) return;
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).delete(); } catch(e){} } 
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).delete(); } catch(e){ showToast("Error Firebase", e.message, true); return; } } 
             else { appState.finanzas = appState.finanzas.filter(function(f){return f.id !== localId;}); saveToLocalStorage(); renderAll(); updateCharts(); }
             showToast("Movimiento Borrado", "El registro fue eliminado.");
         }
@@ -1637,7 +1665,7 @@
             var findItem = appState.finanzas.find(function(x) { return x.id === localId; }); if (!findItem) return;
             var updatedData = { tipo: "Ingreso", detalle: "Cobro Deuda: " + findItem.detalle };
 
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData); } catch(e) {} }
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData); } catch(e) { showToast("Error Firebase", e.message, true); return; } }
             else { var idx = appState.finanzas.findIndex(function(x) { return x.id === localId; }); if (idx !== -1) { appState.finanzas[idx].tipo = "Ingreso"; appState.finanzas[idx].detalle = "Cobro Deuda: " + appState.finanzas[idx].detalle; saveToLocalStorage(); renderAll(); updateCharts(); } }
             showToast("Deuda Cobrada", "La deuda se convirtió en Ingreso de Caja.");
         }
@@ -1645,10 +1673,10 @@
         // --- CRUD STOCK ---
         async function guardarStock() {
             var nombre = document.getElementById("form-stk-nombre").value; var talle = document.getElementById("form-stk-talle").value || "U"; var cant = parseInt(document.getElementById("form-stk-cant").value) || 0; var min = parseInt(document.getElementById("form-stk-min").value) || 2;
-            if (!nombre) { showToast("Falta Nombre", "Por favor ingresá el nombre del insumo."); return; }
+            if (!nombre) { showToast("Falta Nombre", "Por favor ingresá el nombre del insumo.", true); return; }
             var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
 
-            if (hasFirebase && authUser) { await db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo); } 
+            if (hasFirebase && authUser) { try{ await db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo); } catch(e){ showToast("Error Firebase", e.message, true); return; } } 
             else { appState.stock.push(nuevoInsumo); saveToLocalStorage(); renderAll(); }
             closeModal('modalStock'); showToast("Stock Añadido", `Artículo agregado.`);
         }
@@ -1665,14 +1693,14 @@
             var nombre = document.getElementById("edit-stk-nombre").value; var talle = document.getElementById("edit-stk-talle").value; var cant = parseInt(document.getElementById("edit-stk-cant").value) || 0; var min = parseInt(document.getElementById("edit-stk-min").value) || 0;
             var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min };
 
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).update(updatedData); } catch(e) {} } 
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).update(updatedData); } catch(e) { showToast("Error Firebase", e.message, true); return; } } 
             else { var idx = appState.stock.findIndex(function(x) { return x.id === localId; }); if (idx !== -1) { appState.stock[idx] = { ...appState.stock[idx], ...updatedData }; saveToLocalStorage(); renderAll(); } }
             closeModal('modalEditStock'); showToast("Stock Actualizado", `Insumo guardado correctamente.`);
         }
 
         async function eliminarStock(docId, localId) {
             if (!confirm("¿Estás seguro de ELIMINAR este insumo del depósito?")) return;
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).delete(); } catch(e){} } 
+            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).delete(); } catch(e){ showToast("Error Firebase", e.message, true); return; } } 
             else { appState.stock = appState.stock.filter(function(s){return s.id !== localId;}); saveToLocalStorage(); renderAll(); }
             showToast("Insumo Borrado", "El elemento se retiró del depósito.");
         }
@@ -1723,7 +1751,21 @@
             chart2.data.datasets[0].data = [ingresos, egresos, inversiones]; chart2.update();
         }
 
-        function showToast(title, desc) { document.getElementById("toast-title").innerText = title; document.getElementById("toast-desc").innerText = desc; var t = document.getElementById("toast"); t.classList.add("active"); setTimeout(function() { t.classList.remove("active"); }, 3000); }
+        function showToast(title, desc, isError = false) { 
+            document.getElementById("toast-title").innerText = title; 
+            document.getElementById("toast-desc").innerText = desc; 
+            var icon = document.getElementById("toast-icon");
+            if (isError) {
+                icon.className = "fa-solid fa-triangle-exclamation";
+                icon.style.color = "var(--color-danger)";
+            } else {
+                icon.className = "fa-solid fa-circle-check";
+                icon.style.color = "var(--color-accent)";
+            }
+            var t = document.getElementById("toast"); 
+            t.classList.add("active"); 
+            setTimeout(function() { t.classList.remove("active"); }, 4000); 
+        }
 
         // EXPORTACIÓN A WINDOW
         window.toggleSidebar = toggleSidebar; window.switchTab = switchTab; window.openModal = openModal; window.closeModal = closeModal; window.guardarNuevoPedido = guardarNuevoPedido; window.guardarNuevoCliente = guardarNuevoCliente; window.guardarFinanzas = guardarFinanzas; window.guardarStock = guardarStock; window.eliminarCliente = eliminarCliente; window.generarComprobante = generarComprobante; window.handleChatKeyPress = handleChatKeyPress; window.sendMessageToInbox = sendMessageToInbox; window.cobrarDeuda = cobrarDeuda; window.abrirAgregarFinanzasRapido = abrirAgregarFinanzasRapido; window.abrirEditarPedido = abrirEditarPedido; window.guardarEdicionPedido = guardarEdicionPedido; window.abrirEditarCliente = abrirEditarCliente; window.guardarEdicionCliente = guardarEdicionCliente; window.abrirEditarStock = abrirEditarStock; window.guardarEdicionStock = guardarEdicionStock; window.abrirEditarFinanzas = abrirEditarFinanzas; window.guardarEdicionFinanzas = guardarEdicionFinanzas; window.eliminarPedido = eliminarPedido; window.eliminarStock = eliminarStock; window.eliminarFinanzas = eliminarFinanzas; window.allowDrop = allowDrop; window.drop = drop;

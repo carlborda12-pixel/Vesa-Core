@@ -620,60 +620,6 @@
                     <div class="form-section-title" style="margin-top: 8px;">📦 Inventario (Auto-Detección)</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Insumo a descontar</label>
-                            <select class="form-control" id="form-ped-stock-item">
-                                <option value="">No descontar stock</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Cantidad</label>
-                            <input type="number" class="form-control" id="form-ped-stock-qty" placeholder="0" min="0">
-                        </div>
-                    </div>
-
-                    <div class="form-row" style="margin-top: 8px;">
-                        <div class="form-group">
-                            <label>Malla</label>
-                            <input type="text" class="form-control" id="form-ped-malla" placeholder="Ej: 43T o 62T">
-                        </div>
-                        <div class="form-group">
-                            <label>Tintas</label>
-                            <input type="text" class="form-control" id="form-ped-tintas" placeholder="Ej: Plastisol Blanco">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Referencia Visual</label>
-                        <input type="file" class="form-control" id="form-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;">
-                    </div>
-                </div>
-
-                <!-- Columna Derecha -->
-                <div class="modal-col">
-                    <div class="form-section-title" style="margin-top: 0;">Facturación y Logística</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Valor Total ($)</label>
-                            <input type="number" class="form-control" id="form-ped-monto" placeholder="Ej: 350000">
-                        </div>
-                        <div class="form-group">
-                            <label>Fase de Inicio</label>
-                            <select class="form-control" id="form-ped-estado">
-                                <option value="Presupuesto">Presupuesto Formal</option>
-                                <option value="Confirmado" selected>Confirmado (A Mesa)</option>
-                                <option value="En diseño">En diseño / Ajustes</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Pago</label>
-                            <select class="form-control" id="form-ped-metodopago">
-                                <option value="Mercado Pago" selected>Mercado Pago</option>
-                                <option value="Transferencia">Transferencia</option>
-                                <option value="Efectivo">Efectivo</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
                             <label>Entrega</label>
                             <select class="form-control" id="form-ped-entrega">
                                 <option value="Retiro en local">Pick-up Local</option>
@@ -692,7 +638,7 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="guardarNuevoPedido()" style="margin-top: 10px; justify-content: center;"><i class="fa-solid fa-bolt"></i> Generar OT y Descontar Stock</button>
+            <button class="btn btn-primary" onclick="guardarNuevoPedido()" style="margin-top: 10px; justify-content: center;"><i class="fa-solid fa-check"></i> Generar Orden</button>
         </div>
     </div>
 

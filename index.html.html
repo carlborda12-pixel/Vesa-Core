@@ -324,7 +324,6 @@
                     <li><a class="menu-item" onclick="switchTab('clientes')" title="Directorio de clientes y accesos directos de contacto"><i class="fa-solid fa-address-book"></i> Clientes</a></li>
                     <li><a class="menu-item" onclick="switchTab('stock')" title="Auditoría de insumos, materias primas y alertas de faltantes"><i class="fa-solid fa-boxes-stacked"></i> Stock</a></li>
                     <li><a class="menu-item" onclick="switchTab('finanzas')" title="Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
-                    <li><a class="menu-item" onclick="switchTab('asistente')" title="Consola de IA para automatización de ventas y soporte"><i class="fa-solid fa-robot"></i> Chat IA <span class="badge" style="background: rgba(0,242,255,0.1); color: var(--color-accent); border: 1px solid var(--color-accent); padding: 2px 6px; font-size: 8px;">NUEVO</span></a></li>
                 </ul>
             </div>
             
@@ -533,37 +532,6 @@
                                 <thead><tr><th>Fecha</th><th>Concepto</th><th>Movimiento</th><th>Canal</th><th style="text-align: right;">Monto</th><th style="text-align: right;">Acciones</th></tr></thead>
                                 <tbody id="finanzas-main-tbody"></tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- VISTA ASISTENTE IA (CHAT & CONSOLA) -->
-                <div id="section-asistente" class="view-section">
-                    <div class="panel-block">
-                        <div class="panel-header">
-                            <h3><i class="fa-solid fa-robot"></i> Chat Inteligente & WhatsApp</h3>
-                            <p style="font-size: 12px; color: var(--color-text-secondary);">Simulador de automatización de ventas. El asistente atiende clientes, verifica stock y emite órdenes.</p>
-                        </div>
-                        
-                        <div class="chat-layout">
-                            <div class="chat-box-area">
-                                <div class="chat-messages" id="inbox-chat-box">
-                                    <div class="chat-bubble system">
-                                        <i class="fa-solid fa-robot" style="margin-right: 8px;"></i> ¡Hola! Bienvenido al canal automatizado de Taller VESA. ¿Qué trabajo textil necesitas presupuestar hoy?
-                                    </div>
-                                </div>
-                                <div class="chat-input-area">
-                                    <input type="text" class="chat-input" id="inbox-user-msg" placeholder="Escribí como un cliente (ej: 30 remeras con logo)..." onkeypress="handleChatKeyPress(event)">
-                                    <button class="btn btn-primary" onclick="sendMessageToInbox()" style="padding: 12px 18px; border-radius: 10px;" title="Enviar mensaje al servidor de Inteligencia Artificial"><i class="fa-solid fa-paper-plane"></i></button>
-                                </div>
-                            </div>
-
-                            <div class="integration-console">
-                                <div class="console-line header"><i class="fa-solid fa-terminal" style="margin-right: 6px;"></i> APEXTECH ENGINE LOGS</div>
-                                <div class="console-line">Motor Semántico: <span class="success">EN LÍNEA</span></div>
-                                <div class="console-line">Esperando entrada desde Webhook...</div>
-                                <div id="console-logs"></div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1430,105 +1398,6 @@
             showToast("Removido", "La ficha fue eliminada.");
         }
 
-        // --- SISTEMA DE ASISTENTE DE IA (INBOX) CON AUTO-STOCK ---
-        function appendConsoleLine(text, styleClass = "") {
-            var logsContainer = document.getElementById("console-logs"); if (!logsContainer) return;
-            var line = document.createElement("div"); line.className = "console-line " + styleClass; line.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
-            logsContainer.appendChild(line); logsContainer.scrollTop = logsContainer.scrollHeight;
-        }
-
-        function handleChatKeyPress(event) { if (event.key === "Enter") sendMessageToInbox(); }
-
-        function sendMessageToInbox() {
-            var input = document.getElementById("inbox-user-msg"); var text = input.value.trim(); if(!text) return; input.value = "";
-            var chatBox = document.getElementById("inbox-chat-box"); 
-            var userBubble = document.createElement("div");
-            userBubble.className = "chat-bubble user"; userBubble.innerText = text; 
-            chatBox.appendChild(userBubble); chatBox.scrollTop = chatBox.scrollHeight;
-            
-            appendConsoleLine(`Webhook trigger: Entrada detectada: "${text}"`);
-
-            setTimeout(async function() {
-                var reply = ""; var hasOrder = false; var parsedDetail = ""; var calculatedCost = 0;
-                var normalizedText = text.toLowerCase();
-
-                if (normalizedText.includes("remera") || normalizedText.includes("buzo") || normalizedText.includes("remeras") || normalizedText.includes("buzos") || normalizedText.includes("gorra")) {
-                    
-                    var qty = 20; var numMatch = normalizedText.match(/\d+/);
-                    if (numMatch) qty = parseInt(numMatch[0]);
-
-                    var itemType = "remera";
-                    if (normalizedText.includes("buzo")) itemType = "buzo";
-                    if (normalizedText.includes("gorra")) itemType = "gorra";
-                    
-                    parsedDetail = `${qty} ${itemType}s personalizadas`;
-                    calculatedCost = qty * (itemType === "remera" ? 12000 : 25000);
-
-                    // Búsqueda real de stock para la IA
-                    let bestStockMatch = null;
-                    for (let s of appState.stock) {
-                        if (s.item.toLowerCase().includes(itemType)) {
-                            bestStockMatch = s; break;
-                        }
-                    }
-
-                    if (bestStockMatch) {
-                        appendConsoleLine(`SQL: Registro de inventario. Coincidencia con: ${bestStockMatch.item}.`, "success");
-                    } else {
-                        appendConsoleLine(`SQL: No se encontró stock vinculado a la palabra ${itemType}.`, "warn");
-                    }
-                    
-                    if (normalizedText.includes("pixelado") || normalizedText.includes("baja calidad") || normalizedText.includes("malo") || normalizedText.includes("captura")) {
-                        appendConsoleLine("RECHAZADO: ARCHIVO CON BAJO DPI", "danger");
-                        reply = `He recibido tu mensaje solicitando ${parsedDetail}. Sin embargo, nuestro validador técnico detecta que el diseño enviado no cuenta con la resolución requerida (300 DPI mínimos). ¿Podrías facilitarnos el archivo en formato .AI o .PDF?`;
-                    } else {
-                        hasOrder = true;
-                        appendConsoleLine("VERIFICACIÓN APROBADA: ARTE COMPATIBLE", "success");
-                        reply = `¡Excelente! Hemos procesado tu consulta de ${parsedDetail}. El presupuesto calculado por el sistema es de $${calculatedCost.toLocaleString('es-AR')}. ¿Querés confirmar la orden para generar el link de pago y cargarlo a producción?`;
-                    }
-                } else if (normalizedText.includes("precio") || normalizedText.includes("costo")) {
-                    reply = "Nuestra tarifa base es de $12.000 por remera oversize (mín. 10 unidades) y de $25.000 por buzo canguro. Incluye 2 colores de estampado en serigrafía.";
-                } else {
-                    reply = "Entiendo tu consulta. Para darte una cotización exacta, por favor detallame el número de prendas, tipo de prenda, y si contás con el archivo de diseño en alta calidad.";
-                }
-
-                var botBubble = document.createElement("div"); botBubble.className = "chat-bubble system"; botBubble.innerHTML = `<i class="fa-solid fa-robot" style="margin-right: 8px; color: var(--color-accent);"></i> ${reply}`;
-                chatBox.appendChild(botBubble); chatBox.scrollTop = chatBox.scrollHeight;
-
-                if (hasOrder && calculatedCost > 0) {
-                    var nuevoId = appState.pedidos.length > 0 ? Math.max(...appState.pedidos.map(p=>p.id)) + 1 : 1000;
-                    var nuevoPed = { id: nuevoId, cliente: "IA Automation S.A.", detalle: parsedDetail, estado: "Confirmado", monto: calculatedCost, fecha: new Date().toLocaleDateString('es-AR', dateOptions), tipoEntrega: "Retiro en local", horaEntrega: "18:00 hs", medioPago: "Mercado Pago" };
-                    var nuevoIngreso = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: "Ingreso", detalle: `Seña Transaccional Pedido #${nuevoId}`, monto: Math.round(calculatedCost * 0.5), fecha: new Date().toLocaleDateString('es-AR', dateOptions), medioPago: "Mercado Pago" };
-
-                    // Deducción automática IA
-                    let bestStockMatch = null;
-                    let qtyToDeduct = parseInt(parsedDetail.match(/\d+/)[0]);
-                    let matchType = "remera";
-                    if (parsedDetail.includes("buzo")) matchType = "buzo";
-                    if (parsedDetail.includes("gorra")) matchType = "gorra";
-
-                    for (let s of appState.stock) {
-                        if (s.item.toLowerCase().includes(matchType)) { bestStockMatch = s; break; }
-                    }
-
-                    if (hasFirebase && authUser) {
-                        try {
-                            await db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed);
-                            await db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevoIngreso);
-                            if (bestStockMatch && bestStockMatch.docId) {
-                                await db.collection('artifacts/' + appId + '/public/data/stock').doc(bestStockMatch.docId).update({ cantidad: Math.max(0, bestStockMatch.cantidad - qtyToDeduct) });
-                            }
-                        } catch(e) {}
-                    } else {
-                        appState.pedidos.unshift(nuevoPed); appState.finanzas.unshift(nuevoIngreso);
-                        if (bestStockMatch) bestStockMatch.cantidad = Math.max(0, bestStockMatch.cantidad - qtyToDeduct);
-                        saveToLocalStorage(); renderAll(); updateCharts();
-                    }
-                    showToast("Automatización", `Orden #${nuevoId} procesada y stock descontado.`);
-                }
-            }, 800);
-        }
-
         function limpiarConfigFirebaseCustom() {
             localStorage.removeItem("vesa_custom_firebase_config"); localStorage.removeItem("vesa_custom_app_id");
             showToast("Red Restablecida", "Reiniciando conexión..."); closeModal('modalConfigFirebase'); setTimeout(() => window.location.reload(), 800);
@@ -1565,7 +1434,7 @@
         window.generarFichaTecnica = generarFichaTecnica; window.allowDrop = allowDrop; window.drop = drop;
         window.confirmarDescuentoStock = confirmarDescuentoStock; window.omitirDescuentoStock = omitirDescuentoStock;
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
-        window.playVoiceReport = playVoiceReport; window.handleChatKeyPress = handleChatKeyPress; window.sendMessageToInbox = sendMessageToInbox;
+        window.playVoiceReport = playVoiceReport; 
         window.autoDetectStock = autoDetectStock; window.goToStockAndHighlight = goToStockAndHighlight;
         
     </script>

@@ -258,6 +258,7 @@
             .notification-toast { right: 16px; left: 16px; bottom: 80px; width: auto; max-width: none; }
             .modal-box { padding: 20px; border-radius: 16px; }
             .modal-body-grid { grid-template-columns: 1fr; gap: 16px; }
+            .form-row { grid-template-columns: 1fr; gap: 8px; }
         }
     </style>
 </head>
@@ -534,7 +535,7 @@
         </div>
     </div>
 
-    <!-- MÓDULO 1: NUEVO PEDIDO CON AUTO-STOCK -->
+    <!-- MÓDULO 1: NUEVO PEDIDO CON MULTI-CARRITO Y SEÑA -->
     <div class="modal-overlay" id="modalPedido">
         <div class="modal-box wide">
             <div class="modal-header">
@@ -543,9 +544,9 @@
             </div>
             
             <div class="modal-body-grid">
-                <!-- Columna Izquierda -->
+                <!-- Columna Izquierda (Prendas y Detalles) -->
                 <div class="modal-col">
-                    <div class="form-section-title" style="margin-top: 0;">Técnica y Cliente</div>
+                    <div class="form-section-title" style="margin-top: 0;">Cliente y Observaciones</div>
                     <div class="form-group">
                         <label>Razón Social / Cliente</label>
                         <div style="display: flex; gap: 8px;">
@@ -556,24 +557,28 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Requerimiento (Cantidades y Tipo)</label>
-                        <!-- AUTO-DETECT EVENT ADDED HERE -->
-                        <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: 15 remeras oversize negras L y XL" oninput="autoDetectStock()" title="El sistema intentará detectar automáticamente la cantidad y el artículo al escribir aquí">
+                        <label>Observaciones de Diseño (Opcional)</label>
+                        <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: Logo frente blanco, espalda full color" title="Cualquier nota extra para el taller">
                     </div>
 
-                    <!-- NUEVA SECCIÓN DE AUTO-DETECCIÓN DE STOCK -->
-                    <div class="form-section-title" style="margin-top: 8px;">📦 Inventario (Auto-Detección)</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Insumo a descontar</label>
-                            <select class="form-control" id="form-ped-stock-item" title="Artículo de tu inventario que se restará al confirmar">
-                                <option value="">No descontar stock</option>
-                            </select>
+                    <!-- NUEVO: CARRITO MÚLTIPLE DE PRENDAS Y TALLES -->
+                    <div class="form-section-title" style="margin-top: 8px;">📦 Prendas, Talles y Precios (Auto-Stock)</div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-end;">
+                        <div class="form-group" style="flex: 2;">
+                            <select class="form-control" id="ped-add-item-select" style="padding: 10px; font-size: 12px;"></select>
                         </div>
-                        <div class="form-group">
-                            <label>Cantidad</label>
-                            <input type="number" class="form-control" id="form-ped-stock-qty" placeholder="0" min="0" title="Unidades a restar de forma automática">
+                        <div class="form-group" style="flex: 1;">
+                            <input type="number" class="form-control" id="ped-add-item-qty" placeholder="Cant." style="padding: 10px; font-size: 12px;" min="1">
                         </div>
+                        <div class="form-group" style="flex: 1.2;">
+                            <input type="number" class="form-control" id="ped-add-item-price" placeholder="$ Unit." style="padding: 10px; font-size: 12px;" min="0">
+                        </div>
+                        <button class="btn btn-primary" onclick="addOrderItem()" style="padding: 10px; height: 38px; border-radius: 10px;" title="Agregar esta prenda al pedido actual"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    
+                    <!-- Lista de Prendas Agregadas -->
+                    <div id="ped-items-list" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; min-height: 50px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px;">
+                        <div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>
                     </div>
 
                     <div class="form-row" style="margin-top: 8px;">
@@ -592,14 +597,20 @@
                     </div>
                 </div>
 
-                <!-- Columna Derecha -->
+                <!-- Columna Derecha (Facturación) -->
                 <div class="modal-col">
                     <div class="form-section-title" style="margin-top: 0;">Facturación y Logística</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Valor Total ($)</label>
-                            <input type="number" class="form-control" id="form-ped-monto" placeholder="Ej: 350000" title="Importe bruto que se sumará a tus finanzas">
+                            <input type="number" class="form-control" id="form-ped-monto" placeholder="Se calcula solo" title="Monto total automático según prendas agregadas">
                         </div>
+                        <div class="form-group">
+                            <label>Seña / Adelanto ($)</label>
+                            <input type="number" class="form-control" id="form-ped-sena" placeholder="Ej: 50000" title="Dinero que ingresará hoy a la caja. El resto queda como saldo.">
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>Fase de Inicio</label>
                             <select class="form-control" id="form-ped-estado" title="Columna del tablero en la que aparecerá la orden">
@@ -607,6 +618,10 @@
                                 <option value="Confirmado" selected>Confirmado (A Mesa)</option>
                                 <option value="En diseño">En diseño / Ajustes</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Curado</label>
+                            <input type="text" class="form-control" id="form-ped-plancha" placeholder="Ej: 160°C - 15 seg">
                         </div>
                     </div>
                     <div class="form-row">
@@ -630,14 +645,10 @@
                         <label>Ventana de Entrega (Hora)</label>
                         <input type="text" class="form-control" id="form-ped-hora" placeholder="Ej: 16:30 hs">
                     </div>
-                    <div class="form-group">
-                        <label>Curado</label>
-                        <input type="text" class="form-control" id="form-ped-plancha" placeholder="Ej: 160°C - 15 seg">
-                    </div>
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="guardarNuevoPedido()" style="margin-top: 10px; justify-content: center;" title="Registra el pedido y actualiza el stock y finanzas automáticamente"><i class="fa-solid fa-check"></i> Generar Orden</button>
+            <button class="btn btn-primary" onclick="guardarNuevoPedido()" style="margin-top: 10px; justify-content: center;" title="Registra el pedido, descuenta el stock exacto e ingresa la seña a la caja"><i class="fa-solid fa-check"></i> Generar Orden</button>
         </div>
     </div>
 
@@ -655,7 +666,7 @@
                 <div class="modal-col">
                     <div class="form-section-title" style="margin-top: 0;">Técnica y Cliente</div>
                     <div class="form-group"><label>Cliente</label><select class="form-control" id="edit-ped-cliente"></select></div>
-                    <div class="form-group"><label>Requerimiento</label><input type="text" class="form-control" id="edit-ped-detalle"></div>
+                    <div class="form-group"><label>Observaciones / Requerimiento</label><input type="text" class="form-control" id="edit-ped-detalle"></div>
                     
                     <div class="form-row">
                         <div class="form-group"><label>Malla</label><input type="text" class="form-control" id="edit-ped-malla"></div>
@@ -669,7 +680,10 @@
                 
                 <div class="modal-col">
                     <div class="form-section-title" style="margin-top: 0;">Finanzas y Estado</div>
-                    <div class="form-group"><label>Valor Final ($)</label><input type="number" class="form-control" id="edit-ped-monto"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Valor Final ($)</label><input type="number" class="form-control" id="edit-ped-monto"></div>
+                        <div class="form-group"><label>Seña Recibida ($)</label><input type="number" class="form-control" id="edit-ped-sena"></div>
+                    </div>
                     <div class="form-group"><label>Progreso</label><select class="form-control" id="edit-ped-estado"><option value="Presupuesto">Presupuesto</option><option value="Confirmado">Confirmado</option><option value="En diseño">En diseño</option><option value="Producción">Producción</option><option value="Estampado">Estampado</option><option value="Listo">Listo</option><option value="Entregado">Entregado</option></select></div>
                 </div>
             </div>
@@ -686,7 +700,7 @@
             </div>
             <div class="voucher-header">
                 <div>
-                    <h2 style="text-transform: uppercase; letter-spacing: 1px;">HOJA DE RUTA TÉCNICA</h2>
+                    <h2 style="text-transform: uppercase; letter-spacing: 1px;">ORDEN DE TRABAJO / REMITO</h2>
                     <p style="color:#64748b; font-size: 11px; font-weight: 800; margin-top: 2px;">OPERACIONES VESA / CONFIDENCIAL</p>
                 </div>
                 <div style="text-align: right;">
@@ -700,8 +714,41 @@
                 <p id="ficha-cliente" style="font-weight: 800; font-size: 16px; color: #0f172a; margin-bottom: 2px;">-</p>
                 <p id="ficha-detalle" style="font-size: 13px; color: #475569; font-weight: 500;">-</p>
             </div>
+
+            <!-- NUEVA TABLA DETALLADA DE PRODUCTOS -->
+            <div style="margin-top: 20px;">
+                <table class="voucher-table">
+                    <thead>
+                        <tr>
+                            <th>Cant. / Producto / Talle</th>
+                            <th style="text-align: right;">Precio Unit.</th>
+                            <th style="text-align: right;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comp-items-tbody">
+                        <!-- Llenado dinámico -->
+                    </tbody>
+                </table>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                    <table style="width: 250px; font-size: 13px; color: #0f172a; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 6px; border: none; text-align: right; color: #64748b;">Monto Total:</td>
+                            <td style="padding: 6px; border: none; text-align: right; font-weight: 800;" id="ficha-monto-total">$0</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px; border: none; text-align: right; color: #64748b;">Seña Abonada:</td>
+                            <td style="padding: 6px; border: none; text-align: right; font-weight: 800; color: #10b981;" id="ficha-sena">$0</td>
+                        </tr>
+                        <tr style="border-top: 2px solid #e2e8f0;">
+                            <td style="padding: 8px 6px; border: none; text-align: right; font-weight: 800; font-size: 15px;">SALDO PENDIENTE:</td>
+                            <td style="padding: 8px 6px; border: none; text-align: right; font-weight: 900; font-size: 15px; color: #f43f5e;" id="ficha-saldo">$0</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
             
-            <div style="margin-top: 24px;">
+            <div style="margin-top: 20px;">
                 <h4 style="font-weight: 800; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; font-size: 12px;">ESPECIFICACIONES DE TALLER</h4>
                 <div class="technical-spec">
                     <p style="margin-bottom: 8px; display: flex; align-items: center;"><strong style="width: 140px; color: #64748b;">[MATRIZ_HILOS]</strong>   <span id="ficha-malla" style="font-weight: 700; font-size: 13px;">NO ESPECIFICADO</span></p>
@@ -710,8 +757,8 @@
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top:40px; border-top:2px dashed #cbd5e1; padding-top:16px;">
-                <p style="font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">VESA Core OS - Control Operativo: ______________________</p>
+            <div style="text-align: center; margin-top:30px; border-top:2px dashed #cbd5e1; padding-top:16px;">
+                <p style="font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">VESA Core OS - Sistema de Control Operativo</p>
             </div>
             <button class="btn btn-primary" onclick="window.print()" style="margin-top:20px; width:100%; justify-content:center;" title="Abre el gestor de impresión para obtener la versión PDF"><i class="fa-solid fa-print"></i> Imprimir Documento</button>
         </div>
@@ -794,8 +841,10 @@
         var welcomeShown = sessionStorage.getItem("vesa_welcome_shown");
         var lastReportText = "";
 
-        // Variable global para saber si el modal de cliente se abrió desde el de pedido
         var returnToPedidoModal = false;
+
+        // NUEVO: Array para el mini-carrito de pedidos
+        var currentOrderItems = [];
 
         // ESTADO INICIAL
         var defaultState = { 
@@ -810,7 +859,6 @@
         };
         var appState = { pedidos: [], clientes: [], stock: [], finanzas: [] };
 
-        // --- SISTEMA DE VOZ (ASISTENTE IA) ---
         function playVoiceReport(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
@@ -867,7 +915,6 @@
             });
         }
 
-        // --- ARRANQUE Y LÓGICA DE FIREBASE ---
         window.addEventListener('DOMContentLoaded', () => { initApexCore(); });
 
         async function initApexCore() {
@@ -901,7 +948,6 @@
                             setupLocalStorageFallback();
                         }
                     });
-                    // Autenticación anónima
                     await auth.signInAnonymously();
                 } catch (err) { 
                     setupLocalStorageFallback(); 
@@ -969,7 +1015,6 @@
             populateDropdowns();
         }
 
-        // --- RENDERS BÁSICOS ---
         function renderMetrics() {
             document.getElementById("val-pendientes").innerText = appState.pedidos.filter(p=>p.estado !== "Entregado").length;
             var ventasTotal = appState.pedidos.reduce((acc, p) => acc + p.monto, 0);
@@ -981,6 +1026,7 @@
         function renderDashboardAlerts() { document.getElementById("dash-alerts").innerHTML = ""; }
         function renderDashboardOrders() { document.getElementById("dash-pedidos-tbody").innerHTML = ""; }
         function renderDashboardStock() { document.getElementById("dash-stock-list").innerHTML = ""; }
+        
         function renderClientesTable() {
             var tbody = document.getElementById("clientes-tbody"); tbody.innerHTML = "";
             appState.clientes.forEach(function(c) {
@@ -1020,7 +1066,7 @@
             var profitTotal = sumI - sumE; var profitEl = document.getElementById("fin-profit-total"); profitEl.innerText = "$" + profitTotal.toLocaleString('es-AR'); profitEl.style.color = profitTotal >= 0 ? "var(--color-accent)" : "var(--color-danger)"; 
         }
 
-        // OPTIMIZACIÓN: Carga de selectores
+        // --- SISTEMA DE CARRITO PARA PEDIDOS ---
         function populateDropdowns() {
             var selectsCli = [document.getElementById("form-ped-cliente"), document.getElementById("edit-ped-cliente")];
             selectsCli.forEach(sel => { 
@@ -1030,24 +1076,80 @@
                 appState.clientes.forEach(c => sel.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`); 
             });
 
-            var stockSelect = document.getElementById("form-ped-stock-item");
+            var stockSelect = document.getElementById("ped-add-item-select");
             if(stockSelect) {
-                stockSelect.innerHTML = `<option value="">No descontar stock automáticamente</option>`;
+                stockSelect.innerHTML = `<option value="" disabled selected>Seleccionar prenda/insumo...</option>`;
                 appState.stock.forEach(s => {
-                    stockSelect.innerHTML += `<option value="${s.id}">${s.item} (${s.talle}) - Disp: ${s.cantidad}</option>`;
+                    stockSelect.innerHTML += `<option value="${s.id}">${s.item} (Talle: ${s.talle}) - Disp: ${s.cantidad}</option>`;
                 });
             }
+        }
+
+        function addOrderItem() {
+            const select = document.getElementById("ped-add-item-select");
+            const qty = parseInt(document.getElementById("ped-add-item-qty").value);
+            const price = parseInt(document.getElementById("ped-add-item-price").value) || 0;
+            
+            if (!select.value || !qty || qty <= 0) {
+                showToast("Error", "Seleccioná un insumo y una cantidad válida.", true);
+                return;
+            }
+            
+            const stockId = parseInt(select.value);
+            const stockItem = appState.stock.find(s => s.id === stockId);
+            
+            currentOrderItems.push({
+                stockId: stockId,
+                nombre: stockItem.item,
+                talle: stockItem.talle,
+                cantidad: qty,
+                precioUnitario: price,
+                subtotal: qty * price
+            });
+            
+            document.getElementById("ped-add-item-qty").value = "";
+            document.getElementById("ped-add-item-price").value = "";
+            renderOrderItems();
+        }
+
+        function removeOrderItem(index) {
+            currentOrderItems.splice(index, 1);
+            renderOrderItems();
+        }
+
+        function renderOrderItems() {
+            const list = document.getElementById("ped-items-list");
+            list.innerHTML = "";
+            let totalAuto = 0;
+            
+            if (currentOrderItems.length === 0) {
+                list.innerHTML = '<div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>';
+                document.getElementById("form-ped-monto").value = "";
+                return;
+            }
+            
+            currentOrderItems.forEach((item, index) => {
+                totalAuto += item.subtotal;
+                list.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+                        <div><strong style="color: var(--color-accent); font-size: 13px;">${item.cantidad}x</strong> ${item.nombre} (Talle: ${item.talle})</div>
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-weight: 700;">$${item.subtotal.toLocaleString('es-AR')}</span>
+                            <button onclick="removeOrderItem(${index})" style="background: none; border: none; color: var(--color-danger); cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById("form-ped-monto").value = totalAuto;
         }
 
         // Lógica para abrir modal de cliente desde el modal de pedido sin perder estado
         function openModalClienteDesdePedido() {
             returnToPedidoModal = true;
             document.getElementById('modalPedido').classList.remove('active');
-            
-            // Limpiamos los campos del cliente
             document.getElementById("form-cli-nombre").value = "";
             document.getElementById("form-cli-tel").value = "";
-            
             openModal('modalCliente');
         }
 
@@ -1107,18 +1209,13 @@
         
         function switchTab(tabId, isGoBack = false) {
             if (currentTabId === tabId) return;
-            
-            // Si no estamos volviendo atrás, guardamos la pestaña actual en el historial
-            if (!isGoBack) {
-                tabHistory.push(currentTabId);
-            }
+            if (!isGoBack) tabHistory.push(currentTabId);
             currentTabId = tabId;
 
             document.querySelectorAll('.view-section').forEach(sec => { sec.classList.remove('active'); sec.style.animation = 'none'; sec.offsetHeight; sec.style.animation = null; });
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             document.getElementById('section-' + tabId).classList.add('active'); 
             
-            // Actualizado para que el marcador izquierdo del menú resalte correctamente
             document.querySelectorAll('.menu-item').forEach(item => { 
                 if(item.getAttribute('onclick') && item.getAttribute('onclick').includes(tabId)) {
                     item.classList.add('active');
@@ -1136,14 +1233,13 @@
             }
         }
 
-        // Atajos de Teclado (Escape y Retroceso) para volver a la pestaña anterior
         document.addEventListener('keydown', function(event) {
             const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
             const isInput = activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select';
             
             if (event.key === 'Escape') {
                 const activeModal = document.querySelector('.modal-overlay.active');
-                if (activeModal) { // Si hay un modal, Escape lo cierra (UX nativo)
+                if (activeModal) { 
                     activeModal.classList.remove('active');
                     if (returnToPedidoModal && activeModal.id === 'modalCliente') {
                         document.getElementById('modalPedido').classList.add('active');
@@ -1151,30 +1247,24 @@
                     }
                     return;
                 }
-                if (!isInput) {
-                    event.preventDefault();
-                    goBackTab();
-                }
+                if (!isInput) { event.preventDefault(); goBackTab(); }
                 return;
             }
 
-            // Retroceso (Backspace) vuelve a la pestaña anterior si no estamos escribiendo en un formulario
-            if (event.key === 'Backspace' && !isInput) {
-                event.preventDefault();
-                goBackTab();
-            }
+            if (event.key === 'Backspace' && !isInput) { event.preventDefault(); goBackTab(); }
         });
 
         function openModal(id) { 
-            // Resetear la bandera si abrimos cualquier modal que no sea el flujo de cliente
+            if(id === 'modalPedido') {
+                currentOrderItems = [];
+                renderOrderItems();
+            }
             if(id !== 'modalCliente') returnToPedidoModal = false;
             document.getElementById(id).classList.add('active'); 
         }
 
         function closeModal(id) { 
             document.getElementById(id).classList.remove('active'); 
-            
-            // Si cerramos el modal de cliente (cancelando o por X) y veníamos del pedido, volvemos
             if(id === 'modalCliente' && returnToPedidoModal) {
                 document.getElementById('modalPedido').classList.add('active');
                 returnToPedidoModal = false;
@@ -1194,9 +1284,6 @@
         function procesarCambioEstado(id, nuevoEstado) {
             var pedido = appState.pedidos.find(p => p.id === id); 
             if (!pedido || pedido.estado === nuevoEstado) return;
-            
-            // OPTIMIZACIÓN: Como el stock se descuenta al INICIO del pedido, 
-            // ya no preguntamos acá. Directamente movemos la tarjeta.
             ejecutarCambioEstadoFinal(id, nuevoEstado);
         }
 
@@ -1207,48 +1294,12 @@
             showToast("Actualizado", `La orden #${id} avanzó a ${nuevoEstado}.`);
         }
 
-        // --- AUTO-DETECCIÓN DE INVENTARIO (NUEVO) ---
-        function autoDetectStock() {
-            const detalleText = document.getElementById("form-ped-detalle").value.toLowerCase();
-            const stockSelect = document.getElementById("form-ped-stock-item");
-            const qtyInput = document.getElementById("form-ped-stock-qty");
-            
-            // Buscar si hay un número en el texto para la cantidad
-            const qtyMatch = detalleText.match(/\d+/);
-            const qty = qtyMatch ? parseInt(qtyMatch[0]) : 0;
-            
-            if (qty > 0) qtyInput.value = qty;
-            else qtyInput.value = "";
-
-            let found = false;
-            // Buscar coincidencias de palabras clave con nuestra base de stock real
-            for (let s of appState.stock) {
-                const stockNameLower = s.item.toLowerCase();
-                
-                // Match directo por palabras clave de indumentaria
-                if (detalleText.includes("remera") && stockNameLower.includes("remera")) { stockSelect.value = s.id; found = true; break; }
-                if (detalleText.includes("buzo") && stockNameLower.includes("buzo")) { stockSelect.value = s.id; found = true; break; }
-                if (detalleText.includes("gorra") && stockNameLower.includes("gorra")) { stockSelect.value = s.id; found = true; break; }
-                
-                // Match genérico por palabras largas
-                const words = detalleText.split(' ').filter(w => w.length >= 4);
-                for(let w of words) {
-                    if (stockNameLower.includes(w)) {
-                        stockSelect.value = s.id;
-                        found = true;
-                        break;
-                    }
-                }
-                if(found) break;
-            }
-            if(!found) stockSelect.value = "";
-        }
-
-        // --- CRUD PEDIDOS CON AUTO-DESCUENTO ---
+        // --- CRUD PEDIDOS CON MULTI-CARRITO Y SEÑA ---
         async function guardarNuevoPedido() {
             var cliente = document.getElementById("form-ped-cliente").value; 
-            var detalle = document.getElementById("form-ped-detalle").value.trim();
-            var monto = parseInt(document.getElementById("form-ped-monto").value) || 0; 
+            var observaciones = document.getElementById("form-ped-detalle").value.trim();
+            var montoTotal = parseInt(document.getElementById("form-ped-monto").value) || 0; 
+            var sena = parseInt(document.getElementById("form-ped-sena").value) || 0; 
             var estado = document.getElementById("form-ped-estado").value;
             var mediopago = document.getElementById("form-ped-metodopago").value; 
             var entrega = document.getElementById("form-ped-entrega").value; 
@@ -1258,12 +1309,14 @@
             var tintas = document.getElementById("form-ped-tintas").value.trim();
             var plancha = document.getElementById("form-ped-plancha").value.trim();
 
-            // Datos de auto-deducción
-            var stockItemId = parseInt(document.getElementById("form-ped-stock-item").value);
-            var stockQty = parseInt(document.getElementById("form-ped-stock-qty").value) || 0;
+            if (currentOrderItems.length === 0 && !observaciones) { 
+                showToast("Error", "Agregá prendas al carrito o escribí un detalle.", true); return; 
+            }
+            if (!cliente) { showToast("Error", "Debes seleccionar un cliente.", true); return; }
 
-            if (!detalle) { showToast("Error", "Se requiere el detalle para abrir la OT.", true); return; }
-            if (!cliente) { showToast("Error", "Debes seleccionar o crear un cliente.", true); return; }
+            // Crear string resumen para la tabla
+            let detalleString = currentOrderItems.map(i => `${i.cantidad}x ${i.nombre} (${i.talle})`).join(" + ");
+            if (observaciones) detalleString = detalleString ? `${detalleString} | Nota: ${observaciones}` : observaciones;
             
             var fileInput = document.getElementById("form-ped-arte-file");
             var arteUrl = "";
@@ -1271,51 +1324,68 @@
 
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             var nuevoId = appState.pedidos.length > 0 ? Math.max(...appState.pedidos.map(p=>p.id)) + 1 : 1000;
+            
             var nuevoPed = { 
-                id: nuevoId, cliente: cliente, detalle: detalle, estado: estado, monto: monto, fecha: hoy, 
-                tipoEntrega: entrega, horaEntrega: hora, medioPago: mediopago,
+                id: nuevoId, cliente: cliente, detalle: detalleString, estado: estado, 
+                monto: montoTotal, sena: sena, saldo: montoTotal - sena, items: currentOrderItems, 
+                fecha: hoy, tipoEntrega: entrega, horaEntrega: hora, medioPago: mediopago,
                 malla: malla, tintas: tintas, plancha: plancha, arte: arteUrl
             };
+
+            var nuevaFinanza = null;
+            if (estado !== "Presupuesto" && sena > 0) {
+                nuevaFinanza = {
+                    id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, 
+                    tipo: "Ingreso", detalle: `Seña Pedido #${nuevoId} (${cliente})`, 
+                    monto: sena, fecha: hoy, medioPago: mediopago
+                };
+            }
 
             if (hasFirebase && authUser) {
                 try { 
                     await db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed); 
+                    if (nuevaFinanza) await db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza);
                     
-                    // LÓGICA: Descuento inmediato de inventario en la nube
-                    if (stockItemId && stockQty > 0) {
-                        let stockItem = appState.stock.find(s => s.id === stockItemId);
+                    // Descuento inmediato de inventario en la nube
+                    for (let item of currentOrderItems) {
+                        let stockItem = appState.stock.find(s => s.id === item.stockId);
                         if (stockItem && stockItem.docId) {
-                            let nuevaCant = Math.max(0, stockItem.cantidad - stockQty);
+                            let nuevaCant = Math.max(0, stockItem.cantidad - item.cantidad);
                             await db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant });
                         }
                     }
                 } catch(e) { console.error(e); }
             } else { 
                 appState.pedidos.unshift(nuevoPed); 
+                if (nuevaFinanza) appState.finanzas.unshift(nuevaFinanza);
                 
-                // LÓGICA: Descuento inmediato de inventario en Local
-                if (stockItemId && stockQty > 0) {
-                    let sIdx = appState.stock.findIndex(s => s.id === stockItemId);
+                // Descuento inmediato de inventario en Local
+                for (let item of currentOrderItems) {
+                    let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
                     if (sIdx !== -1) {
-                        appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - stockQty);
+                        appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
                     }
                 }
                 saveToLocalStorage(); renderAll(); updateCharts(); 
             }
             
             document.getElementById("form-ped-detalle").value = ""; document.getElementById("form-ped-monto").value = ""; 
-            document.getElementById("form-ped-arte-file").value = ""; document.getElementById("form-ped-stock-qty").value = "";
-            document.getElementById("form-ped-stock-item").value = "";
+            document.getElementById("form-ped-sena").value = ""; document.getElementById("form-ped-arte-file").value = ""; 
+            currentOrderItems = []; renderOrderItems();
             
             closeModal('modalPedido'); 
-            showToast("Carga Exitosa", `Orden #${nuevoId} procesada y stock actualizado.`);
+            showToast("Carga Exitosa", `Orden #${nuevoId} procesada y stock descontado.`);
         }
 
         function abrirEditarPedido(docId, localId) {
             var p = appState.pedidos.find(x => x.id === localId); if (!p) return;
             document.getElementById("edit-ped-id-doc").value = docId || ''; document.getElementById("edit-ped-id-local").value = localId;
             populateDropdowns(); 
-            document.getElementById("edit-ped-cliente").value = p.cliente; document.getElementById("edit-ped-detalle").value = p.detalle || ''; document.getElementById("edit-ped-monto").value = p.monto || 0; document.getElementById("edit-ped-estado").value = p.estado || 'Confirmado'; 
+            document.getElementById("edit-ped-cliente").value = p.cliente; 
+            document.getElementById("edit-ped-detalle").value = p.detalle || ''; 
+            document.getElementById("edit-ped-monto").value = p.monto || 0; 
+            document.getElementById("edit-ped-sena").value = p.sena || 0; 
+            document.getElementById("edit-ped-estado").value = p.estado || 'Confirmado'; 
             document.getElementById("edit-ped-malla").value = p.malla || ''; document.getElementById("edit-ped-tintas").value = p.tintas || ''; document.getElementById("edit-ped-plancha").value = p.plancha || '';
             openModal('modalEditPedido');
         }
@@ -1323,9 +1393,11 @@
         async function guardarEdicionPedido() {
             var docId = document.getElementById("edit-ped-id-doc").value; var localId = parseInt(document.getElementById("edit-ped-id-local").value);
             var cliente = document.getElementById("edit-ped-cliente").value; var detalle = document.getElementById("edit-ped-detalle").value.trim(); 
-            var monto = parseInt(document.getElementById("edit-ped-monto").value) || 0; var estado = document.getElementById("edit-ped-estado").value; 
+            var monto = parseInt(document.getElementById("edit-ped-monto").value) || 0; 
+            var sena = parseInt(document.getElementById("edit-ped-sena").value) || 0; 
+            var estado = document.getElementById("edit-ped-estado").value; 
             var malla = document.getElementById("edit-ped-malla").value.trim(); var tintas = document.getElementById("edit-ped-tintas").value.trim(); var plancha = document.getElementById("edit-ped-plancha").value.trim();
-            var updatedData = { cliente: cliente, detalle: detalle, estado: estado, monto: monto, malla: malla, tintas: tintas, plancha: plancha };
+            var updatedData = { cliente: cliente, detalle: detalle, estado: estado, monto: monto, sena: sena, saldo: monto - sena, malla: malla, tintas: tintas, plancha: plancha };
 
             var fileInput = document.getElementById("edit-ped-arte-file");
             if (fileInput.files.length > 0) { try { updatedData.arte = await getFileBase64(fileInput.files[0]); } catch(e) { } }
@@ -1343,11 +1415,34 @@
             showToast("Borrado", "La orden fue removida del historial.");
         }
 
-        // --- FICHA TÉCNICA PDF ---
+        // --- FICHA TÉCNICA PDF CON DETALLE DE PRODUCTOS ---
         function generarFichaTecnica(idPedido) {
             var p = appState.pedidos.find(x => x.id === idPedido); if (!p) return;
             document.getElementById("ficha-id").innerText = "OT#" + p.id; document.getElementById("ficha-fecha").innerText = "Expedido: " + new Date().toLocaleDateString('es-AR');
-            document.getElementById("ficha-cliente").innerText = p.cliente; document.getElementById("ficha-detalle").innerText = p.detalle;
+            document.getElementById("ficha-cliente").innerText = p.cliente; 
+            document.getElementById("ficha-detalle").innerText = "Obs: " + (p.detalle || "-");
+
+            const tbodyItems = document.getElementById("comp-items-tbody");
+            tbodyItems.innerHTML = "";
+            
+            if (p.items && p.items.length > 0) {
+                p.items.forEach(item => {
+                    tbodyItems.innerHTML += `
+                        <tr>
+                            <td><strong>${item.cantidad}x</strong> ${item.nombre} (Talle ${item.talle})</td>
+                            <td style="text-align: right;">$${item.precioUnitario.toLocaleString('es-AR')}</td>
+                            <td style="text-align: right; font-weight: 700;">$${item.subtotal.toLocaleString('es-AR')}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbodyItems.innerHTML = `<tr><td colspan="3" style="text-align:center; color: #64748b;">Detalle consolidado (Pedido antiguo o sin desglose)</td></tr>`;
+            }
+
+            document.getElementById("ficha-monto-total").innerText = "$" + p.monto.toLocaleString('es-AR');
+            document.getElementById("ficha-sena").innerText = p.sena ? "$" + p.sena.toLocaleString('es-AR') : "$0";
+            document.getElementById("ficha-saldo").innerText = p.saldo ? "$" + p.saldo.toLocaleString('es-AR') : "$" + p.monto.toLocaleString('es-AR');
+
             document.getElementById("ficha-malla").innerText = p.malla || "NO APLICADO"; document.getElementById("ficha-tintas").innerText = p.tintas || "NO APLICADO"; document.getElementById("ficha-plancha").innerText = p.plancha || "NO APLICADO";
             openModal('modalFichaTecnica');
         }
@@ -1383,12 +1478,11 @@
                 appState.clientes.push(nuevoCli); saveToLocalStorage(); renderAll(); 
             }
             
-            // Lógica de retorno mágico al modal de pedido
             if(returnToPedidoModal) {
                 document.getElementById('modalCliente').classList.remove('active');
-                populateDropdowns(); // Actualizar las listas
-                document.getElementById('form-ped-cliente').value = nombre; // Auto-seleccionar el nuevo cliente
-                document.getElementById('modalPedido').classList.add('active'); // Reabrir el pedido
+                populateDropdowns(); 
+                document.getElementById('form-ped-cliente').value = nombre; 
+                document.getElementById('modalPedido').classList.add('active'); 
                 returnToPedidoModal = false;
             } else {
                 closeModal('modalCliente'); 
@@ -1523,7 +1617,10 @@
         window.generarFichaTecnica = generarFichaTecnica; window.allowDrop = allowDrop; window.drop = drop;
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
         window.playVoiceReport = playVoiceReport; 
-        window.autoDetectStock = autoDetectStock; window.goToStockAndHighlight = goToStockAndHighlight;
+        
+        // Exponer nuevas funciones del mini-carrito
+        window.addOrderItem = addOrderItem;
+        window.removeOrderItem = removeOrderItem;
         
     </script>
 </body>

@@ -41,7 +41,7 @@
         
         body { 
             background-color: var(--bg-base); color: var(--color-text-primary); 
-            display: flex; height: 100vh; overflow: hidden; position: relative;
+            display: flex; height: 100vh; height: 100dvh; overflow: hidden; position: relative;
         }
 
         /* --- FONDOS AMBIENTALES (AURORA GLOW) --- */
@@ -102,6 +102,8 @@
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
         .metric-card { background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: transform 0.2s ease-out, border-color 0.2s ease-out; overflow: hidden; }
         .metric-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.3); }
+        .metric-card.clickable { cursor: pointer; transition: all 0.3s; }
+        .metric-card.clickable:hover { box-shadow: 0 15px 40px rgba(244, 63, 94, 0.15), inset 0 0 20px rgba(244, 63, 94, 0.05); transform: translateY(-6px); }
         
         .metric-title { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
         .metric-icon-box { width: 36px; height: 36px; border-radius: 10px; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--color-accent); }
@@ -132,14 +134,11 @@
         td:last-child { border-right: 1px solid rgba(255,255,255,0.02); border-radius: 0 12px 12px 0; }
         tr:hover td { background: rgba(56,189,248,0.04); }
 
-        /* EFECTO FLASH ROJO PARA STOCK BAJO */
         @keyframes flashRow { 
             0% { background-color: rgba(244, 63, 94, 0.4); box-shadow: inset 0 0 20px rgba(244, 63, 94, 0.5); } 
             100% { background-color: rgba(255,255,255,0.02); box-shadow: none; } 
         }
         .flash-danger td { animation: flashRow 2s ease-out forwards; }
-        .metric-card.clickable { cursor: pointer; transition: all 0.3s; }
-        .metric-card.clickable:hover { box-shadow: 0 15px 40px rgba(244, 63, 94, 0.15), inset 0 0 20px rgba(244, 63, 94, 0.05); transform: translateY(-6px); }
 
         .empty-placeholder { text-align: center; color: var(--color-text-secondary); padding: 40px 20px !important; font-size: 14px; border: 1px dashed rgba(255,255,255,0.1) !important; border-radius: 12px !important; background: transparent !important; }
 
@@ -169,7 +168,7 @@
         .stock-qty { font-weight: 800; font-size: 14px; font-family: 'Space Mono', monospace; }
 
         /* BOTONES */
-        .bottom-actions { display: flex; gap: 16px; padding: 24px 40px; background: #0b1120; border-top: 1px solid var(--border-glass); justify-content: flex-start; z-index: 40; }
+        .bottom-actions { display: flex; gap: 16px; padding: 24px 40px; background: #0b1120; border-top: 1px solid var(--border-glass); justify-content: flex-start; z-index: 40; flex-shrink: 0; }
         .btn { background: rgba(255,255,255,0.03); color: var(--color-text-primary); border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 12px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background-color 0.15s, border-color 0.15s; text-transform: uppercase; letter-spacing: 1px; }
         .btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
         .btn-primary { background: linear-gradient(135deg, var(--color-accent), #00a2ff); color: #000; border: none; }
@@ -272,10 +271,10 @@
             .sidebar { position: fixed; top: 0; left: 0; bottom: 0; height: 100%; transform: translateX(-100%); z-index: 1000; background: #0b1120; }
             .sidebar.active { transform: translateX(0); }
             .sidebar-close-btn { display: block; }
-            .main-content { padding: 16px; gap: 16px; }
+            .main-content { padding: 16px; padding-bottom: 80px; gap: 16px; }
             .header-app { flex-direction: column; align-items: flex-start; gap: 10px; }
             .metrics-grid { grid-template-columns: 1fr; gap: 12px; }
-            .bottom-actions { position: sticky; bottom: 0; padding: 12px 16px; width: 100%; overflow-x: auto; background: #0b1120; }
+            .bottom-actions { position: fixed; bottom: 0; left: 0; padding: 12px 16px; width: 100%; overflow-x: auto; background: #0b1120; z-index: 90; border-top: 1px solid var(--border-glass); }
             .notification-toast { right: 16px; left: 16px; bottom: 80px; width: auto; max-width: none; }
             .modal-box { padding: 20px; border-radius: 16px; }
             .modal-body-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -297,7 +296,7 @@
             <div class="expired-icon"><i class="fa-solid fa-lock"></i></div>
             <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 10px; color: white;">Sesión Expirada</h2>
             <p style="color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; margin-bottom: 24px;">Por motivos de seguridad, tu token de acceso a la base de datos ha caducado. Debes volver a autenticarte.</p>
-            <button class="btn btn-primary" onclick="window.location.reload()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--color-danger), #be123c); border: none;">
+            <button class="btn btn-primary" onclick="window.location.reload()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--color-danger), #be123c); border: none;" title="Volver a cargar el sistema VESA">
                 <i class="fa-solid fa-rotate-right"></i> Recargar
             </button>
         </div>
@@ -319,13 +318,13 @@
                 <h2>VESA<span>.</span></h2>
                 <span class="brand-sub">Core Operations</span>
                 <ul class="menu-list">
-                    <li><a class="menu-item active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Inicio</a></li>
-                    <li><a class="menu-item" onclick="switchTab('pedidos')"><i class="fa-solid fa-folder-open"></i> Pedidos</a></li>
-                    <li><a class="menu-item" onclick="switchTab('kanban')"><i class="fa-solid fa-layer-group"></i> Tablero</a></li>
-                    <li><a class="menu-item" onclick="switchTab('clientes')"><i class="fa-solid fa-address-book"></i> Clientes</a></li>
-                    <li><a class="menu-item" onclick="switchTab('stock')"><i class="fa-solid fa-boxes-stacked"></i> Stock</a></li>
-                    <li><a class="menu-item" onclick="switchTab('finanzas')"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
-                    <li><a class="menu-item" onclick="switchTab('asistente')"><i class="fa-solid fa-robot"></i> Chat IA <span class="badge" style="background: rgba(0,242,255,0.1); color: var(--color-accent); border: 1px solid var(--color-accent); padding: 2px 6px; font-size: 8px;">NUEVO</span></a></li>
+                    <li><a class="menu-item active" onclick="switchTab('dashboard')" title="Panel principal con métricas de salud del taller"><i class="fa-solid fa-chart-pie"></i> Inicio</a></li>
+                    <li><a class="menu-item" onclick="switchTab('pedidos')" title="Historial completo y búsqueda de órdenes de trabajo"><i class="fa-solid fa-folder-open"></i> Pedidos</a></li>
+                    <li><a class="menu-item" onclick="switchTab('kanban')" title="Vista Kanban interactiva para gestión de producción"><i class="fa-solid fa-layer-group"></i> Tablero</a></li>
+                    <li><a class="menu-item" onclick="switchTab('clientes')" title="Directorio de clientes y accesos directos de contacto"><i class="fa-solid fa-address-book"></i> Clientes</a></li>
+                    <li><a class="menu-item" onclick="switchTab('stock')" title="Auditoría de insumos, materias primas y alertas de faltantes"><i class="fa-solid fa-boxes-stacked"></i> Stock</a></li>
+                    <li><a class="menu-item" onclick="switchTab('finanzas')" title="Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
+                    <li><a class="menu-item" onclick="switchTab('asistente')" title="Consola de IA para automatización de ventas y soporte"><i class="fa-solid fa-robot"></i> Chat IA <span class="badge" style="background: rgba(0,242,255,0.1); color: var(--color-accent); border: 1px solid var(--color-accent); padding: 2px 6px; font-size: 8px;">NUEVO</span></a></li>
                 </ul>
             </div>
             
@@ -349,7 +348,7 @@
                         <p id="sub-welcome-text">Gestión operativa centralizada y en tiempo real.</p>
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
-                        <div class="db-status local" id="status-badge" onclick="openModal('modalConfigFirebase')" title="Verificar Infraestructura">
+                        <div class="db-status local" id="status-badge" onclick="openModal('modalConfigFirebase')" title="Verificar estado de conexión con servidores de Google">
                             <i class="fa-solid fa-circle"></i> <span id="status-text">Inicializando...</span>
                         </div>
                         <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 700; background: rgba(255,255,255,0.02); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-family: 'Space Mono', monospace;">
@@ -363,22 +362,22 @@
                     
                     <!-- TARJETAS DE MÉTRICAS -->
                     <div class="metrics-grid">
-                        <div class="metric-card">
+                        <div class="metric-card" title="Total de pedidos que aún no han sido entregados al cliente">
                             <div class="metric-title">Órdenes Activas <div class="metric-icon-box"><i class="fa-solid fa-basket-shopping"></i></div></div>
                             <div class="metric-value" id="val-pendientes">0</div>
                             <div class="metric-subtext" id="val-produccion-sub" style="color: var(--color-text-secondary);">0 en proceso</div>
                         </div>
-                        <div class="metric-card">
+                        <div class="metric-card" title="Suma total bruta del valor de los pedidos activos">
                             <div class="metric-title">Flujo Ingresos <div class="metric-icon-box"><i class="fa-solid fa-arrow-trend-up"></i></div></div>
                             <div class="metric-value" id="val-ventas">$0</div>
                             <div class="metric-subtext text-green" id="val-ventas-trend"><i class="fa-solid fa-arrow-up-right-dots"></i> Tendencia estable</div>
                         </div>
-                        <div class="metric-card">
+                        <div class="metric-card" title="Cálculo matemático de margen operativo estimado (40% s/ventas)">
                             <div class="metric-title">Utilidad Estimada <div class="metric-icon-box"><i class="fa-solid fa-scale-balanced"></i></div></div>
                             <div class="metric-value" id="val-ganancias">$0</div>
                             <div class="metric-subtext text-green" id="val-ganancias-trend"><i class="fa-solid fa-bullseye"></i> Margen bruto 40%</div>
                         </div>
-                        <div class="metric-card clickable" style="border-color: rgba(244, 63, 94, 0.3);" onclick="goToStockAndHighlight()" title="Ir a gestionar stock crítico">
+                        <div class="metric-card clickable" style="border-color: rgba(244, 63, 94, 0.3);" onclick="goToStockAndHighlight()" title="Artículos que requieren reposición urgente. Clic para auditar">
                             <div class="metric-title" style="color: white;">Faltantes Stock <div class="metric-icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div></div>
                             <div class="metric-value" id="val-stock" style="color: var(--color-danger);">0</div>
                             <div class="metric-subtext" style="color: var(--color-danger);">Comprar insumos <i class="fa-solid fa-arrow-right" style="margin-left: 6px;"></i></div>
@@ -388,11 +387,11 @@
                     <div class="dashboard-row-1">
                         <div class="panel-block">
                             <div class="panel-header"><h3><i class="fa-solid fa-chart-pie"></i> Distribución Operativa</h3></div>
-                            <div class="chart-container"><canvas id="chartPedidos"></canvas></div>
+                            <div class="chart-container"><canvas id="chartPedidos" title="Porcentaje de pedidos en cada etapa de producción"></canvas></div>
                         </div>
                         <div class="panel-block">
                             <div class="panel-header"><h3><i class="fa-solid fa-chart-column"></i> Finanzas</h3></div>
-                            <div class="chart-container"><canvas id="chartFinanzas"></canvas></div>
+                            <div class="chart-container"><canvas id="chartFinanzas" title="Comparativa directa entre Ingresos (Verde) y Egresos (Rojo)"></canvas></div>
                         </div>
                         <div class="panel-block">
                             <div class="panel-header"><h3><i class="fa-solid fa-bolt"></i> Alertas</h3></div>
@@ -401,7 +400,7 @@
                     </div>
                     <div class="dashboard-row-2">
                         <div class="panel-block">
-                            <div class="panel-header"><h3><i class="fa-solid fa-list-check"></i> Actividad Reciente</h3><button class="btn btn-small" onclick="switchTab('pedidos')">Ver todo</button></div>
+                            <div class="panel-header"><h3><i class="fa-solid fa-list-check"></i> Actividad Reciente</h3><button class="btn btn-small" onclick="switchTab('pedidos')" title="Ver registro histórico completo">Ver todo</button></div>
                             <div class="table-wrapper">
                                 <table>
                                     <thead><tr><th>Ref</th><th>Cliente</th><th>Detalle Comercial</th><th>Status</th><th>Acción</th></tr></thead>
@@ -410,7 +409,7 @@
                             </div>
                         </div>
                         <div class="panel-block">
-                            <div class="panel-header"><h3><i class="fa-solid fa-boxes-stacked"></i> Inventario Crítico</h3><button class="btn btn-small" onclick="switchTab('stock')">Gestionar</button></div>
+                            <div class="panel-header"><h3><i class="fa-solid fa-boxes-stacked"></i> Inventario Crítico</h3><button class="btn btn-small" onclick="switchTab('stock')" title="Ir al panel de gestión de almacén">Gestionar</button></div>
                             <div id="dash-stock-list"></div>
                         </div>
                     </div>
@@ -483,7 +482,7 @@
                     <div class="panel-block">
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-boxes-stacked"></i> Control de Stock</h3>
-                            <button class="btn btn-primary btn-small" onclick="openModal('modalStock')"><i class="fa-solid fa-plus"></i> Ingresar Lote</button>
+                            <button class="btn btn-primary btn-small" onclick="openModal('modalStock')" title="Agregar una nueva ficha de producto al sistema"><i class="fa-solid fa-plus"></i> Ingresar Lote</button>
                         </div>
                         <div class="table-wrapper">
                             <table>
@@ -497,19 +496,23 @@
                 <!-- VISTA FINANZAS -->
                 <div id="section-finanzas" class="view-section">
                     <div class="finanzas-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px;">
-                        <div class="metric-card" style="border-top: 3px solid var(--color-success);">
+                        <div class="metric-card" style="border-top: 3px solid var(--color-success);" title="Totalidad de dinero que entró a caja">
                             <div class="metric-title" style="color: var(--color-success);">Caja Positiva <div class="metric-icon-box" style="color: var(--color-success); border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);"><i class="fa-solid fa-arrow-up"></i></div></div>
                             <div class="metric-value" id="fin-total-ingresos">$0</div>
                         </div>
-                        <div class="metric-card" style="border-top: 3px solid var(--color-danger);">
+                        <div class="metric-card" style="border-top: 3px solid var(--color-danger);" title="Totalidad de dinero gastado o invertido en el taller">
                             <div class="metric-title" style="color: var(--color-danger);">Caja Negativa <div class="metric-icon-box" style="color: var(--color-danger); border-color: rgba(244,63,94,0.2); background: rgba(244,63,94,0.05);"><i class="fa-solid fa-arrow-down"></i></div></div>
                             <div class="metric-value" id="fin-total-egresos">$0</div>
                         </div>
-                        <div class="metric-card" style="border-top: 3px solid var(--color-warning);">
+                        <div class="metric-card" style="border-top: 3px solid var(--color-warning);" title="Saldos pendientes de cobro a favor de VESA">
                             <div class="metric-title" style="color: var(--color-warning);">Capital Pendiente <div class="metric-icon-box" style="color: var(--color-warning); border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.05);"><i class="fa-solid fa-clock"></i></div></div>
                             <div class="metric-value" id="fin-total-deudas">$0</div>
                         </div>
-                        <div class="metric-card" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(56,189,248,0.05), rgba(15,23,42,0.6));">
+                        <div class="metric-card" style="border-top: 3px solid var(--color-purple);" title="Dinero de Santiago invertido por fuera del ecosistema del taller o ahorros personales">
+                            <div class="metric-title" style="color: var(--color-purple);">Capital Privado <div class="metric-icon-box" style="color: var(--color-purple); border-color: rgba(168, 85, 247, 0.2); background: rgba(168, 85, 247, 0.05);"><i class="fa-solid fa-user-tie"></i></div></div>
+                            <div class="metric-value" id="fin-fondo-privado">$0</div>
+                        </div>
+                        <div class="metric-card" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(56,189,248,0.05), rgba(15,23,42,0.6));" title="Ingresos reales menos Egresos (Rentabilidad neta del Taller)">
                             <div class="metric-title" style="color: var(--color-accent);">Flujo Libre (Profit) <div class="metric-icon-box"><i class="fa-solid fa-scale-balanced"></i></div></div>
                             <div class="metric-value" id="fin-profit-total">$0</div>
                         </div>
@@ -519,9 +522,10 @@
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-list-ul"></i> Movimientos de Caja</h3>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                <button class="btn btn-small" style="background: rgba(16,185,129,0.1); color: var(--color-success); border-color: rgba(16,185,129,0.3);" onclick="abrirAgregarFinanzasRapido('Ingreso')">+ Ingreso</button>
-                                <button class="btn btn-small" style="background: rgba(244,63,94,0.1); color: var(--color-danger); border-color: rgba(244,63,94,0.3);" onclick="abrirAgregarFinanzasRapido('Egreso')">- Egreso</button>
-                                <button class="btn btn-small" style="background: rgba(245,158,11,0.1); color: var(--color-warning); border-color: rgba(245,158,11,0.3);" onclick="abrirAgregarFinanzasRapido('Deuda')">+ Deuda</button>
+                                <button class="btn btn-small" style="background: rgba(16,185,129,0.1); color: var(--color-success); border-color: rgba(16,185,129,0.3);" onclick="abrirAgregarFinanzasRapido('Ingreso')" title="Cargar cobros o adelantos">+ Ingreso</button>
+                                <button class="btn btn-small" style="background: rgba(244,63,94,0.1); color: var(--color-danger); border-color: rgba(244,63,94,0.3);" onclick="abrirAgregarFinanzasRapido('Egreso')" title="Cargar compras de insumos o pagos">- Egreso</button>
+                                <button class="btn btn-small" style="background: rgba(245,158,11,0.1); color: var(--color-warning); border-color: rgba(245,158,11,0.3);" onclick="abrirAgregarFinanzasRapido('Deuda')" title="Asentar dinero que los clientes aún nos deben">+ Deuda</button>
+                                <button class="btn btn-small" style="background: rgba(168, 85, 247, 0.1); color: var(--color-purple); border-color: rgba(168, 85, 247, 0.3);" onclick="abrirAgregarFinanzasRapido('Fondo Privado')" title="Registrar ahorros o inversiones externas de Santiago">+ Capital Privado</button>
                             </div>
                         </div>
                         <div class="table-wrapper">
@@ -550,7 +554,7 @@
                                 </div>
                                 <div class="chat-input-area">
                                     <input type="text" class="chat-input" id="inbox-user-msg" placeholder="Escribí como un cliente (ej: 30 remeras con logo)..." onkeypress="handleChatKeyPress(event)">
-                                    <button class="btn btn-primary" onclick="sendMessageToInbox()" style="padding: 12px 18px; border-radius: 10px;"><i class="fa-solid fa-paper-plane"></i></button>
+                                    <button class="btn btn-primary" onclick="sendMessageToInbox()" style="padding: 12px 18px; border-radius: 10px;" title="Enviar mensaje al servidor de Inteligencia Artificial"><i class="fa-solid fa-paper-plane"></i></button>
                                 </div>
                             </div>
 
@@ -568,9 +572,9 @@
 
             <!-- BOTONERA INFERIOR -->
             <div class="bottom-actions">
-                <button class="btn btn-primary" onclick="openModal('modalPedido')"><i class="fa-solid fa-plus"></i> Ingresar Orden</button>
-                <button class="btn" onclick="openModal('modalCliente')"><i class="fa-solid fa-user-plus"></i> Alta Cliente</button>
-                <button class="btn" onclick="openModal('modalFinanzas')"><i class="fa-solid fa-cash-register"></i> Asentar Caja</button>
+                <button class="btn btn-primary" onclick="openModal('modalPedido')" title="Abre el asistente para crear una orden de trabajo y sumarla al tablero"><i class="fa-solid fa-plus"></i> Ingresar Orden</button>
+                <button class="btn" onclick="openModal('modalCliente')" title="Añade un nuevo cliente a la base de datos central"><i class="fa-solid fa-user-plus"></i> Alta Cliente</button>
+                <button class="btn" onclick="openModal('modalFinanzas')" title="Registra manualmente un movimiento de dinero en el libro contable"><i class="fa-solid fa-cash-register"></i> Asentar Caja</button>
             </div>
         </div>
 
@@ -589,7 +593,7 @@
             
             <div style="display: flex; gap: 10px; margin-top: 16px;">
                 <button class="btn btn-primary" onclick="closeModal('modalWelcomeAlert'); if(window.speechSynthesis) window.speechSynthesis.cancel();" style="flex: 1; justify-content: center;"><i class="fa-solid fa-power-off" style="margin-right: 6px;"></i> Iniciar Jornada</button>
-                <button class="btn" onclick="playVoiceReport(window.lastReportText)" style="padding: 12px 16px;" title="Repetir reporte de voz"><i class="fa-solid fa-volume-high"></i></button>
+                <button class="btn" onclick="playVoiceReport(window.lastReportText)" style="padding: 12px 16px;" title="Repetir reporte de voz de la IA"><i class="fa-solid fa-volume-high"></i></button>
             </div>
         </div>
     </div>
@@ -608,17 +612,71 @@
                     <div class="form-section-title" style="margin-top: 0;">Técnica y Cliente</div>
                     <div class="form-group">
                         <label>Razón Social / Cliente</label>
-                        <select class="form-control" id="form-ped-cliente"></select>
+                        <select class="form-control" id="form-ped-cliente" title="Selecciona un cliente previamente registrado en el directorio"></select>
                     </div>
                     <div class="form-group">
                         <label>Requerimiento (Cantidades y Tipo)</label>
                         <!-- AUTO-DETECT EVENT ADDED HERE -->
-                        <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: 15 remeras oversize negras L y XL" oninput="autoDetectStock()">
+                        <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: 15 remeras oversize negras L y XL" oninput="autoDetectStock()" title="El sistema intentará detectar automáticamente la cantidad y el artículo al escribir aquí">
                     </div>
 
                     <!-- NUEVA SECCIÓN DE AUTO-DETECCIÓN DE STOCK -->
                     <div class="form-section-title" style="margin-top: 8px;">📦 Inventario (Auto-Detección)</div>
                     <div class="form-row">
+                        <div class="form-group">
+                            <label>Insumo a descontar</label>
+                            <select class="form-control" id="form-ped-stock-item" title="Artículo de tu inventario que se restará al confirmar">
+                                <option value="">No descontar stock</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad</label>
+                            <input type="number" class="form-control" id="form-ped-stock-qty" placeholder="0" min="0" title="Unidades a restar de forma automática">
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="margin-top: 8px;">
+                        <div class="form-group">
+                            <label>Malla</label>
+                            <input type="text" class="form-control" id="form-ped-malla" placeholder="Ej: 43T o 62T">
+                        </div>
+                        <div class="form-group">
+                            <label>Tintas</label>
+                            <input type="text" class="form-control" id="form-ped-tintas" placeholder="Ej: Plastisol Blanco">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Referencia Visual</label>
+                        <input type="file" class="form-control" id="form-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;" title="Sube una foto del diseño menor a 1MB">
+                    </div>
+                </div>
+
+                <!-- Columna Derecha -->
+                <div class="modal-col">
+                    <div class="form-section-title" style="margin-top: 0;">Facturación y Logística</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Valor Total ($)</label>
+                            <input type="number" class="form-control" id="form-ped-monto" placeholder="Ej: 350000" title="Importe bruto que se sumará a tus finanzas">
+                        </div>
+                        <div class="form-group">
+                            <label>Fase de Inicio</label>
+                            <select class="form-control" id="form-ped-estado" title="Columna del tablero en la que aparecerá la orden">
+                                <option value="Presupuesto">Presupuesto Formal</option>
+                                <option value="Confirmado" selected>Confirmado (A Mesa)</option>
+                                <option value="En diseño">En diseño / Ajustes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Pago</label>
+                            <select class="form-control" id="form-ped-metodopago">
+                                <option value="Mercado Pago" selected>Mercado Pago</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Efectivo">Efectivo</option>
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label>Entrega</label>
                             <select class="form-control" id="form-ped-entrega">
@@ -638,7 +696,7 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="guardarNuevoPedido()" style="margin-top: 10px; justify-content: center;"><i class="fa-solid fa-check"></i> Generar Orden</button>
+            <button class="btn btn-primary" onclick="guardarNuevoPedido()" style="margin-top: 10px; justify-content: center;" title="Registra el pedido y actualiza el stock y finanzas automáticamente"><i class="fa-solid fa-check"></i> Generar Orden</button>
         </div>
     </div>
 
@@ -664,7 +722,7 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group"><label>Curado</label><input type="text" class="form-control" id="edit-ped-plancha"></div>
-                        <div class="form-group"><label>Actualizar Arte</label><input type="file" class="form-control" id="edit-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;"></div>
+                        <div class="form-group"><label>Actualizar Arte</label><input type="file" class="form-control" id="edit-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;" title="Si subís una nueva imagen se borrará la anterior"></div>
                     </div>
                 </div>
                 
@@ -675,7 +733,7 @@
                 </div>
             </div>
             
-            <button class="btn btn-primary" onclick="guardarEdicionPedido()" style="margin-top: 10px; justify-content: center;">Aplicar</button>
+            <button class="btn btn-primary" onclick="guardarEdicionPedido()" style="margin-top: 10px; justify-content: center;" title="Sobrescribe los datos en la base del sistema">Aplicar Cambios</button>
         </div>
     </div>
 
@@ -714,25 +772,24 @@
             <div style="text-align: center; margin-top:40px; border-top:2px dashed #cbd5e1; padding-top:16px;">
                 <p style="font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">VESA Core OS - Control Operativo: ______________________</p>
             </div>
-            <button class="btn btn-primary" onclick="window.print()" style="margin-top:20px; width:100%; justify-content:center;"><i class="fa-solid fa-print"></i> Imprimir Documento</button>
+            <button class="btn btn-primary" onclick="window.print()" style="margin-top:20px; width:100%; justify-content:center;" title="Abre el gestor de impresión para obtener la versión PDF"><i class="fa-solid fa-print"></i> Imprimir Documento</button>
         </div>
     </div>
 
     <!-- Otros Modales Básicos -->
     <div class="modal-overlay" id="modalCliente"><div class="modal-box"><div class="modal-header"><h3>Alta de Cliente</h3><button class="modal-close" onclick="closeModal('modalCliente')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="form-cli-nombre"></div><div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="form-cli-tel"></div><button class="btn btn-primary" onclick="guardarNuevoCliente()" style="margin-top:8px; justify-content:center;">Registrar Cliente</button></div></div>
     
-    <div class="modal-overlay" id="modalFinanzas"><div class="modal-box"><div class="modal-header"><h3>Registro Contable</h3><button class="modal-close" onclick="closeModal('modalFinanzas')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-row"><div class="form-group"><label>Operación</label><select class="form-control" id="form-fin-tipo"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso (-)</option><option value="Deuda">Cuenta por Cobrar (*)</option></select></div><div class="form-group"><label>Monto ($)</label><input type="number" class="form-control" id="form-fin-monto"></div></div><div class="form-group"><label>Concepto</label><input type="text" class="form-control" id="form-fin-detalle"></div><button class="btn btn-primary" onclick="guardarFinanzas()" style="margin-top:8px; justify-content:center;">Asentar</button></div></div>
+    <div class="modal-overlay" id="modalFinanzas"><div class="modal-box"><div class="modal-header"><h3>Registro Contable</h3><button class="modal-close" onclick="closeModal('modalFinanzas')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-row"><div class="form-group"><label>Operación</label><select class="form-control" id="form-fin-tipo"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso (-)</option><option value="Deuda">Cuenta por Cobrar (*)</option><option value="Fondo Privado">Capital Privado (Personal)</option></select></div><div class="form-group"><label>Monto ($)</label><input type="number" class="form-control" id="form-fin-monto"></div></div><div class="form-group"><label>Concepto</label><input type="text" class="form-control" id="form-fin-detalle"></div><button class="btn btn-primary" onclick="guardarFinanzas()" style="margin-top:8px; justify-content:center;" title="Carga el movimiento monetario en el libro diario">Asentar</button></div></div>
 
-    <div class="modal-overlay" id="modalStock"><div class="modal-box"><div class="modal-header"><h3>Adquisición de Insumos</h3><button class="modal-close" onclick="closeModal('modalStock')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-group"><label>Artículo</label><input type="text" class="form-control" id="form-stk-nombre"></div><div class="form-row"><div class="form-group"><label>Talle/Formato</label><input type="text" class="form-control" id="form-stk-talle"></div><div class="form-group"><label>Unidades</label><input type="number" class="form-control" id="form-stk-cant"></div></div><div class="form-group"><label>Alerta Mínima</label><input type="number" class="form-control" id="form-stk-min"></div><button class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar</button></div></div>
+    <div class="modal-overlay" id="modalStock"><div class="modal-box"><div class="modal-header"><h3>Adquisición de Insumos</h3><button class="modal-close" onclick="closeModal('modalStock')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-group"><label>Artículo</label><input type="text" class="form-control" id="form-stk-nombre"></div><div class="form-row"><div class="form-group"><label>Talle/Formato</label><input type="text" class="form-control" id="form-stk-talle"></div><div class="form-group"><label>Unidades</label><input type="number" class="form-control" id="form-stk-cant"></div></div><div class="form-group"><label>Alerta Mínima</label><input type="number" class="form-control" id="form-stk-min" title="Si la cantidad baja de este número, el panel mostrará una alerta roja"></div><button class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar al Inventario</button></div></div>
 
-    <!-- MODALES DE EDICIÓN FALTANTES -->
     <div class="modal-overlay" id="modalEditCliente"><div class="modal-box"><div class="modal-header"><h3>Editar Cliente</h3><button class="modal-close" onclick="closeModal('modalEditCliente')"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" id="edit-cli-id-doc"><input type="hidden" id="edit-cli-id-local"><div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="edit-cli-nombre"></div><div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="edit-cli-tel"></div><div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="edit-cli-ig"></div><button class="btn btn-primary" onclick="guardarEdicionCliente()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button></div></div>
     
-    <div class="modal-overlay" id="modalEditFinanzas"><div class="modal-box"><div class="modal-header"><h3>Editar Registro Contable</h3><button class="modal-close" onclick="closeModal('modalEditFinanzas')"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" id="edit-fin-id-doc"><input type="hidden" id="edit-fin-id-local"><div class="form-row"><div class="form-group"><label>Operación</label><select class="form-control" id="edit-fin-tipo"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso (-)</option><option value="Deuda">Cuenta por Cobrar (*)</option></select></div><div class="form-group"><label>Monto ($)</label><input type="number" class="form-control" id="edit-fin-monto"></div></div><div class="form-group"><label>Concepto</label><input type="text" class="form-control" id="edit-fin-detalle"></div><button class="btn btn-primary" onclick="guardarEdicionFinanzas()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button></div></div>
+    <div class="modal-overlay" id="modalEditFinanzas"><div class="modal-box"><div class="modal-header"><h3>Editar Registro Contable</h3><button class="modal-close" onclick="closeModal('modalEditFinanzas')"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" id="edit-fin-id-doc"><input type="hidden" id="edit-fin-id-local"><div class="form-row"><div class="form-group"><label>Operación</label><select class="form-control" id="edit-fin-tipo"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso (-)</option><option value="Deuda">Cuenta por Cobrar (*)</option><option value="Fondo Privado">Capital Privado (Personal)</option></select></div><div class="form-group"><label>Monto ($)</label><input type="number" class="form-control" id="edit-fin-monto"></div></div><div class="form-group"><label>Concepto</label><input type="text" class="form-control" id="edit-fin-detalle"></div><button class="btn btn-primary" onclick="guardarEdicionFinanzas()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button></div></div>
 
     <div class="modal-overlay" id="modalEditStock"><div class="modal-box"><div class="modal-header"><h3>Editar Insumo</h3><button class="modal-close" onclick="closeModal('modalEditStock')"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" id="edit-stk-id-doc"><input type="hidden" id="edit-stk-id-local"><div class="form-group"><label>Artículo</label><input type="text" class="form-control" id="edit-stk-nombre"></div><div class="form-row"><div class="form-group"><label>Talle/Formato</label><input type="text" class="form-control" id="edit-stk-talle"></div><div class="form-group"><label>Unidades</label><input type="number" class="form-control" id="edit-stk-cant"></div></div><div class="form-group"><label>Alerta Mínima</label><input type="number" class="form-control" id="edit-stk-min"></div><button class="btn btn-primary" onclick="guardarEdicionStock()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button></div></div>
 
-    <div class="modal-overlay" id="modalConfigFirebase"><div class="modal-box"><div class="modal-header"><h3>Acceso a Base de Datos</h3><button class="modal-close" onclick="closeModal('modalConfigFirebase')"><i class="fa-solid fa-xmark"></i></button></div><p style="font-size:12px; color:var(--color-text-secondary); line-height: 1.4;">Infraestructura gestionada por Vercel. Uso manual exclusivo para depuración técnica.</p><div class="form-group"><label>Clúster ID (Sala)</label><input type="text" class="form-control" id="form-fb-appid-custom" readonly></div><div class="form-group"><label>Estado</label><input type="text" class="form-control" id="form-fb-status" value="Gestionado por Backend" readonly style="color: var(--color-success);"></div><div style="display:flex;gap:10px; margin-top: 8px;"><button class="btn btn-danger" onclick="limpiarConfigFirebaseCustom()" style="flex:1; justify-content:center;"><i class="fa-solid fa-rotate-left"></i> Resetear Red</button></div></div></div>
+    <div class="modal-overlay" id="modalConfigFirebase"><div class="modal-box"><div class="modal-header"><h3>Acceso a Base de Datos</h3><button class="modal-close" onclick="closeModal('modalConfigFirebase')"><i class="fa-solid fa-xmark"></i></button></div><p style="font-size:12px; color:var(--color-text-secondary); line-height: 1.4;">Infraestructura gestionada por Vercel. Uso manual exclusivo para depuración técnica.</p><div class="form-group"><label>Clúster ID (Sala)</label><input type="text" class="form-control" id="form-fb-appid-custom" readonly></div><div class="form-group"><label>Estado</label><input type="text" class="form-control" id="form-fb-status" value="Gestionado por Backend" readonly style="color: var(--color-success);"></div><div style="display:flex;gap:10px; margin-top: 8px;"><button class="btn btn-danger" onclick="limpiarConfigFirebaseCustom()" style="flex:1; justify-content:center;" title="Fuerza un reinicio de la conexión segura"><i class="fa-solid fa-rotate-left"></i> Resetear Red</button></div></div></div>
 
     <!-- PANTALLA DE SESIÓN VENCIDA -->
     <div id="session-expired-screen">
@@ -973,7 +1030,7 @@
             var tbody = document.getElementById("clientes-tbody"); tbody.innerHTML = "";
             appState.clientes.forEach(function(c) {
                 var docIdSegura = c.docId ? `'${c.docId}'` : 'null';
-                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${c.nombre}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${c.whatsapp}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${c.instagram}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${c.nombre}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${c.whatsapp}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${c.instagram}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
         function renderStockTable() {
@@ -982,7 +1039,7 @@
                 var docIdSegura = s.docId ? `'${s.docId}'` : 'null';
                 var isLow = s.cantidad <= s.minimo;
                 var badge = isLow ? `<span class="badge" style="background:rgba(244, 63, 94, 0.1); color:var(--color-danger); border-color: rgba(244, 63, 94, 0.3);">Quiebre</span>` : `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color: rgba(16, 185, 129, 0.3);">Estable</span>`;
-                tbody.innerHTML += `<tr class="${isLow ? 'low-stock-row' : ''}"><td>#${s.id}</td><td style="font-weight:700;">${s.item}</td><td>${s.talle}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td>${badge}</td><td><div style="display:flex; gap:6px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbody.innerHTML += `<tr><td>#${s.id}</td><td style="font-weight:700;">${s.item}</td><td>${s.talle}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td>${badge}</td><td><div style="display:flex; gap:6px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})" title="Modificar cantidades o límites"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})" title="Remover insumo de la base de datos"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
         function renderFinanzasTable() {
@@ -993,15 +1050,18 @@
             appState.finanzas.forEach(function(f) {
                 var docIdSegura = f.docId ? `'${f.docId}'` : 'null';
                 var colorMonto = 'var(--color-text-primary)'; var badgeHtml = ''; var iconHtml = '';
-                if (f.tipo === 'Inversion') { colorMonto = 'var(--color-purple)'; badgeHtml = `<span class="badge" style="background:rgba(157, 78, 221, 0.1); color:var(--color-purple); border-color:rgba(157, 78, 221, 0.3);">Capital</span>`; iconHtml = `<i class="fa-solid fa-chart-line" style="color:var(--color-purple); font-size:16px; width:20px; text-align:center;"></i>`; sumInv += f.monto; } 
+                if (f.tipo === 'Inversion' || f.tipo === 'Fondo Privado') { colorMonto = 'var(--color-purple)'; badgeHtml = `<span class="badge" style="background:rgba(168, 85, 247, 0.15); color:var(--color-purple); border-color:rgba(168, 85, 247, 0.3);">Privado</span>`; iconHtml = `<i class="fa-solid fa-user-tie" style="color:var(--color-purple); font-size:16px; width:20px; text-align:center;"></i>`; sumInv += f.monto; } 
                 else if (f.tipo === 'Egreso') { colorMonto = 'var(--color-danger)'; badgeHtml = `<span class="badge" style="background:rgba(244, 63, 94, 0.1); color:var(--color-danger); border-color:rgba(244, 63, 94, 0.3);">Gasto</span>`; iconHtml = `<i class="fa-solid fa-arrow-down" style="color:var(--color-danger); font-size:16px; width:20px; text-align:center;"></i>`; sumE += f.monto; } 
                 else if (f.tipo === 'Deuda') { colorMonto = 'var(--color-warning)'; badgeHtml = `<span class="badge" style="background:rgba(245, 158, 11, 0.1); color:var(--color-warning); border-color:rgba(245, 158, 11, 0.3);">Pendiente</span>`; iconHtml = `<i class="fa-solid fa-clock" style="color:var(--color-warning); font-size:16px; width:20px; text-align:center;"></i>`; sumD += f.monto; } 
-                else { colorMonto = 'var(--color-success)'; badgeHtml = `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color:rgba(16, 185, 129, 0.3);">Venta</span>`; iconHtml = `<i class="fa-solid fa-arrow-up" style="color:var(--color-success); font-size:16px; width:20px; text-align:center;"></i>`; sumI += f.monto; }
+                else if (f.tipo === 'Ingreso') { colorMonto = 'var(--color-success)'; badgeHtml = `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color:rgba(16, 185, 129, 0.3);">Venta</span>`; iconHtml = `<i class="fa-solid fa-arrow-up" style="color:var(--color-success); font-size:16px; width:20px; text-align:center;"></i>`; sumI += f.monto; }
+                else { colorMonto = 'var(--color-text-secondary)'; badgeHtml = `<span class="badge" style="background:rgba(255, 255, 255, 0.1); color:white;">Otro</span>`; iconHtml = `<i class="fa-solid fa-circle-question" style="color:white; font-size:16px; width:20px; text-align:center;"></i>`; }
 
-                tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<span style="font-weight:700; color:white;">${f.detalle}</span></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${f.tipo === 'Deuda' ? `<button class="btn btn-small" style="background:var(--color-success); color:black; border:none;" onclick="cobrarDeuda(${docIdSegura}, ${f.id})" title="Acreditar"><i class="fa-solid fa-check"></i></button>` : ''}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarFinanzas(${docIdSegura}, ${f.id})"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarFinanzas(${docIdSegura}, ${f.id})"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<span style="font-weight:700; color:white;">${f.detalle}</span></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${f.tipo === 'Deuda' ? `<button class="btn btn-small" style="background:var(--color-success); color:black; border:none;" onclick="cobrarDeuda(${docIdSegura}, ${f.id})" title="Marcar deuda como cobrada a favor"><i class="fa-solid fa-check"></i></button>` : ''}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarFinanzas(${docIdSegura}, ${f.id})" title="Editar monto o detalle del registro"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarFinanzas(${docIdSegura}, ${f.id})" title="Eliminar registro contable"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
             if (tbodyMain.innerHTML === "") tbodyMain.innerHTML = `<tr><td colspan="6" class="empty-placeholder"><i class="fa-solid fa-money-bill-transfer"></i>Libro contable vacío.</td></tr>`;
             document.getElementById("fin-total-ingresos").innerText = "$" + sumI.toLocaleString('es-AR'); document.getElementById("fin-total-egresos").innerText = "$" + sumE.toLocaleString('es-AR'); document.getElementById("fin-total-deudas").innerText = "$" + sumD.toLocaleString('es-AR');
+            if (document.getElementById("fin-fondo-privado")) document.getElementById("fin-fondo-privado").innerText = "$" + sumInv.toLocaleString('es-AR');
+            
             var profitTotal = sumI - sumE; var profitEl = document.getElementById("fin-profit-total"); profitEl.innerText = "$" + profitTotal.toLocaleString('es-AR'); profitEl.style.color = profitTotal >= 0 ? "var(--color-accent)" : "var(--color-danger)"; 
         }
 
@@ -1037,9 +1097,9 @@
                         <td style="font-weight:800; font-family:'Space Mono'; color:var(--color-accent);">$${p.monto.toLocaleString('es-AR')}</td>
                         <td>
                             <div style="display:flex; gap:6px;">
-                                <button class="btn btn-small" style="background:rgba(56, 189, 248, 0.1); color: var(--color-accent); border-color: rgba(56, 189, 248, 0.3);" onclick="generarFichaTecnica(${p.id})" title="Ficha PDF"><i class="fa-solid fa-file-lines"></i> Ficha</button>
-                                <button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarPedido(${docIdSegura}, ${p.id})"><i class="fa-solid fa-pen"></i></button>
-                                <button class="btn btn-small btn-danger" onclick="eliminarPedido(${docIdSegura}, ${p.id})"><i class="fa-solid fa-trash"></i></button>
+                                <button class="btn btn-small" style="background:rgba(56, 189, 248, 0.1); color: var(--color-accent); border-color: rgba(56, 189, 248, 0.3);" onclick="generarFichaTecnica(${p.id})" title="Descargar Ficha Técnica PDF para el Taller"><i class="fa-solid fa-file-lines"></i> Ficha</button>
+                                <button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarPedido(${docIdSegura}, ${p.id})" title="Editar parámetros técnicos o de facturación"><i class="fa-solid fa-pen"></i></button>
+                                <button class="btn btn-small btn-danger" onclick="eliminarPedido(${docIdSegura}, ${p.id})" title="Eliminar orden por completo"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </td>
                     </tr>
@@ -1492,19 +1552,6 @@
             chart1.data.datasets[0].data = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado]; chart1.update();
             var ingresos = appState.finanzas.filter(f => f.tipo === "Ingreso").reduce((acc, f) => acc + f.monto, 0); var egresos = appState.finanzas.filter(f => f.tipo === "Egreso").reduce((acc, f) => acc + f.monto, 0);
             chart2.data.datasets[0].data = [ingresos, egresos]; chart2.update();
-        }
-
-        function goToStockAndHighlight() {
-            switchTab('stock');
-            // Pequeño delay para dejar que la animación de la pestaña termine antes de iluminar
-            setTimeout(() => {
-                const lowRows = document.querySelectorAll('.low-stock-row');
-                lowRows.forEach(row => {
-                    row.classList.remove('flash-danger');
-                    void row.offsetWidth; // Forzar reflow (reiniciar animación)
-                    row.classList.add('flash-danger');
-                });
-            }, 150);
         }
 
         // EXPORTACIONES A WINDOW

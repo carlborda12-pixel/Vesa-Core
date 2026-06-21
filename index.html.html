@@ -193,24 +193,6 @@
         .k-card-title span:first-child { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--color-accent); background: rgba(56,189,248,0.1); padding: 4px 8px; border-radius: 6px; }
         .k-card-desc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.4; font-weight: 500;}
 
-        /* SECCIÓN DE ASISTENTE IA (CHAT & CONSOLA) */
-        .chat-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; height: 480px; max-height: 60vh; }
-        .chat-box-area { background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-glass); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
-        .chat-bubble { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 13px; line-height: 1.5; font-weight: 500; }
-        .chat-bubble.system { background: rgba(255,255,255,0.05); border-bottom-left-radius: 4px; align-self: flex-start; border: 1px solid var(--border-glass); color: var(--color-text-primary); }
-        .chat-bubble.user { background: linear-gradient(135deg, var(--color-accent), #0077ff); border-bottom-right-radius: 4px; align-self: flex-end; color: #000; font-weight: 700; }
-        .chat-input-area { display: flex; padding: 14px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-glass); gap: 10px; }
-        .chat-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 16px; color: white; outline: none; font-size: 13px; transition: border-color 0.2s; }
-        .chat-input:focus { border-color: var(--color-accent); }
-        
-        .integration-console { background: #020617; border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 16px; padding: 20px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--color-accent); display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-        .console-line { line-height: 1.4; }
-        .console-line.header { color: #fff; font-weight: bold; margin-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 8px;}
-        .console-line.success { color: var(--color-success); }
-        .console-line.warn { color: var(--color-warning); }
-        .console-line.danger { color: var(--color-danger); }
-
         /* MODALES */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.85); z-index: 2000; align-items: center; justify-content: center; animation: fadeInModal 0.2s ease-out; overflow-y: auto; padding: 20px; }
         .modal-overlay.active { display: flex; }
@@ -262,8 +244,6 @@
             .dashboard-row-1, .dashboard-row-2 { grid-template-columns: 1fr; }
             .form-row { grid-template-columns: 1fr; gap: 16px; }
             .main-content { padding: 24px; }
-            .chat-layout { grid-template-columns: 1fr; height: auto; max-height: none; }
-            .integration-console { height: 200px; }
         }
         @media (max-width: 768px) {
             body { flex-direction: column; padding-top: 60px; }
@@ -288,18 +268,6 @@
     <div class="ambient-bg">
         <div class="glow-blob glow-1"></div>
         <div class="glow-blob glow-2"></div>
-    </div>
-
-    <!-- PANTALLA DE SESIÓN CADUCADA (CRÍTICA) -->
-    <div id="session-expired-screen">
-        <div class="expired-box">
-            <div class="expired-icon"><i class="fa-solid fa-lock"></i></div>
-            <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 10px; color: white;">Sesión Expirada</h2>
-            <p style="color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; margin-bottom: 24px;">Por motivos de seguridad, tu token de acceso a la base de datos ha caducado. Debes volver a autenticarte.</p>
-            <button class="btn btn-primary" onclick="window.location.reload()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--color-danger), #be123c); border: none;" title="Volver a cargar el sistema VESA">
-                <i class="fa-solid fa-rotate-right"></i> Recargar
-            </button>
-        </div>
     </div>
 
     <!-- CONTENEDOR DE LA APP -->
@@ -580,7 +548,12 @@
                     <div class="form-section-title" style="margin-top: 0;">Técnica y Cliente</div>
                     <div class="form-group">
                         <label>Razón Social / Cliente</label>
-                        <select class="form-control" id="form-ped-cliente" title="Selecciona un cliente previamente registrado en el directorio"></select>
+                        <div style="display: flex; gap: 8px;">
+                            <select class="form-control" id="form-ped-cliente" style="flex: 1;" title="Selecciona un cliente previamente registrado en el directorio"></select>
+                            <button class="btn" style="padding: 10px 14px; border-radius: 10px; font-size: 12px;" onclick="openModalClienteDesdePedido()" title="Registrar un cliente nuevo sin salir de esta pantalla">
+                                <i class="fa-solid fa-user-plus"></i> Nuevo
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Requerimiento (Cantidades y Tipo)</label>
@@ -745,7 +718,18 @@
     </div>
 
     <!-- Otros Modales Básicos -->
-    <div class="modal-overlay" id="modalCliente"><div class="modal-box"><div class="modal-header"><h3>Alta de Cliente</h3><button class="modal-close" onclick="closeModal('modalCliente')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="form-cli-nombre"></div><div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="form-cli-tel"></div><button class="btn btn-primary" onclick="guardarNuevoCliente()" style="margin-top:8px; justify-content:center;">Registrar Cliente</button></div></div>
+    <div class="modal-overlay" id="modalCliente">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Alta de Cliente</h3>
+                <button class="modal-close" onclick="closeModal('modalCliente')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="form-cli-nombre"></div>
+            <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="form-cli-tel" placeholder="Ej: +54 9..."></div>
+            <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="form-cli-ig" placeholder="Ej: @usuario"></div>
+            <button class="btn btn-primary" onclick="guardarNuevoCliente()" style="margin-top:8px; justify-content:center;">Registrar Cliente</button>
+        </div>
+    </div>
     
     <div class="modal-overlay" id="modalFinanzas"><div class="modal-box"><div class="modal-header"><h3>Registro Contable</h3><button class="modal-close" onclick="closeModal('modalFinanzas')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-row"><div class="form-group"><label>Operación</label><select class="form-control" id="form-fin-tipo"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso (-)</option><option value="Deuda">Cuenta por Cobrar (*)</option><option value="Fondo Privado">Capital Privado (Personal)</option></select></div><div class="form-group"><label>Monto ($)</label><input type="number" class="form-control" id="form-fin-monto"></div></div><div class="form-group"><label>Concepto</label><input type="text" class="form-control" id="form-fin-detalle"></div><button class="btn btn-primary" onclick="guardarFinanzas()" style="margin-top:8px; justify-content:center;" title="Carga el movimiento monetario en el libro diario">Asentar</button></div></div>
 
@@ -765,7 +749,7 @@
             <div class="expired-icon"><i class="fa-solid fa-lock"></i></div>
             <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 10px; color: white;">Sesión Expirada</h2>
             <p style="color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; margin-bottom: 24px;">Por motivos de seguridad, tu token de acceso a la base de datos ha caducado. Debes volver a autenticarte.</p>
-            <button class="btn btn-primary" onclick="window.location.reload()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--color-danger), #be123c); border: none;">
+            <button class="btn btn-primary" onclick="window.location.reload()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--color-danger), #be123c); border: none;" title="Volver a cargar el sistema VESA">
                 <i class="fa-solid fa-rotate-right"></i> Recargar
             </button>
         </div>
@@ -809,6 +793,9 @@
         var chart1 = null, chart2 = null;
         var welcomeShown = sessionStorage.getItem("vesa_welcome_shown");
         var lastReportText = "";
+
+        // Variable global para saber si el modal de cliente se abrió desde el de pedido
+        var returnToPedidoModal = false;
 
         // ESTADO INICIAL
         var defaultState = { 
@@ -1052,6 +1039,18 @@
             }
         }
 
+        // Lógica para abrir modal de cliente desde el modal de pedido sin perder estado
+        function openModalClienteDesdePedido() {
+            returnToPedidoModal = true;
+            document.getElementById('modalPedido').classList.remove('active');
+            
+            // Limpiamos los campos del cliente
+            document.getElementById("form-cli-nombre").value = "";
+            document.getElementById("form-cli-tel").value = "";
+            
+            openModal('modalCliente');
+        }
+
         // --- RENDER PEDIDOS Y KANBAN ---
         function renderPedidosTable() {
             var tbody = document.getElementById("pedidos-tbody"); tbody.innerHTML = "";
@@ -1101,17 +1100,86 @@
         }
 
         // --- NAVEGACIÓN Y TABS ---
+        let tabHistory = [];
+        let currentTabId = 'dashboard';
+
         function toggleSidebar(open) { var sidebar = document.getElementById("app-sidebar"); var overlay = document.getElementById("sidebar-overlay"); if (open) { sidebar.classList.add("active"); overlay.classList.add("active"); } else { sidebar.classList.remove("active"); overlay.classList.remove("active"); } }
         
-        function switchTab(tabId) {
+        function switchTab(tabId, isGoBack = false) {
+            if (currentTabId === tabId) return;
+            
+            // Si no estamos volviendo atrás, guardamos la pestaña actual en el historial
+            if (!isGoBack) {
+                tabHistory.push(currentTabId);
+            }
+            currentTabId = tabId;
+
             document.querySelectorAll('.view-section').forEach(sec => { sec.classList.remove('active'); sec.style.animation = 'none'; sec.offsetHeight; sec.style.animation = null; });
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-            document.getElementById('section-' + tabId).classList.add('active'); document.querySelectorAll('.menu-item').forEach(item => { if(item.innerText.toLowerCase().includes(tabId.split('-')[0])) item.classList.add('active'); }); toggleSidebar(false);
-            if(tabId==='kanban') renderKanbanBoard();
+            document.getElementById('section-' + tabId).classList.add('active'); 
+            
+            // Actualizado para que el marcador izquierdo del menú resalte correctamente
+            document.querySelectorAll('.menu-item').forEach(item => { 
+                if(item.getAttribute('onclick') && item.getAttribute('onclick').includes(tabId)) {
+                    item.classList.add('active');
+                }
+            }); 
+            
+            toggleSidebar(false);
+            if(tabId === 'kanban') renderKanbanBoard();
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function goBackTab() {
+            if (tabHistory.length > 0) {
+                let prevTab = tabHistory.pop();
+                switchTab(prevTab, true);
+            }
+        }
+
+        // Atajos de Teclado (Escape y Retroceso) para volver a la pestaña anterior
+        document.addEventListener('keydown', function(event) {
+            const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            const isInput = activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select';
+            
+            if (event.key === 'Escape') {
+                const activeModal = document.querySelector('.modal-overlay.active');
+                if (activeModal) { // Si hay un modal, Escape lo cierra (UX nativo)
+                    activeModal.classList.remove('active');
+                    if (returnToPedidoModal && activeModal.id === 'modalCliente') {
+                        document.getElementById('modalPedido').classList.add('active');
+                        returnToPedidoModal = false;
+                    }
+                    return;
+                }
+                if (!isInput) {
+                    event.preventDefault();
+                    goBackTab();
+                }
+                return;
+            }
+
+            // Retroceso (Backspace) vuelve a la pestaña anterior si no estamos escribiendo en un formulario
+            if (event.key === 'Backspace' && !isInput) {
+                event.preventDefault();
+                goBackTab();
+            }
+        });
+
+        function openModal(id) { 
+            // Resetear la bandera si abrimos cualquier modal que no sea el flujo de cliente
+            if(id !== 'modalCliente') returnToPedidoModal = false;
+            document.getElementById(id).classList.add('active'); 
+        }
+
+        function closeModal(id) { 
+            document.getElementById(id).classList.remove('active'); 
+            
+            // Si cerramos el modal de cliente (cancelando o por X) y veníamos del pedido, volvemos
+            if(id === 'modalCliente' && returnToPedidoModal) {
+                document.getElementById('modalPedido').classList.add('active');
+                returnToPedidoModal = false;
+            }
+        }
 
         // --- KANBAN DRAG & DROP ---
         function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add("drag-over"); }
@@ -1195,6 +1263,7 @@
             var stockQty = parseInt(document.getElementById("form-ped-stock-qty").value) || 0;
 
             if (!detalle) { showToast("Error", "Se requiere el detalle para abrir la OT.", true); return; }
+            if (!cliente) { showToast("Error", "Debes seleccionar o crear un cliente.", true); return; }
             
             var fileInput = document.getElementById("form-ped-arte-file");
             var arteUrl = "";
@@ -1303,22 +1372,42 @@
 
         // --- CRUD CLIENTES ---
         async function guardarNuevoCliente() {
-            var nombre = document.getElementById("form-cli-nombre").value; var whatsapp = document.getElementById("form-cli-tel").value; var ig = document.getElementById("form-cli-ig").value;
+            var nombre = document.getElementById("form-cli-nombre").value; var whatsapp = document.getElementById("form-cli-tel").value; var ig = document.getElementById("form-cli-ig") ? document.getElementById("form-cli-ig").value : "";
             if (!nombre || !whatsapp) { showToast("Error", "Razón Social y WhatsApp son obligatorios.", true); return; }
             var nuevoId = appState.clientes.length > 0 ? Math.max(...appState.clientes.map(c=>c.id)) + 1 : 1;
             var nuevoCli = { id: nuevoId, nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
-            if (hasFirebase && authUser) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli); } catch(e){ } } 
-            else { appState.clientes.push(nuevoCli); saveToLocalStorage(); renderAll(); }
-            closeModal('modalCliente'); showToast("Carga Lista", `Cliente agendado.`);
+            
+            if (hasFirebase && authUser) { 
+                try { await db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli); } catch(e){ } 
+            } else { 
+                appState.clientes.push(nuevoCli); saveToLocalStorage(); renderAll(); 
+            }
+            
+            // Lógica de retorno mágico al modal de pedido
+            if(returnToPedidoModal) {
+                document.getElementById('modalCliente').classList.remove('active');
+                populateDropdowns(); // Actualizar las listas
+                document.getElementById('form-ped-cliente').value = nombre; // Auto-seleccionar el nuevo cliente
+                document.getElementById('modalPedido').classList.add('active'); // Reabrir el pedido
+                returnToPedidoModal = false;
+            } else {
+                closeModal('modalCliente'); 
+            }
+            
+            document.getElementById("form-cli-nombre").value = ""; 
+            document.getElementById("form-cli-tel").value = "";
+            if (document.getElementById("form-cli-ig")) document.getElementById("form-cli-ig").value = "";
+            
+            showToast("Carga Lista", `Cliente agendado.`);
         }
         function abrirEditarCliente(docId, localId) {
             var c = appState.clientes.find(x => x.id === localId); if (!c) return;
             document.getElementById("edit-cli-id-doc").value = docId || ''; document.getElementById("edit-cli-id-local").value = localId;
-            document.getElementById("edit-cli-nombre").value = c.nombre; document.getElementById("edit-cli-tel").value = c.whatsapp; document.getElementById("edit-cli-ig").value = c.instagram; openModal('modalEditCliente');
+            document.getElementById("edit-cli-nombre").value = c.nombre; document.getElementById("edit-cli-tel").value = c.whatsapp; if(document.getElementById("edit-cli-ig")) document.getElementById("edit-cli-ig").value = c.instagram; openModal('modalEditCliente');
         }
         async function guardarEdicionCliente() {
             var docId = document.getElementById("edit-cli-id-doc").value; var localId = parseInt(document.getElementById("edit-cli-id-local").value);
-            var nombre = document.getElementById("edit-cli-nombre").value.trim(); var whatsapp = document.getElementById("edit-cli-tel").value.trim(); var ig = document.getElementById("edit-cli-ig").value.trim();
+            var nombre = document.getElementById("edit-cli-nombre").value.trim(); var whatsapp = document.getElementById("edit-cli-tel").value.trim(); var ig = document.getElementById("edit-cli-ig") ? document.getElementById("edit-cli-ig").value.trim() : "";
             var updatedData = { nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
             if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).update(updatedData); } catch(e) {} } 
             else { var idx = appState.clientes.findIndex(x => x.id === localId); if (idx !== -1) { var viejoNombre = appState.clientes[idx].nombre; appState.clientes[idx] = { ...appState.clientes[idx], ...updatedData }; appState.pedidos.forEach((p, pIdx) => { if (p.cliente === viejoNombre) { appState.pedidos[pIdx].cliente = nombre; } }); saveToLocalStorage(); renderAll(); } }
@@ -1430,9 +1519,8 @@
         window.guardarFinanzas = guardarFinanzas; window.guardarEdicionFinanzas = guardarEdicionFinanzas; window.eliminarFinanzas = eliminarFinanzas; window.cobrarDeuda = cobrarDeuda; window.abrirAgregarFinanzasRapido = abrirAgregarFinanzasRapido;
         window.guardarStock = guardarStock; window.guardarEdicionStock = guardarEdicionStock; window.eliminarStock = eliminarStock;
         window.abrirEditarCliente = abrirEditarCliente; window.abrirEditarStock = abrirEditarStock; window.abrirEditarFinanzas = abrirEditarFinanzas;
-        window.abrirEditarPedido = abrirEditarPedido;
+        window.abrirEditarPedido = abrirEditarPedido; window.openModalClienteDesdePedido = openModalClienteDesdePedido;
         window.generarFichaTecnica = generarFichaTecnica; window.allowDrop = allowDrop; window.drop = drop;
-        window.confirmarDescuentoStock = confirmarDescuentoStock; window.omitirDescuentoStock = omitirDescuentoStock;
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
         window.playVoiceReport = playVoiceReport; 
         window.autoDetectStock = autoDetectStock; window.goToStockAndHighlight = goToStockAndHighlight;

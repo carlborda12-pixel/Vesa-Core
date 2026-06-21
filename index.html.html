@@ -1166,7 +1166,8 @@
                         <td style="font-weight:800; font-family:'Space Mono'; color:var(--color-accent);">$${p.monto.toLocaleString('es-AR')}</td>
                         <td>
                             <div style="display:flex; gap:6px;">
-                                <button class="btn btn-small" style="background:rgba(56, 189, 248, 0.1); color: var(--color-accent); border-color: rgba(56, 189, 248, 0.3);" onclick="generarFichaTecnica(${p.id})" title="Descargar Ficha Técnica PDF para el Taller"><i class="fa-solid fa-file-lines"></i> Ficha</button>
+                                <button class="btn btn-small" style="background:rgba(56, 189, 248, 0.1); color: var(--color-accent); border-color: rgba(56, 189, 248, 0.3);" onclick="generarFichaTecnica(${p.id})" title="Ver Ficha Técnica"><i class="fa-solid fa-eye"></i></button>
+                                <button class="btn btn-small" style="background:rgba(16, 185, 129, 0.1); color: var(--color-success); border-color: rgba(16, 185, 129, 0.3);" onclick="descargarFichaDirecta(${p.id})" title="Descargar Ficha en PDF"><i class="fa-solid fa-download"></i></button>
                                 <button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarPedido(${docIdSegura}, ${p.id})" title="Editar parámetros técnicos o de facturación"><i class="fa-solid fa-pen"></i></button>
                                 <button class="btn btn-small btn-danger" onclick="eliminarPedido(${docIdSegura}, ${p.id})" title="Eliminar orden por completo"><i class="fa-solid fa-trash"></i></button>
                             </div>
@@ -1382,6 +1383,11 @@
             document.getElementById("edit-ped-id-doc").value = docId || ''; document.getElementById("edit-ped-id-local").value = localId;
             populateDropdowns(); 
             document.getElementById("edit-ped-cliente").value = p.cliente; 
+            
+            // Lógica para manejar pedidos antiguos sin array de items
+            currentOrderItems = p.items ? JSON.parse(JSON.stringify(p.items)) : []; 
+            renderOrderItems();
+
             document.getElementById("edit-ped-detalle").value = p.detalle || ''; 
             document.getElementById("edit-ped-monto").value = p.monto || 0; 
             document.getElementById("edit-ped-sena").value = p.sena || 0; 
@@ -1392,12 +1398,29 @@
 
         async function guardarEdicionPedido() {
             var docId = document.getElementById("edit-ped-id-doc").value; var localId = parseInt(document.getElementById("edit-ped-id-local").value);
-            var cliente = document.getElementById("edit-ped-cliente").value; var detalle = document.getElementById("edit-ped-detalle").value.trim(); 
+            var cliente = document.getElementById("edit-ped-cliente").value; var observaciones = document.getElementById("edit-ped-detalle").value.trim(); 
             var monto = parseInt(document.getElementById("edit-ped-monto").value) || 0; 
             var sena = parseInt(document.getElementById("edit-ped-sena").value) || 0; 
             var estado = document.getElementById("edit-ped-estado").value; 
             var malla = document.getElementById("edit-ped-malla").value.trim(); var tintas = document.getElementById("edit-ped-tintas").value.trim(); var plancha = document.getElementById("edit-ped-plancha").value.trim();
-            var updatedData = { cliente: cliente, detalle: detalle, estado: estado, monto: monto, sena: sena, saldo: monto - sena, malla: malla, tintas: tintas, plancha: plancha };
+            
+            // Reconstruir el detalle si hay items en el carrito (para pedidos viejos que se editan)
+            let detalleString = currentOrderItems.map(i => `${i.cantidad}x ${i.nombre} (${i.talle})`).join(" + ");
+            if (observaciones) detalleString = detalleString ? `${detalleString} | Nota: ${observaciones}` : observaciones;
+            if(!detalleString) detalleString = observaciones; // Fallback por si no hay items
+
+            var updatedData = { 
+                cliente: cliente, 
+                detalle: detalleString, 
+                estado: estado, 
+                monto: monto, 
+                sena: sena, 
+                saldo: monto - sena, 
+                malla: malla, 
+                tintas: tintas, 
+                plancha: plancha,
+                items: currentOrderItems // Guardamos los items actualizados
+            };
 
             var fileInput = document.getElementById("edit-ped-arte-file");
             if (fileInput.files.length > 0) { try { updatedData.arte = await getFileBase64(fileInput.files[0]); } catch(e) { } }
@@ -1405,7 +1428,10 @@
             if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).update(updatedData); } catch(e) { } } 
             else { var idx = appState.pedidos.findIndex(x => x.id === localId); if (idx !== -1) { appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; saveToLocalStorage(); renderAll(); updateCharts(); } }
             
-            document.getElementById("edit-ped-arte-file").value = ""; closeModal('modalEditPedido'); showToast("Actualizado", `Cambios aplicados.`);
+            document.getElementById("edit-ped-arte-file").value = ""; 
+            currentOrderItems = []; // Limpiamos el carrito al cerrar
+            closeModal('modalEditPedido'); 
+            showToast("Actualizado", `Cambios aplicados.`);
         }
 
         async function eliminarPedido(docId, localId) {
@@ -1420,7 +1446,10 @@
             var p = appState.pedidos.find(x => x.id === idPedido); if (!p) return;
             document.getElementById("ficha-id").innerText = "OT#" + p.id; document.getElementById("ficha-fecha").innerText = "Expedido: " + new Date().toLocaleDateString('es-AR');
             document.getElementById("ficha-cliente").innerText = p.cliente; 
-            document.getElementById("ficha-detalle").innerText = "Obs: " + (p.detalle || "-");
+            
+            // Ocultamos la nota si está vacía para que el remito quede más limpio
+            const nota = p.detalle ? (p.detalle.includes("| Nota:") ? p.detalle.split("| Nota:")[1].trim() : p.detalle) : "-";
+            document.getElementById("ficha-detalle").innerText = "Obs: " + nota;
 
             const tbodyItems = document.getElementById("comp-items-tbody");
             tbodyItems.innerHTML = "";
@@ -1441,10 +1470,21 @@
 
             document.getElementById("ficha-monto-total").innerText = "$" + p.monto.toLocaleString('es-AR');
             document.getElementById("ficha-sena").innerText = p.sena ? "$" + p.sena.toLocaleString('es-AR') : "$0";
-            document.getElementById("ficha-saldo").innerText = p.saldo ? "$" + p.saldo.toLocaleString('es-AR') : "$" + p.monto.toLocaleString('es-AR');
+            document.getElementById("ficha-saldo").innerText = p.saldo !== undefined ? "$" + p.saldo.toLocaleString('es-AR') : "$" + p.monto.toLocaleString('es-AR');
 
             document.getElementById("ficha-malla").innerText = p.malla || "NO APLICADO"; document.getElementById("ficha-tintas").innerText = p.tintas || "NO APLICADO"; document.getElementById("ficha-plancha").innerText = p.plancha || "NO APLICADO";
             openModal('modalFichaTecnica');
+        }
+
+        // --- FUNCIÓN PARA DESCARGA DIRECTA DE PDF ---
+        function descargarFichaDirecta(idPedido) {
+            generarFichaTecnica(idPedido);
+            // Pequeño delay para dejar que el modal se renderice visualmente
+            setTimeout(() => {
+                window.print();
+                // Opcional: Cerrar el modal después de que se abre la ventana de impresión
+                // setTimeout(() => closeModal('modalFichaTecnica'), 500); 
+            }, 100);
         }
 
         function showToast(title, desc, isError = false) { 
@@ -1614,7 +1654,7 @@
         window.guardarStock = guardarStock; window.guardarEdicionStock = guardarEdicionStock; window.eliminarStock = eliminarStock;
         window.abrirEditarCliente = abrirEditarCliente; window.abrirEditarStock = abrirEditarStock; window.abrirEditarFinanzas = abrirEditarFinanzas;
         window.abrirEditarPedido = abrirEditarPedido; window.openModalClienteDesdePedido = openModalClienteDesdePedido;
-        window.generarFichaTecnica = generarFichaTecnica; window.allowDrop = allowDrop; window.drop = drop;
+        window.generarFichaTecnica = generarFichaTecnica; window.descargarFichaDirecta = descargarFichaDirecta; window.allowDrop = allowDrop; window.drop = drop;
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
         window.playVoiceReport = playVoiceReport; 
         

@@ -780,11 +780,11 @@
     <div class="form-group" id="form-stk-oneoff-container" style="display:none; background: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 8px; border: 1px dashed var(--color-warning);">
         <label style="display: flex; align-items: flex-start; gap: 10px; color: var(--color-warning); cursor: pointer; text-transform: none; letter-spacing: 0;">
             <input type="checkbox" id="form-stk-oneoff" style="margin-top: 2px;"> 
-            <span style="font-size: 12px; font-weight: 500;">Es un insumo de única vez. Solo agregar al pedido actual (No sumar al stock general de VESA).</span>
-        </label>
-    </div>
+    <div class="modal-overlay" id="modalFinanzas"><div class="modal-box"><div class="modal-header"><h3>Registro Contable</h3><button class="modal-close" onclick="closeModal('modalFinanzas')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-row"><div class="form-group"><label>Operación</label><select class="form-control" id="form-fin-tipo"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso (-)</option><option value="Deuda">Cuenta por Cobrar (*)</option><option value="Fondo Privado">Capital Privado (Personal)</option></select></div><div class="form-group"><label>Monto ($)</label><input type="number" class="form-control" id="form-fin-monto"></div></div><div class="form-group"><label>Concepto</label><input type="text" class="form-control" id="form-fin-detalle"></div><button class="btn btn-primary" onclick="guardarFinanzas()" style="margin-top:8px; justify-content:center;" title="Carga el movimiento monetario en el libro diario">Asentar</button></div></div>
 
-    <button class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar Insumo</button></div></div>
+    <div class="modal-overlay" id="modalStock"><div class="modal-box"><div class="modal-header"><h3>Adquisición de Insumos</h3><button class="modal-close" onclick="closeModal('modalStock')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-group"><label>Artículo</label><input type="text" class="form-control" id="form-stk-nombre"></div><div class="form-row"><div class="form-group"><label>Talle/Formato</label><input type="text" class="form-control" id="form-stk-talle"></div><div class="form-group"><label>Unidades</label><input type="number" class="form-control" id="form-stk-cant"></div></div><div class="form-group"><label>Alerta Mínima</label><input type="number" class="form-control" id="form-stk-min" title="Si la cantidad baja de este número, el panel mostrará una alerta roja"></div>
+
+    <button type="button" class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar Insumo</button></div></div>
 
     <div class="modal-overlay" id="modalEditCliente"><div class="modal-box"><div class="modal-header"><h3>Editar Cliente</h3><button class="modal-close" onclick="closeModal('modalEditCliente')"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" id="edit-cli-id-doc"><input type="hidden" id="edit-cli-id-local"><div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="edit-cli-nombre"></div><div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="edit-cli-tel"></div><div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="edit-cli-ig"></div><button class="btn btn-primary" onclick="guardarEdicionCliente()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button></div></div>
     
@@ -849,9 +849,8 @@
         var returnToPedidoModalFromCliente = false;
         var returnToPedidoModalFromStock = false;
 
-        // Array para el mini-carrito de pedidos y stock temporal
+        // Array para el mini-carrito de pedidos
         var currentOrderItems = [];
-        var tempStockItems = [];
 
         // ESTADO INICIAL
         var defaultState = { 
@@ -1087,10 +1086,8 @@
             stockSelects.forEach(stockSelect => {
                 if(stockSelect) {
                     stockSelect.innerHTML = `<option value="" disabled selected>Seleccionar prenda/insumo...</option>`;
-                    let allStock = [...appState.stock, ...tempStockItems];
-                    allStock.forEach(s => {
-                        let indicator = s.isTemp ? " ⭐ (Única vez)" : ` - Disp: ${s.cantidad}`;
-                        stockSelect.innerHTML += `<option value="${s.id}">${s.item} (Talle: ${s.talle})${indicator}</option>`;
+                    appState.stock.forEach(s => {
+                        stockSelect.innerHTML += `<option value="${s.id}">${s.item} (Talle: ${s.talle}) - Disp: ${s.cantidad}</option>`;
                     });
                 }
             });
@@ -1108,8 +1105,7 @@
             }
             
             const stockId = parseInt(select.value);
-            let allStock = [...appState.stock, ...tempStockItems];
-            const stockItem = allStock.find(s => s.id === stockId);
+            const stockItem = appState.stock.find(s => s.id === stockId);
             
             currentOrderItems.push({
                 stockId: stockId,
@@ -1117,8 +1113,7 @@
                 talle: stockItem.talle,
                 cantidad: qty,
                 precioUnitario: price,
-                subtotal: qty * price,
-                isTemp: stockItem.isTemp || false
+                subtotal: qty * price
             });
             
             document.getElementById(`${prefix}ped-add-item-qty`).value = "";
@@ -1143,17 +1138,15 @@
             } else {
                 currentOrderItems.forEach((item, index) => {
                     totalAuto += item.subtotal;
-                    let badgeTemp = item.isTemp ? `<span class="badge" style="background:rgba(245, 158, 11, 0.2); color:var(--color-warning); font-size:9px; padding:2px 6px; margin-left: 6px;">Uso Único</span>` : '';
                     htmlContent += `
                         <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-size: 12px;">
                             <div style="display:flex; align-items:center;">
                                 <strong style="color: var(--color-accent); font-size: 13px; margin-right: 6px;">${item.cantidad}x</strong> 
                                 ${item.nombre} (Talle: ${item.talle})
-                                ${badgeTemp}
                             </div>
                             <div style="display: flex; align-items: center; gap: 14px;">
                                 <span style="font-weight: 700;">$${item.subtotal.toLocaleString('es-AR')}</span>
-                                <button onclick="removeOrderItem(${index})" style="background: none; border: none; color: var(--color-danger); cursor: pointer;" title="Eliminar del pedido"><i class="fa-solid fa-trash"></i></button>
+                                <button type="button" onclick="removeOrderItem(${index})" style="background: none; border: none; color: var(--color-danger); cursor: pointer;" title="Eliminar del pedido"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                     `;
@@ -1186,10 +1179,6 @@
             document.getElementById("form-stk-talle").value = "";
             document.getElementById("form-stk-cant").value = "1";
             document.getElementById("form-stk-min").value = "0";
-            
-            // Mostrar la opción de USO ÚNICO y activarla por defecto para ahorrar tiempo
-            document.getElementById("form-stk-oneoff-container").style.display = "block";
-            document.getElementById("form-stk-oneoff").checked = true;
             
             openModal('modalStock');
         }
@@ -1289,7 +1278,8 @@
                         document.getElementById('modalPedido').classList.add('active');
                         returnToPedidoModalFromCliente = false;
                     } else if (returnToPedidoModalFromStock && activeModal.id === 'modalStock') {
-                        document.getElementById('modalPedido').classList.add('active');
+                        const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
+                        document.getElementById(targetModal).classList.add('active');
                         returnToPedidoModalFromStock = false;
                     }
                     return;
@@ -1305,11 +1295,6 @@
             if(id === 'modalPedido') {
                 currentOrderItems = [];
                 renderOrderItems();
-            }
-            if(id === 'modalStock' && !returnToPedidoModalFromStock) {
-                // Si abrimos stock normalmente desde la pestaña de stock, ocultamos el checkbox de Uso Único
-                document.getElementById("form-stk-oneoff-container").style.display = "none";
-                document.getElementById("form-stk-oneoff").checked = false;
             }
             if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
             if(id !== 'modalStock') returnToPedidoModalFromStock = false;
@@ -1402,7 +1387,6 @@
                     
                     // Descuento inmediato de inventario en la nube
                     for (let item of currentOrderItems) {
-                        if (item.isTemp) continue; // Ignoramos los de uso único
                         let stockItem = appState.stock.find(s => s.id === item.stockId);
                         if (stockItem && stockItem.docId) {
                             let nuevaCant = Math.max(0, stockItem.cantidad - item.cantidad);
@@ -1416,7 +1400,6 @@
                 
                 // Descuento inmediato de inventario en Local
                 for (let item of currentOrderItems) {
-                    if (item.isTemp) continue;
                     let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
                     if (sIdx !== -1) {
                         appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
@@ -1485,8 +1468,8 @@
             let oldItems = appState.pedidos[idx].items || [];
             let stockUpdates = {}; // Mapa de ID Insumo -> Cambio Neto (Positivo es devolver, Negativo es descontar)
             
-            oldItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) + i.cantidad; });
-            currentOrderItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) - i.cantidad; });
+            oldItems.forEach(i => { stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) + i.cantidad; });
+            currentOrderItems.forEach(i => { stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) - i.cantidad; });
 
             if (hasFirebase && authUser && docId) { 
                 try { 
@@ -1707,39 +1690,14 @@
 
         // --- CRUD STOCK ---
         async function guardarStock() {
-            var nombre = document.getElementById("form-stk-nombre").value; var talle = document.getElementById("form-stk-talle").value || "U"; var cant = parseInt(document.getElementById("form-stk-cant").value) || 0; var min = parseInt(document.getElementById("form-stk-min").value) || 0;
-            if (!nombre) { showToast("Error", "Falta nombre del artículo.", true); return; }
+            var nombre = document.getElementById("form-stk-nombre").value; 
+            var talle = document.getElementById("form-stk-talle").value || "U"; 
+            var cant = parseInt(document.getElementById("form-stk-cant").value) || 0; 
+            var min = parseInt(document.getElementById("form-stk-min").value) || 0;
             
-            // VERIFICAMOS SI ES UN INSUMO TEMPORAL (Solo para un pedido)
-            const isOneOffEl = document.getElementById("form-stk-oneoff");
-            const isOneOff = isOneOffEl && isOneOffEl.checked;
+            if (!nombre) { showToast("Error", "Falta nombre del artículo.", true); return; }
 
-            if (isOneOff) {
-                // Creamos un ID aleatorio alto para no chocar con el stock real
-                const tempId = Date.now(); 
-                const nuevoInsumoTemp = { id: tempId, item: nombre, talle: talle, cantidad: cant, minimo: min, isTemp: true };
-                tempStockItems.push(nuevoInsumoTemp);
-                
-                const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
-                const targetSelect = returnToPedidoModalFromStock === 'edit' ? 'edit-ped-add-item-select' : 'ped-add-item-select';
-
-                document.getElementById('modalStock').classList.remove('active');
-                populateDropdowns(); 
-                
-                setTimeout(() => {
-                    document.getElementById(targetSelect).value = tempId;
-                    document.getElementById(targetModal).classList.add('active'); 
-                }, 100);
-                
-                returnToPedidoModalFromStock = false;
-                document.getElementById("form-stk-nombre").value = "";
-                document.getElementById("form-stk-talle").value = "";
-                document.getElementById("form-stk-cant").value = "";
-                showToast("Insumo Especial", `Prenda única cargada al carrito.`);
-                return; // Cortamos la función para que no guarde en Firebase ni en appState.stock
-            }
-
-            // FLUJO NORMAL (Guardar en stock general de la empresa)
+            // FLUJO NORMAL (Guardar en stock general de la empresa SIEMPRE)
             var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
             
             if (hasFirebase && authUser) { 
@@ -1748,7 +1706,7 @@
                 appState.stock.push(nuevoInsumo); saveToLocalStorage(); renderAll(); 
             }
             
-            // Lógica de retorno al modal de pedido (Si era desde el botón Nuevo normal)
+            // Lógica de retorno al modal de pedido (Si era desde el botón Nuevo)
             if(returnToPedidoModalFromStock) {
                 const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
                 const targetSelect = returnToPedidoModalFromStock === 'edit' ? 'edit-ped-add-item-select' : 'ped-add-item-select';
@@ -1757,9 +1715,11 @@
                 populateDropdowns(); 
                 setTimeout(() => {
                     const select = document.getElementById(targetSelect);
-                    for (let i = 0; i < select.options.length; i++) {
-                        if (select.options[i].text.includes(nombre) && select.options[i].text.includes(talle)) {
-                            select.selectedIndex = i; break;
+                    if(select) {
+                        for (let i = 0; i < select.options.length; i++) {
+                            if (select.options[i].text.includes(nombre) && select.options[i].text.includes(talle)) {
+                                select.selectedIndex = i; break;
+                            }
                         }
                     }
                     document.getElementById(targetModal).classList.add('active'); 

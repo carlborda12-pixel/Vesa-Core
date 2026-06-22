@@ -588,8 +588,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Referencia Visual</label>
-                        <input type="file" class="form-control" id="form-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;" title="Sube una foto del diseño menor a 1MB">
+                        <label>Archivo Original del Diseño</label>
+                        <input type="file" class="form-control" id="form-ped-arte-file" accept="image/*,.pdf,.ai,.psd,.cdr" style="font-size: 12px; padding: 10px;" title="Sube el diseño original en alta calidad para el taller">
                     </div>
                 </div>
 
@@ -686,8 +686,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Actualizar Referencia Visual</label>
-                        <input type="file" class="form-control" id="edit-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;" title="Dejar vacío para mantener la imagen actual">
+                        <label>Actualizar Archivo Original</label>
+                        <input type="file" class="form-control" id="edit-ped-arte-file" accept="image/*,.pdf,.ai,.psd,.cdr" style="font-size: 12px; padding: 10px;" title="Dejar vacío para mantener el archivo actual">
                     </div>
                 </div>
                 
@@ -834,14 +834,6 @@
             <div class="form-group">
                 <label>Alerta Mínima</label>
                 <input type="number" class="form-control" id="form-stk-min" title="Si la cantidad baja de este número, el panel mostrará una alerta roja">
-            </div>
-
-            <!-- CHECKBOX DE INSUMO DE UN SOLO USO -->
-            <div class="form-group" id="form-stk-oneoff-container" style="display:none; background-color: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 8px; border: 1px dashed var(--color-warning);">
-                <label style="display: flex; align-items: flex-start; gap: 10px; color: var(--color-warning); cursor: pointer; text-transform: none; letter-spacing: 0;">
-                    <input type="checkbox" id="form-stk-oneoff" style="margin-top: 2px;"> 
-                    <span style="font-size: 12px; font-weight: 500;">Es un insumo de única vez. Solo agregar al pedido actual (No sumar al stock global del taller).</span>
-                </label>
             </div>
 
             <button type="button" class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar Insumo</button>
@@ -1060,12 +1052,12 @@
             setTimeout(() => { playVoiceReport(window.lastReportText); }, 600); 
         }
 
-        // NUEVO MOTOR DE COMPRESIÓN DE IMÁGENES AUTOMÁTICO
+        // --- VIEJO MOTOR DE COMPRESIÓN (AHORA ES FALLBACK OFFLINE) ---
         function getFileBase64(file) {
             return new Promise((resolve, reject) => {
                 if (!file.type.match(/image.*/)) {
-                    showToast("Error", "El archivo seleccionado no es una imagen válida.", true);
-                    reject("Not an image");
+                    showToast("Atención", "Sin internet, solo se admiten imágenes JPG/PNG para comprimir de forma local.", true);
+                    resolve("");
                     return;
                 }
                 const reader = new FileReader();
@@ -1077,7 +1069,6 @@
                         let width = image.width;
                         let height = image.height;
 
-                        // Redimensionamiento inteligente manteniendo la proporción
                         if (width > height && width > maxSize) {
                             height *= maxSize / width;
                             width = maxSize;
@@ -1090,7 +1081,6 @@
                         canvas.height = height;
                         canvas.getContext('2d').drawImage(image, 0, 0, width, height);
                         
-                        // Transformar a JPEG con 75% de calidad (Reduce 5MB a ~100KB)
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
                         resolve(dataUrl);
                     };
@@ -1099,6 +1089,29 @@
                 };
                 reader.onerror = (e) => reject(e);
                 reader.readAsDataURL(file);
+            });
+        }
+
+        // NUEVO: MOTOR HÍBRIDO DE IMÁGENES (FIREBASE STORAGE EN LA NUBE + FALLBACK LOCAL)
+        async function uploadImageToStorage(file) {
+            return new Promise((resolve, reject) => {
+                if (hasFirebase && authUser) {
+                    showToast("Subiendo Archivo...", "Guardando original en la nube segura de VESA.");
+                    
+                    const storageRef = firebase.storage().ref();
+                    // Limpiamos el nombre del archivo para que no rompa la URL
+                    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+                    const fileRef = storageRef.child(`artifacts/${appId}/pedidos/diseños/${Date.now()}_${cleanFileName}`);
+                    
+                    fileRef.put(file).then((snapshot) => {
+                        snapshot.ref.getDownloadURL().then((downloadURL) => {
+                            resolve(downloadURL);
+                        }).catch(reject);
+                    }).catch(reject);
+                } else {
+                    // Fallback a modo offline si no hay conexión
+                    getFileBase64(file).then(resolve).catch(reject);
+                }
             });
         }
 
@@ -1367,14 +1380,6 @@
             document.getElementById("form-stk-cant").value = "1";
             document.getElementById("form-stk-min").value = "0";
             
-            // Mostrar la opción de USO ÚNICO
-            const container = document.getElementById("form-stk-oneoff-container");
-            const checkbox = document.getElementById("form-stk-oneoff");
-            if (container && checkbox) {
-                container.style.display = "block";
-                checkbox.checked = true; // Por defecto lo marcamos como temporal
-            }
-
             // Cambiar visualmente a la pestaña Stock antes de abrir el modal
             switchTab('stock');
             
@@ -1416,7 +1421,18 @@
                 var col = cols[colStatus]; if (!col) return;
                 counts[colStatus]++;
 
-                var imageHtml = p.arte ? `<img src="${p.arte}" class="k-card-image" alt="Visual">` : '';
+                // LÓGICA INTELIGENTE DE RENDERIZADO DE ARCHIVOS EN KANBAN
+                var imageHtml = '';
+                if (p.arte) {
+                    const urlWithoutQuery = p.arte.split('?')[0].toLowerCase();
+                    const isNonImage = urlWithoutQuery.endsWith('.pdf') || urlWithoutQuery.endsWith('.ai') || urlWithoutQuery.endsWith('.cdr') || urlWithoutQuery.endsWith('.psd') || urlWithoutQuery.endsWith('.zip');
+                    
+                    if (isNonImage) {
+                        imageHtml = `<a href="${p.arte}" target="_blank" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px 10px; background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.2); border-radius:8px; color:var(--color-accent); text-decoration:none; margin-bottom:10px; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.2s;"><i class="fa-solid fa-file-arrow-down" style="font-size:24px;"></i> Descargar Matriz</a>`;
+                    } else {
+                        imageHtml = `<img src="${p.arte}" class="k-card-image" alt="Visual" style="cursor:pointer;" onclick="window.open('${p.arte}', '_blank')" title="Clic para ver diseño en alta resolución">`;
+                    }
+                }
 
                 var card = document.createElement('div'); card.className = 'kanban-card'; card.draggable = true; card.id = 'kcard-' + p.id;
                 card.addEventListener('dragstart', function(e) { e.dataTransfer.setData('text/plain', p.id); });
@@ -1494,13 +1510,6 @@
                 currentOrderItems = [];
                 renderOrderItems();
             }
-            if(id === 'modalStock' && !returnToPedidoModalFromStock) {
-                // Ocultar la opción de Uso Único si venimos directo del Dashboard/Pestaña de Stock
-                const container = document.getElementById("form-stk-oneoff-container");
-                const checkbox = document.getElementById("form-stk-oneoff");
-                if (container) container.style.display = "none";
-                if (checkbox) checkbox.checked = false;
-            }
             if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
             if(id !== 'modalStock') returnToPedidoModalFromStock = false;
             document.getElementById(id).classList.add('active'); 
@@ -1564,7 +1573,11 @@
             
             var fileInput = document.getElementById("form-ped-arte-file");
             var arteUrl = "";
-            if (fileInput.files.length > 0) { try { arteUrl = await getFileBase64(fileInput.files[0]); } catch(e) { console.error(e); } }
+            if (fileInput.files.length > 0) { 
+                try { 
+                    arteUrl = await uploadImageToStorage(fileInput.files[0]); 
+                } catch(e) { console.error(e); } 
+            }
 
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             var nuevoId = appState.pedidos.length > 0 ? Math.max(...appState.pedidos.map(p=>p.id)) + 1 : 1000;
@@ -1663,11 +1676,11 @@
                 items: currentOrderItems 
             };
 
-            // Lógica de Imagen (File Upload) robusta
+            // Lógica de Imagen (File Upload) robusta a Storage
             var fileInput = document.getElementById("edit-ped-arte-file");
             if (fileInput.files.length > 0) { 
                 try { 
-                    updatedData.arte = await getFileBase64(fileInput.files[0]); 
+                    updatedData.arte = await uploadImageToStorage(fileInput.files[0]); 
                 } catch(e) { console.error("Error al procesar la imagen:", e); } 
             }
 

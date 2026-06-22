@@ -981,7 +981,7 @@
         </div>
     </div>
 
-    <!-- LÓGICA CORE DEL SISTEMA -->
+    <!-- LÓGICA CORE DEL SISTEMA (ACTUALIZACIÓN OPTIMISTA Y ANTI-CUELGUES) -->
     <script>
         const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById("current-date-display").innerText = new Date().toLocaleDateString('es-AR', dateOptions);
@@ -1009,19 +1009,15 @@
         var welcomeShown = sessionStorage.getItem("vesa_welcome_shown");
         var lastReportText = "";
 
-        // Flags para el retorno mágico de modales
         var returnToPedidoModalFromCliente = false;
         var returnToPedidoModalFromStock = false;
 
-        // Array para el mini-carrito de pedidos y stock temporal
         var currentOrderItems = [];
         var tempStockItems = [];
 
-        // MOTOR DE PAGINACIÓN Y FILTROS PARA PEDIDOS
         let pedCurrentPage = 1;
         const pedItemsPerPage = 10;
 
-        // ESTADO INICIAL
         var defaultState = { 
             pedidos: [], 
             clientes: [], 
@@ -1077,75 +1073,92 @@
             setTimeout(() => { playVoiceReport(window.lastReportText); }, 600); 
         }
 
-        // MOTOR OFFLINE DE IMÁGENES
+        // --- MOTOR HÍBRIDO DE COMPRESIÓN (MEMORIA OPTIMIZADA ANTI-CRASH) ---
         function getFileBase64(file) {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 if (!file.type.match(/image.*/)) {
-                    showToast("Atención", "Sin internet, solo se admiten imágenes JPG/PNG para comprimir de forma local.", true);
+                    resolve(""); // Ignora archivos que no son imagen en modo local
+                    return;
+                }
+                
+                // Bloqueo de seguridad: Evita que fotos inmensas colapsen la RAM del dispositivo
+                if (file.size > 15 * 1024 * 1024) {
+                    showToast("Atención", "Una imagen supera los 15MB y fue omitida para evitar bloqueos.", true);
                     resolve("");
                     return;
                 }
-                const reader = new FileReader();
-                reader.onload = (readerEvent) => {
-                    const image = new Image();
-                    image.onload = () => {
+
+                const image = new Image();
+                const objectUrl = URL.createObjectURL(file); // Más rápido y liviano que FileReader
+                
+                image.onload = () => {
+                    URL.revokeObjectURL(objectUrl); // Liberar memoria RAM instantáneamente
+                    try {
                         const canvas = document.createElement('canvas');
-                        const maxSize = 800;
-                        let width = image.width;
-                        let height = image.height;
-
-                        if (width > height && width > maxSize) {
-                            height *= maxSize / width;
-                            width = maxSize;
-                        } else if (height > maxSize) {
-                            width *= maxSize / height;
-                            height = maxSize;
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+                        const maxSize = 800; // Calidad óptima visual
+                        let width = image.width; let height = image.height;
+                        if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; } 
+                        else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+                        canvas.width = width; canvas.height = height;
                         
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-                        resolve(dataUrl);
-                    };
-                    image.onerror = (e) => reject(e);
-                    image.src = readerEvent.target.result;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(image, 0, 0, width, height);
+                        
+                        // JPEG al 60% reduce el peso drásticamente, salvando el LocalStorage
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
+                    } catch(err) {
+                        console.error("Error en compresión visual", err);
+                        resolve(""); 
+                    }
                 };
-                reader.onerror = (e) => reject(e);
-                reader.readAsDataURL(file);
+                image.onerror = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    resolve(""); // Fallback seguro sin dejar promesas colgadas
+                };
+                image.src = objectUrl;
             });
         }
 
-        // MOTOR HÍBRIDO DE IMÁGENES (FIREBASE STORAGE + FALLBACK)
+        // --- SUBIDA A FIREBASE (STORAGE) ---
         async function uploadImageToStorage(file) {
             return new Promise((resolve, reject) => {
                 if (hasFirebase && authUser && firebase.storage) {
-                    const storageRef = firebase.storage().ref();
-                    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-                    const fileRef = storageRef.child(`artifacts/${appId}/pedidos/diseños/${Date.now()}_${cleanFileName}`);
-                    
-                    fileRef.put(file).then((snapshot) => {
-                        snapshot.ref.getDownloadURL().then((downloadURL) => {
-                            resolve(downloadURL);
+                    try {
+                        const storageRef = firebase.storage().ref();
+                        const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+                        const fileRef = storageRef.child(`artifacts/${appId}/pedidos/disenos/${Date.now()}_${cleanFileName}`);
+                        fileRef.put(file).then((snapshot) => {
+                            snapshot.ref.getDownloadURL().then(resolve).catch(reject);
                         }).catch(reject);
-                    }).catch(reject);
+                    } catch(err) { reject(err); }
                 } else {
-                    getFileBase64(file).then(resolve).catch(reject);
+                    getFileBase64(file).then(resolve).catch(() => resolve(""));
                 }
             });
         }
 
-        // PROCESADOR MULTI-ARCHIVO (BATCH PROCESSOR)
+        // --- PROCESADOR MULTI-ARCHIVO SEGURO ---
         async function processMultipleFiles(fileList) {
             let urls = [];
-            let limit = Math.min(fileList.length, 5); 
+            let limit = Math.min(fileList.length, 5); // Tope de 5 archivos máximo
             for(let i = 0; i < limit; i++) {
-                try {
-                    let url = await uploadImageToStorage(fileList[i]);
-                    if (url) urls.push(url);
-                } catch(e) {
-                    console.error("Error procesando archivo: ", e);
+                if (hasFirebase && authUser) {
+                    try {
+                        // TIMEOUT DE 10 SEG para no dejar colgada la interfaz si el internet falla
+                        let url = await Promise.race([
+                            uploadImageToStorage(fileList[i]),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Red")), 10000))
+                        ]);
+                        if (url) urls.push(url);
+                    } catch(e) {
+                        console.warn("Falla en la red/nube. Usando compresor local offline para: " + fileList[i].name);
+                        let localUrl = await getFileBase64(fileList[i]);
+                        if(localUrl) urls.push(localUrl);
+                    }
+                } else {
+                    // Compresión directa si no hay Nube habilitada
+                    let localUrl = await getFileBase64(fileList[i]);
+                    if(localUrl) urls.push(localUrl);
                 }
             }
             return urls;
@@ -1184,13 +1197,8 @@
                         }
                     });
                     await auth.signInAnonymously();
-                } catch (err) { 
-                    setupLocalStorageFallback(); 
-                }
-            } else { 
-                setupLocalStorageFallback(); 
-            }
-            
+                } catch (err) { setupLocalStorageFallback(); }
+            } else { setupLocalStorageFallback(); }
             setTimeout(showWelcomeSummary, 500);
         }
 
@@ -1240,8 +1248,15 @@
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem("vesa_pedidos", JSON.stringify(appState.pedidos)); localStorage.setItem("vesa_clientes", JSON.stringify(appState.clientes));
-            localStorage.setItem("vesa_stock", JSON.stringify(appState.stock)); localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
+            try {
+                localStorage.setItem("vesa_pedidos", JSON.stringify(appState.pedidos));
+                localStorage.setItem("vesa_clientes", JSON.stringify(appState.clientes));
+                localStorage.setItem("vesa_stock", JSON.stringify(appState.stock));
+                localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
+            } catch(e) {
+                // Captura el límite de 5MB si no usa Firebase
+                throw new Error("QUOTA_EXCEEDED");
+            }
         }
 
         function renderAll() {
@@ -1301,7 +1316,6 @@
             var profitTotal = sumI - sumE; var profitEl = document.getElementById("fin-profit-total"); profitEl.innerText = "$" + profitTotal.toLocaleString('es-AR'); profitEl.style.color = profitTotal >= 0 ? "var(--color-accent)" : "var(--color-danger)"; 
         }
 
-        // --- SISTEMA DE CARRITO PARA PEDIDOS ---
         function populateDropdowns() {
             var selectsCli = [document.getElementById("form-ped-cliente"), document.getElementById("edit-ped-cliente")];
             selectsCli.forEach(sel => { 
@@ -1331,8 +1345,7 @@
             const price = parseInt(document.getElementById(`${prefix}ped-add-item-price`).value) || 0;
             
             if (!select.value || !qty || qty <= 0) {
-                showToast("Error", "Seleccioná un insumo y una cantidad válida.", true);
-                return;
+                showToast("Error", "Seleccioná un insumo y una cantidad válida.", true); return;
             }
             
             const stockId = parseInt(select.value);
@@ -1340,13 +1353,8 @@
             const stockItem = allStock.find(s => s.id === stockId);
             
             currentOrderItems.push({
-                stockId: stockId,
-                nombre: stockItem.item,
-                talle: stockItem.talle,
-                cantidad: qty,
-                precioUnitario: price,
-                subtotal: qty * price,
-                isTemp: stockItem.isTemp || false
+                stockId: stockId, nombre: stockItem.item, talle: stockItem.talle,
+                cantidad: qty, precioUnitario: price, subtotal: qty * price, isTemp: stockItem.isTemp || false
             });
             
             document.getElementById(`${prefix}ped-add-item-qty`).value = "";
@@ -1362,8 +1370,7 @@
         function renderOrderItems() {
             const list1 = document.getElementById("ped-items-list");
             const list2 = document.getElementById("edit-ped-items-list");
-            let totalAuto = 0;
-            let htmlContent = '';
+            let totalAuto = 0; let htmlContent = '';
             
             if (currentOrderItems.length === 0) {
                 htmlContent = '<div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>';
@@ -1380,13 +1387,12 @@
                             </div>
                             <div style="display: flex; align-items: center; gap: 14px;">
                                 <span style="font-weight: 700;">$${item.subtotal.toLocaleString('es-AR')}</span>
-                                <button type="button" onclick="removeOrderItem(${index})" style="background: none; border: none; color: var(--color-danger); cursor: pointer;" title="Eliminar del pedido"><i class="fa-solid fa-trash"></i></button>
+                                <button type="button" onclick="removeOrderItem(${index})" style="background: none; border: none; color: var(--color-danger); cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                     `;
                 });
             }
-            
             if (list1) list1.innerHTML = htmlContent;
             if (list2) list2.innerHTML = htmlContent;
             
@@ -1413,60 +1419,38 @@
             document.getElementById("form-stk-cant").value = "1";
             document.getElementById("form-stk-min").value = "0";
             
+            const container = document.getElementById("form-stk-oneoff-container");
+            const checkbox = document.getElementById("form-stk-oneoff");
+            if (container && checkbox) { container.style.display = "block"; checkbox.checked = true; }
             switchTab('stock');
             openModal('modalStock');
         }
 
-        // --- FILTROS Y PAGINACIÓN DE PEDIDOS ---
-        function applyPedidosFilter() {
-            pedCurrentPage = 1;
-            renderPedidosTable();
-        }
-
-        function clearPedidosFilter() {
-            document.getElementById("filter-ped-desde").value = "";
-            document.getElementById("filter-ped-hasta").value = "";
-            pedCurrentPage = 1;
-            renderPedidosTable();
-        }
-
-        function changePedidosPage(direction) {
-            pedCurrentPage += direction;
-            renderPedidosTable();
-        }
+        function applyPedidosFilter() { pedCurrentPage = 1; renderPedidosTable(); }
+        function clearPedidosFilter() { document.getElementById("filter-ped-desde").value = ""; document.getElementById("filter-ped-hasta").value = ""; pedCurrentPage = 1; renderPedidosTable(); }
+        function changePedidosPage(direction) { pedCurrentPage += direction; renderPedidosTable(); }
 
         function renderPedidosTable() {
             var tbody = document.getElementById("pedidos-tbody"); 
-            if(!tbody) return;
-            tbody.innerHTML = "";
+            if(!tbody) return; tbody.innerHTML = "";
             
             let desdeInput = document.getElementById("filter-ped-desde") ? document.getElementById("filter-ped-desde").value : "";
             let hastaInput = document.getElementById("filter-ped-hasta") ? document.getElementById("filter-ped-hasta").value : "";
             
             let filteredPedidos = appState.pedidos.filter(p => {
                 if (!desdeInput && !hastaInput) return true;
-                
                 let pDate;
-                if (p.timestamp) {
-                    pDate = new Date(p.timestamp);
-                } else {
+                if (p.timestamp) pDate = new Date(p.timestamp);
+                else {
                     let parts = p.fecha.split('/');
                     if(parts.length === 3) pDate = new Date(parts[2], parts[1]-1, parts[0]);
                     else pDate = new Date(); 
                 }
                 pDate.setHours(0,0,0,0);
                 
-                let passDesde = true;
-                let passHasta = true;
-                
-                if (desdeInput) {
-                    let d = new Date(desdeInput + 'T00:00:00');
-                    if (pDate < d) passDesde = false;
-                }
-                if (hastaInput) {
-                    let h = new Date(hastaInput + 'T23:59:59');
-                    if (pDate > h) passHasta = false;
-                }
+                let passDesde = true; let passHasta = true;
+                if (desdeInput) { let d = new Date(desdeInput + 'T00:00:00'); if (pDate < d) passDesde = false; }
+                if (hastaInput) { let h = new Date(hastaInput + 'T23:59:59'); if (pDate > h) passHasta = false; }
                 return passDesde && passHasta;
             });
 
@@ -1503,14 +1487,10 @@
                     `;
                 });
             }
-
             let pageInfo = document.getElementById("ped-page-info");
-            if (pageInfo) {
-                pageInfo.innerText = `Mostrando página ${pedCurrentPage} de ${totalPages}  |  ${filteredPedidos.length} órdenes en total`;
-            }
+            if (pageInfo) pageInfo.innerText = `Mostrando página ${pedCurrentPage} de ${totalPages}  |  ${filteredPedidos.length} órdenes en total`;
         }
 
-        // --- KANBAN RENDER ---
         function renderKanbanBoard() {
             var cols = { "En diseño": document.getElementById("kanban-diseno"), "Confirmado": document.getElementById("kanban-diseno"), "Producción": document.getElementById("kanban-produccion"), "Estampado": document.getElementById("kanban-estampado"), "Listo": document.getElementById("kanban-listo") };
             var counts = { "En diseño": 0, "Producción": 0, "Estampado": 0, "Listo": 0 };
@@ -1524,11 +1504,8 @@
 
                 var imageHtml = '';
                 let arteArray = [];
-                if (Array.isArray(p.arte)) {
-                    arteArray = p.arte;
-                } else if (p.arte && typeof p.arte === 'string' && p.arte.trim() !== '') {
-                    arteArray = [p.arte]; 
-                }
+                if (Array.isArray(p.arte)) arteArray = p.arte;
+                else if (p.arte && typeof p.arte === 'string' && p.arte.trim() !== '') arteArray = [p.arte]; 
 
                 if (arteArray.length > 0) {
                     const firstUrl = arteArray[0];
@@ -1536,9 +1513,9 @@
                     const isNonImage = urlWithoutQuery.match(/\.(pdf|ai|cdr|psd|zip)$/);
                     
                     if (isNonImage) {
-                        imageHtml = `<a href="${firstUrl}" target="_blank" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px 10px; background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.2); border-radius:8px; color:var(--color-accent); text-decoration:none; margin-bottom:6px; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.2s;"><i class="fa-solid fa-file-arrow-down" style="font-size:24px;"></i> Descargar Matriz 1</a>`;
+                        imageHtml = `<a href="${firstUrl}" target="_blank" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px 10px; background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.2); border-radius:8px; color:var(--color-accent); text-decoration:none; margin-bottom:6px; font-size: 11px; font-weight: 700; text-transform: uppercase;"><i class="fa-solid fa-file-arrow-down" style="font-size:24px;"></i> Descargar Matriz 1</a>`;
                     } else {
-                        imageHtml = `<img src="${firstUrl}" class="k-card-image" alt="Visual" style="cursor:pointer; margin-bottom:6px;" onclick="window.open('${firstUrl}', '_blank')" title="Clic para ver diseño principal en alta resolución">`;
+                        imageHtml = `<img src="${firstUrl}" class="k-card-image" alt="Visual" style="cursor:pointer; margin-bottom:6px;" onclick="window.open('${firstUrl}', '_blank')" title="Clic para ver diseño en alta resolución">`;
                     }
 
                     if (arteArray.length > 1) {
@@ -1546,9 +1523,8 @@
                         for (let i = 1; i < arteArray.length; i++) {
                             const fUrl = arteArray[i];
                             const fUrlClean = typeof fUrl === 'string' ? fUrl.split('?')[0].toLowerCase() : '';
-                            const fIsNonImage = fUrlClean.match(/\.(pdf|ai|cdr|psd|zip)$/);
-                            const fIcon = fIsNonImage ? 'fa-file-arrow-down' : 'fa-image';
-                            imageHtml += `<a href="${fUrl}" target="_blank" style="font-size:10px; background:rgba(56,189,248,0.1); color:var(--color-accent); border:1px solid rgba(56,189,248,0.3); padding:4px 8px; border-radius:6px; text-decoration:none; display:flex; align-items:center; gap:4px; transition: all 0.2s;"><i class="fa-solid ${fIcon}"></i> Archivo ${i+1}</a>`;
+                            const fIcon = fUrlClean.match(/\.(pdf|ai|cdr|psd|zip)$/) ? 'fa-file-arrow-down' : 'fa-image';
+                            imageHtml += `<a href="${fUrl}" target="_blank" style="font-size:10px; background:rgba(56,189,248,0.1); color:var(--color-accent); border:1px solid rgba(56,189,248,0.3); padding:4px 8px; border-radius:6px; text-decoration:none; display:flex; align-items:center; gap:4px;"><i class="fa-solid ${fIcon}"></i> Archivo ${i+1}</a>`;
                         }
                         imageHtml += `</div>`;
                     }
@@ -1567,67 +1543,39 @@
         }
 
         // --- NAVEGACIÓN Y TABS ---
-        let tabHistory = [];
-        let currentTabId = 'dashboard';
-
+        let tabHistory = []; let currentTabId = 'dashboard';
         function toggleSidebar(open) { var sidebar = document.getElementById("app-sidebar"); var overlay = document.getElementById("sidebar-overlay"); if (open) { sidebar.classList.add("active"); overlay.classList.add("active"); } else { sidebar.classList.remove("active"); overlay.classList.remove("active"); } }
-        
         function switchTab(tabId, isGoBack = false) {
             if (currentTabId === tabId) return;
             if (!isGoBack) tabHistory.push(currentTabId);
             currentTabId = tabId;
-
             document.querySelectorAll('.view-section').forEach(sec => { sec.classList.remove('active'); sec.style.animation = 'none'; sec.offsetHeight; sec.style.animation = null; });
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             document.getElementById('section-' + tabId).classList.add('active'); 
-            
-            document.querySelectorAll('.menu-item').forEach(item => { 
-                if(item.getAttribute('onclick') && item.getAttribute('onclick').includes(tabId)) {
-                    item.classList.add('active');
-                }
-            }); 
-            
-            toggleSidebar(false);
-            if(tabId === 'kanban') renderKanbanBoard();
+            document.querySelectorAll('.menu-item').forEach(item => { if(item.getAttribute('onclick') && item.getAttribute('onclick').includes(tabId)) item.classList.add('active'); }); 
+            toggleSidebar(false); if(tabId === 'kanban') renderKanbanBoard();
         }
-
-        function goBackTab() {
-            if (tabHistory.length > 0) {
-                let prevTab = tabHistory.pop();
-                switchTab(prevTab, true);
-            }
-        }
-
+        function goBackTab() { if (tabHistory.length > 0) { let prevTab = tabHistory.pop(); switchTab(prevTab, true); } }
+        
         document.addEventListener('keydown', function(event) {
             const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
             const isInput = activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select';
-            
             if (event.key === 'Escape') {
                 const activeModal = document.querySelector('.modal-overlay.active');
                 if (activeModal) { 
                     activeModal.classList.remove('active');
-                    if (returnToPedidoModalFromCliente && activeModal.id === 'modalCliente') {
-                        document.getElementById('modalPedido').classList.add('active');
-                        returnToPedidoModalFromCliente = false;
-                    } else if (returnToPedidoModalFromStock && activeModal.id === 'modalStock') {
-                        const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
-                        document.getElementById(targetModal).classList.add('active');
-                        returnToPedidoModalFromStock = false;
-                    }
+                    if (returnToPedidoModalFromCliente && activeModal.id === 'modalCliente') { document.getElementById('modalPedido').classList.add('active'); returnToPedidoModalFromCliente = false; } 
+                    else if (returnToPedidoModalFromStock && activeModal.id === 'modalStock') { const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido'; document.getElementById(targetModal).classList.add('active'); returnToPedidoModalFromStock = false; }
                     return;
                 }
-                if (!isInput) { event.preventDefault(); goBackTab(); }
-                return;
+                if (!isInput) { event.preventDefault(); goBackTab(); } return;
             }
-
             if (event.key === 'Backspace' && !isInput) { event.preventDefault(); goBackTab(); }
         });
 
         function openModal(id) { 
-            if(id === 'modalPedido') {
-                currentOrderItems = [];
-                renderOrderItems();
-            }
+            if(id === 'modalPedido') { currentOrderItems = []; renderOrderItems(); }
+            if(id === 'modalStock' && !returnToPedidoModalFromStock) { const container = document.getElementById("form-stk-oneoff-container"); const checkbox = document.getElementById("form-stk-oneoff"); if (container) container.style.display = "none"; if (checkbox) checkbox.checked = false; }
             if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
             if(id !== 'modalStock') returnToPedidoModalFromStock = false;
             document.getElementById(id).classList.add('active'); 
@@ -1635,60 +1583,54 @@
 
         function closeModal(id) { 
             document.getElementById(id).classList.remove('active'); 
-            if(id === 'modalCliente' && returnToPedidoModalFromCliente) {
-                document.getElementById('modalPedido').classList.add('active');
-                returnToPedidoModalFromCliente = false;
-            } else if(id === 'modalStock' && returnToPedidoModalFromStock) {
-                const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
-                document.getElementById(targetModal).classList.add('active');
-                returnToPedidoModalFromStock = false;
-            }
+            if(id === 'modalCliente' && returnToPedidoModalFromCliente) { document.getElementById('modalPedido').classList.add('active'); returnToPedidoModalFromCliente = false; } 
+            else if(id === 'modalStock' && returnToPedidoModalFromStock) { const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido'; document.getElementById(targetModal).classList.add('active'); returnToPedidoModalFromStock = false; }
         }
 
         // --- KANBAN DRAG & DROP ---
         function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add("drag-over"); }
-        function drop(ev, nuevoEstado) {
-            ev.preventDefault(); document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
-            var idStr = ev.dataTransfer.getData("text/plain"); if(!idStr) return;
-            procesarCambioEstado(parseInt(idStr), nuevoEstado);
-        }
+        function drop(ev, nuevoEstado) { ev.preventDefault(); document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over')); var idStr = ev.dataTransfer.getData("text/plain"); if(!idStr) return; procesarCambioEstado(parseInt(idStr), nuevoEstado); }
         document.addEventListener('dragend', function(e) { document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over')); });
         document.addEventListener('dragleave', function(e) { if(e.target.classList && e.target.classList.contains('kanban-column')) e.target.classList.remove('drag-over'); });
 
         function procesarCambioEstado(id, nuevoEstado) {
             var pedido = appState.pedidos.find(p => p.id === id); 
             if (!pedido || pedido.estado === nuevoEstado) return;
-            ejecutarCambioEstadoFinal(id, nuevoEstado);
-        }
-
-        async function ejecutarCambioEstadoFinal(id, nuevoEstado) {
-            var pedido = appState.pedidos.find(p => p.id === id); if (!pedido) return;
-            if (hasFirebase && authUser && pedido.docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ estado: nuevoEstado }); } catch(e) { } } 
-            else { pedido.estado = nuevoEstado; saveToLocalStorage(); renderAll(); updateCharts(); }
+            
+            // Actualización Optimista Local
+            pedido.estado = nuevoEstado;
+            
+            // Sincronización en la nube silenciosa
+            if (hasFirebase && authUser && pedido.docId) { 
+                db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ estado: nuevoEstado }).catch(console.error); 
+            } else { 
+                try { saveToLocalStorage(); } catch(e) {} 
+            }
+            renderAll(); updateCharts();
             showToast("Actualizado", `La orden #${id} avanzó a ${nuevoEstado}.`);
         }
 
         // ==========================================
-        // --- CRUD DE PEDIDOS CON SISTEMA ANTI-ERROR ---
+        // --- CRUD DE PEDIDOS (CON PROTECCIÓN MEMORIA RAM Y DOBLE CLIC) ---
         // ==========================================
         async function guardarNuevoPedido() {
             const btnSubmit = document.getElementById("btn-submit-pedido");
             
             try {
-                // Bloqueo Anti-Doble Clic
-                if(btnSubmit) {
-                    btnSubmit.disabled = true;
-                    btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
-                }
+                // Bloquear botón para evitar 2 clics seguidos que dupliquen el pedido
+                if(btnSubmit) { btnSubmit.disabled = true; btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...'; }
 
                 var cliente = document.getElementById("form-ped-cliente").value; 
                 var observaciones = document.getElementById("form-ped-detalle").value.trim();
-                var montoTotal = parseInt(document.getElementById("form-ped-monto").value) || 0; 
-                var sena = parseInt(document.getElementById("form-ped-sena").value) || 0; 
+                var montoEl = document.getElementById("form-ped-monto");
+                var senaEl = document.getElementById("form-ped-sena");
+                var montoTotal = montoEl ? parseInt(montoEl.value) || 0 : 0; 
+                var sena = senaEl ? parseInt(senaEl.value) || 0 : 0; 
                 var estado = document.getElementById("form-ped-estado").value;
                 var mediopago = document.getElementById("form-ped-metodopago").value; 
                 var entrega = document.getElementById("form-ped-entrega").value; 
-                var hora = document.getElementById("form-ped-hora").value || "A coordinar";
+                var horaEl = document.getElementById("form-ped-hora");
+                var hora = horaEl ? horaEl.value : "A coordinar";
 
                 if (currentOrderItems.length === 0 && !observaciones) { 
                     showToast("Error", "Agregá prendas al carrito o escribí un detalle.", true); 
@@ -1701,25 +1643,21 @@
                     return; 
                 }
 
-                // Generar Detalles
                 let detalleString = currentOrderItems.map(i => `${i.cantidad}x ${i.nombre} (${i.talle})`).join(" + ");
                 if (observaciones) detalleString = detalleString ? `${detalleString} | Nota: ${observaciones}` : observaciones;
                 
-                // Manejo de Imágenes Múltiples (Lote Seguro)
                 var fileInput = document.getElementById("form-ped-arte-file");
                 var arteUrls = [];
                 if (fileInput && fileInput.files.length > 0) { 
-                    showToast("Procesando...", "Subiendo archivos, por favor espera.");
+                    showToast("Procesando...", "Preparando archivos...");
                     arteUrls = await processMultipleFiles(fileInput.files); 
                 }
 
-                // ID Seguro a prueba de fallos
                 var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
                 let maxId = 999;
                 appState.pedidos.forEach(p => { if(p.id && !isNaN(p.id) && p.id > maxId) maxId = p.id; });
                 var nuevoId = maxId + 1;
                 
-                // Ensamblar Objeto
                 var nuevoPed = { 
                     id: nuevoId, cliente: cliente, detalle: detalleString, estado: estado, 
                     monto: montoTotal, sena: sena, saldo: montoTotal - sena, items: currentOrderItems, 
@@ -1728,7 +1666,6 @@
                     arte: arteUrls
                 };
 
-                // Ensamblar Finanza si aplica
                 var nuevaFinanza = null;
                 if (estado !== "Presupuesto" && sena > 0) {
                     let maxFinId = 0;
@@ -1740,54 +1677,60 @@
                     };
                 }
 
-                // Escribir a BD
                 if (hasFirebase && authUser) {
-                    await db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed); 
-                    if (nuevaFinanza) await db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza);
+                    db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed).catch(console.error); 
+                    if (nuevaFinanza) db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza).catch(console.error);
                     
-                    // Descuento inmediato de inventario en la nube
                     for (let item of currentOrderItems) {
                         if (item.isTemp) continue; 
                         let stockItem = appState.stock.find(s => s.id === item.stockId);
                         if (stockItem && stockItem.docId) {
                             let nuevaCant = Math.max(0, stockItem.cantidad - item.cantidad);
-                            await db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant });
+                            db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
                         }
                     }
-                } else { 
-                    appState.pedidos.unshift(nuevoPed); 
-                    if (nuevaFinanza) appState.finanzas.unshift(nuevaFinanza);
-                    
-                    for (let item of currentOrderItems) {
-                        if (item.isTemp) continue; 
-                        let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
-                        if (sIdx !== -1) {
-                            appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
-                        }
+                } 
+
+                appState.pedidos.unshift(nuevoPed); 
+                if (nuevaFinanza) appState.finanzas.unshift(nuevaFinanza);
+                for (let item of currentOrderItems) {
+                    if (item.isTemp) continue; 
+                    let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
+                    if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
+                }
+                
+                // Defensa contra Memoria Llena sin Firebase
+                if (!hasFirebase) {
+                    try {
+                        saveToLocalStorage(); 
+                    } catch(e) {
+                        // Revertimos cambios para no engañar a la interfaz
+                        appState.pedidos.shift();
+                        if (nuevaFinanza) appState.finanzas.shift();
+                        showToast("Memoria Local Llena", "No entran más fotos pesadas. Conectá el sistema a Firebase.", true);
+                        if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i> Generar Orden'; }
+                        return; // Frenamos acá
                     }
-                    saveToLocalStorage(); 
-                    renderAll(); 
-                    updateCharts(); 
                 }
                 
                 document.getElementById("form-ped-detalle").value = ""; 
-                document.getElementById("form-ped-monto").value = ""; 
-                document.getElementById("form-ped-sena").value = ""; 
+                if(montoEl) montoEl.value = ""; 
+                if(senaEl) senaEl.value = ""; 
                 if(fileInput) fileInput.value = ""; 
                 currentOrderItems = []; 
-                renderOrderItems();
                 
                 closeModal('modalPedido'); 
-                showToast("Carga Exitosa", `Orden #${nuevoId} procesada y stock descontado.`);
+                renderAll(); 
+                updateCharts(); 
+                
+                showToast("Carga Exitosa", `Orden #${nuevoId} guardada. El stock fue descontado.`);
 
             } catch (error) {
-                console.error("Error al guardar pedido:", error);
-                showToast("Error", "No se pudo guardar la orden.", true);
+                console.error("Error crítico al guardar:", error);
+                showToast("Error", "El archivo de imagen no pudo ser procesado.", true);
             } finally {
-                if(btnSubmit) { 
-                    btnSubmit.disabled = false; 
-                    btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i> Generar Orden'; 
-                }
+                // Restauramos el botón a la normalidad PASE LO QUE PASE
+                if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i> Generar Orden'; }
             }
         }
 
@@ -1801,8 +1744,8 @@
             renderOrderItems();
 
             document.getElementById("edit-ped-detalle").value = p.detalle || ''; 
-            document.getElementById("edit-ped-monto").value = p.monto || 0; 
-            document.getElementById("edit-ped-sena").value = p.sena || 0; 
+            var mEl = document.getElementById("edit-ped-monto"); if(mEl) mEl.value = p.monto || 0; 
+            var sEl = document.getElementById("edit-ped-sena"); if(sEl) sEl.value = p.sena || 0; 
             document.getElementById("edit-ped-estado").value = p.estado || 'Confirmado'; 
             openModal('modalEditPedido');
         }
@@ -1816,8 +1759,9 @@
                 var idx = appState.pedidos.findIndex(x => x.id === localId); if (idx === -1) return;
                 
                 var cliente = document.getElementById("edit-ped-cliente").value; var observaciones = document.getElementById("edit-ped-detalle").value.trim(); 
-                var monto = parseInt(document.getElementById("edit-ped-monto").value) || 0; 
-                var sena = parseInt(document.getElementById("edit-ped-sena").value) || 0; 
+                var mEl = document.getElementById("edit-ped-monto"); var sEl = document.getElementById("edit-ped-sena");
+                var monto = mEl ? parseInt(mEl.value) || 0 : 0; 
+                var sena = sEl ? parseInt(sEl.value) || 0 : 0; 
                 var estado = document.getElementById("edit-ped-estado").value; 
                 
                 let detalleString = currentOrderItems.map(i => `${i.cantidad}x ${i.nombre} (${i.talle})`).join(" + ");
@@ -1831,7 +1775,7 @@
 
                 var fileInput = document.getElementById("edit-ped-arte-file");
                 if (fileInput && fileInput.files.length > 0) { 
-                    showToast("Procesando...", "Actualizando archivos, por favor espera.");
+                    showToast("Procesando...", "Preparando archivos de reemplazo...");
                     updatedData.arte = await processMultipleFiles(fileInput.files);
                 }
 
@@ -1842,85 +1786,100 @@
                 currentOrderItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) - i.cantidad; });
 
                 if (hasFirebase && authUser && docId) { 
-                    await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).update(updatedData); 
+                    db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).update(updatedData).catch(console.error); 
                     for (let sId in stockUpdates) {
                         let change = stockUpdates[sId];
                         if (change === 0) continue;
                         let stockItem = appState.stock.find(s => s.id === parseInt(sId));
                         if (stockItem && stockItem.docId) {
                             let nuevaCant = Math.max(0, stockItem.cantidad + change);
-                            await db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant });
+                            db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
                         }
                     }
-                } else { 
-                    appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; 
-                    for (let sId in stockUpdates) {
-                        let change = stockUpdates[sId];
-                        if (change === 0) continue;
-                        let sIdx = appState.stock.findIndex(s => s.id === parseInt(sId));
-                        if (sIdx !== -1) {
-                            appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad + change);
-                        }
+                } 
+                
+                appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; 
+                for (let sId in stockUpdates) {
+                    let change = stockUpdates[sId];
+                    if (change === 0) continue;
+                    let sIdx = appState.stock.findIndex(s => s.id === parseInt(sId));
+                    if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad + change);
+                }
+                
+                if(!hasFirebase) {
+                    try {
+                        saveToLocalStorage(); 
+                    } catch(e) {
+                        showToast("Memoria Local Llena", "Límite de memoria alcanzado. No se pudieron registrar los cambios gráficos.", true);
+                        if(btnEdit) { btnEdit.disabled = false; btnEdit.innerHTML = 'Aplicar Cambios'; }
+                        return; // Frenamos sin colgar
                     }
-                    saveToLocalStorage(); renderAll(); updateCharts(); 
                 }
                 
                 if(fileInput) fileInput.value = ""; 
                 currentOrderItems = [];
                 closeModal('modalEditPedido'); 
-                showToast("Actualizado", `La orden y su stock fueron reajustados.`);
+                renderAll(); updateCharts(); 
+                showToast("Actualizado", `La orden y su stock fueron reajustados al instante.`);
+                
             } catch(e) {
-                showToast("Error", "Falló la edición.", true);
+                console.error("Fallo de edición:", e);
+                showToast("Error", "No se pudo completar la edición por un error interno.", true);
             } finally {
+                // Pase lo que pase, el botón revive
                 if(btnEdit) { btnEdit.disabled = false; btnEdit.innerHTML = 'Aplicar Cambios'; }
             }
         }
 
         async function eliminarPedido(docId, localId) {
             if (!confirm("⚠️ ¿Eliminar de forma irreversible esta orden de trabajo?")) return;
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete(); } catch(e) {} } 
-            else { appState.pedidos = appState.pedidos.filter(p => p.id !== localId); saveToLocalStorage(); renderAll(); updateCharts(); }
+            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete().catch(console.error); } 
+            appState.pedidos = appState.pedidos.filter(p => p.id !== localId); 
+            if(!hasFirebase) saveToLocalStorage(); 
+            renderAll(); updateCharts();
             showToast("Borrado", "La orden fue removida del historial.");
         }
 
         // --- FICHA TÉCNICA PDF CON DETALLE DE PRODUCTOS ---
         function generarFichaTecnica(idPedido) {
             var p = appState.pedidos.find(x => x.id === idPedido); if (!p) return;
-            document.getElementById("ficha-id").innerText = "OT#" + p.id; document.getElementById("ficha-fecha").innerText = "Expedido: " + new Date().toLocaleDateString('es-AR');
-            document.getElementById("ficha-cliente").innerText = p.cliente; 
+            var elFichaId = document.getElementById("ficha-id"); if(elFichaId) elFichaId.innerText = "OT#" + p.id; 
+            var elFichaFecha = document.getElementById("ficha-fecha"); if(elFichaFecha) elFichaFecha.innerText = "Expedido: " + new Date().toLocaleDateString('es-AR');
+            var elFichaCliente = document.getElementById("ficha-cliente"); if(elFichaCliente) elFichaCliente.innerText = p.cliente; 
             
             const nota = p.detalle ? (p.detalle.includes("| Nota:") ? p.detalle.split("| Nota:")[1].trim() : p.detalle) : "-";
-            document.getElementById("ficha-detalle").innerText = "Obs: " + nota;
+            var elFichaDetalle = document.getElementById("ficha-detalle"); if(elFichaDetalle) elFichaDetalle.innerText = "Obs: " + nota;
 
             const tbodyItems = document.getElementById("comp-items-tbody");
-            tbodyItems.innerHTML = "";
-            
-            if (p.items && p.items.length > 0) {
-                p.items.forEach(item => {
-                    tbodyItems.innerHTML += `
-                        <tr>
-                            <td><strong>${item.cantidad}x</strong> ${item.nombre} (Talle ${item.talle})</td>
-                            <td style="text-align: right;">$${item.precioUnitario.toLocaleString('es-AR')}</td>
-                            <td style="text-align: right; font-weight: 700;">$${item.subtotal.toLocaleString('es-AR')}</td>
-                        </tr>
-                    `;
-                });
-            } else {
-                tbodyItems.innerHTML = `<tr><td colspan="3" style="text-align:center; color: #64748b;">Detalle consolidado (Pedido antiguo o sin desglose)</td></tr>`;
+            if(tbodyItems) {
+                tbodyItems.innerHTML = "";
+                if (p.items && p.items.length > 0) {
+                    p.items.forEach(item => {
+                        tbodyItems.innerHTML += `
+                            <tr>
+                                <td><strong>${item.cantidad}x</strong> ${item.nombre} (Talle ${item.talle})</td>
+                                <td style="text-align: right;">$${item.precioUnitario.toLocaleString('es-AR')}</td>
+                                <td style="text-align: right; font-weight: 700;">$${item.subtotal.toLocaleString('es-AR')}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbodyItems.innerHTML = `<tr><td colspan="3" style="text-align:center; color: #64748b;">Detalle consolidado (Pedido antiguo o sin desglose)</td></tr>`;
+                }
             }
 
-            document.getElementById("ficha-monto-total").innerText = "$" + p.monto.toLocaleString('es-AR');
-            document.getElementById("ficha-sena").innerText = p.sena ? "$" + p.sena.toLocaleString('es-AR') : "$0";
-            document.getElementById("ficha-saldo").innerText = p.saldo !== undefined ? "$" + p.saldo.toLocaleString('es-AR') : "$" + p.monto.toLocaleString('es-AR');
+            var elFichaMonto = document.getElementById("ficha-monto-total"); if(elFichaMonto) elFichaMonto.innerText = "$" + p.monto.toLocaleString('es-AR');
+            var elFichaSena = document.getElementById("ficha-sena"); if(elFichaSena) elFichaSena.innerText = p.sena ? "$" + p.sena.toLocaleString('es-AR') : "$0";
+            var elFichaSaldo = document.getElementById("ficha-saldo"); if(elFichaSaldo) elFichaSaldo.innerText = p.saldo !== undefined ? "$" + p.saldo.toLocaleString('es-AR') : "$" + p.monto.toLocaleString('es-AR');
 
-            document.getElementById("btn-imprimir-ficha").onclick = function() { descargarFichaDirecta(idPedido); };
+            var btnImprimir = document.getElementById("btn-imprimir-ficha");
+            if(btnImprimir) btnImprimir.onclick = function() { descargarFichaDirecta(idPedido); };
 
             openModal('modalFichaTecnica');
         }
 
         function descargarFichaDirecta(idPedido) {
             generarFichaTecnica(idPedido); 
-            
             setTimeout(() => {
                 const element = document.getElementById('print-ficha-area');
                 const closeBtn = element.querySelector('.modal-close');
@@ -1948,35 +1907,37 @@
         }
 
         function showToast(title, desc, isError = false) { 
-            document.getElementById("toast-title").innerText = title; document.getElementById("toast-desc").innerText = desc; 
+            var elTitle = document.getElementById("toast-title"); if(elTitle) elTitle.innerText = title; 
+            var elDesc = document.getElementById("toast-desc"); if(elDesc) elDesc.innerText = desc; 
             var icon = document.getElementById("toast-icon");
             var iconBox = document.getElementById("toast-icon-box");
-            if (isError) { 
-                icon.className = "fa-solid fa-triangle-exclamation"; icon.style.color = "var(--color-danger)"; 
-                iconBox.style.background = "rgba(244, 63, 94, 0.1)"; iconBox.style.borderColor = "rgba(244, 63, 94, 0.2)";
-                document.getElementById("toast").style.borderColor = "var(--color-danger)";
-            } else { 
-                icon.className = "fa-solid fa-check"; icon.style.color = "var(--color-accent)"; 
-                iconBox.style.background = "rgba(56, 189, 248, 0.1)"; iconBox.style.borderColor = "rgba(56, 189, 248, 0.2)";
-                document.getElementById("toast").style.borderColor = "var(--color-accent)";
+            if(icon && iconBox) {
+                if (isError) { 
+                    icon.className = "fa-solid fa-triangle-exclamation"; icon.style.color = "var(--color-danger)"; 
+                    iconBox.style.background = "rgba(244, 63, 94, 0.1)"; iconBox.style.borderColor = "rgba(244, 63, 94, 0.2)";
+                    document.getElementById("toast").style.borderColor = "var(--color-danger)";
+                } else { 
+                    icon.className = "fa-solid fa-check"; icon.style.color = "var(--color-accent)"; 
+                    iconBox.style.background = "rgba(56, 189, 248, 0.1)"; iconBox.style.borderColor = "rgba(56, 189, 248, 0.2)";
+                    document.getElementById("toast").style.borderColor = "var(--color-accent)";
+                }
             }
             var t = document.getElementById("toast"); 
-            t.classList.add("active"); 
-            setTimeout(function() { t.classList.remove("active"); }, 2500); 
+            if(t) {
+                t.classList.add("active"); 
+                setTimeout(function() { t.classList.remove("active"); }, 2500); 
+            }
         }
 
-        // --- CRUD CLIENTES ---
+        // --- CRUD CLIENTES (OPTIMISTA) ---
         async function guardarNuevoCliente() {
             var nombre = document.getElementById("form-cli-nombre").value; var whatsapp = document.getElementById("form-cli-tel").value; var ig = document.getElementById("form-cli-ig") ? document.getElementById("form-cli-ig").value : "";
             if (!nombre || !whatsapp) { showToast("Error", "Razón Social y WhatsApp son obligatorios.", true); return; }
             var nuevoId = appState.clientes.length > 0 ? Math.max(...appState.clientes.map(c=>c.id)) + 1 : 1;
             var nuevoCli = { id: nuevoId, nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
             
-            if (hasFirebase && authUser) { 
-                try { await db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli); } catch(e){ } 
-            } else { 
-                appState.clientes.push(nuevoCli); saveToLocalStorage(); renderAll(); 
-            }
+            if (hasFirebase && authUser) { db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli).catch(console.error); } 
+            appState.clientes.push(nuevoCli); if(!hasFirebase) saveToLocalStorage(); 
             
             if(returnToPedidoModalFromCliente) {
                 document.getElementById('modalCliente').classList.remove('active');
@@ -1984,15 +1945,11 @@
                 document.getElementById('form-ped-cliente').value = nombre; 
                 document.getElementById('modalPedido').classList.add('active'); 
                 returnToPedidoModalFromCliente = false;
-            } else {
-                closeModal('modalCliente'); 
-            }
+            } else { closeModal('modalCliente'); }
             
-            document.getElementById("form-cli-nombre").value = ""; 
-            document.getElementById("form-cli-tel").value = "";
+            document.getElementById("form-cli-nombre").value = ""; document.getElementById("form-cli-tel").value = "";
             if (document.getElementById("form-cli-ig")) document.getElementById("form-cli-ig").value = "";
-            
-            showToast("Carga Lista", `Cliente agendado.`);
+            renderAll(); showToast("Carga Lista", `Cliente agendado.`);
         }
         function abrirEditarCliente(docId, localId) {
             var c = appState.clientes.find(x => x.id === localId); if (!c) return;
@@ -2003,27 +1960,33 @@
             var docId = document.getElementById("edit-cli-id-doc").value; var localId = parseInt(document.getElementById("edit-cli-id-local").value);
             var nombre = document.getElementById("edit-cli-nombre").value.trim(); var whatsapp = document.getElementById("edit-cli-tel").value.trim(); var ig = document.getElementById("edit-cli-ig") ? document.getElementById("edit-cli-ig").value.trim() : "";
             var updatedData = { nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).update(updatedData); } catch(e) {} } 
-            else { var idx = appState.clientes.findIndex(x => x.id === localId); if (idx !== -1) { var viejoNombre = appState.clientes[idx].nombre; appState.clientes[idx] = { ...appState.clientes[idx], ...updatedData }; appState.pedidos.forEach((p, pIdx) => { if (p.cliente === viejoNombre) { appState.pedidos[pIdx].cliente = nombre; } }); saveToLocalStorage(); renderAll(); } }
-            closeModal('modalEditCliente'); showToast("Guardado", `Cambios aplicados.`);
+            
+            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).update(updatedData).catch(console.error); } 
+            var idx = appState.clientes.findIndex(x => x.id === localId); 
+            if (idx !== -1) { 
+                var viejoNombre = appState.clientes[idx].nombre; appState.clientes[idx] = { ...appState.clientes[idx], ...updatedData }; 
+                appState.pedidos.forEach((p, pIdx) => { if (p.cliente === viejoNombre) { appState.pedidos[pIdx].cliente = nombre; } }); 
+            }
+            if(!hasFirebase) saveToLocalStorage(); 
+            closeModal('modalEditCliente'); renderAll(); showToast("Guardado", `Cambios aplicados.`);
         }
         async function eliminarCliente(docId, localId) {
             if (!confirm("⚠️ ¿Expulsar a esta entidad del directorio?")) return;
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).delete(); } catch(e){} } 
-            else { appState.clientes = appState.clientes.filter(c => c.id !== localId); saveToLocalStorage(); renderAll(); }
-            showToast("Baja Efectuada", "Contacto removido.");
+            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).delete().catch(console.error); } 
+            appState.clientes = appState.clientes.filter(c => c.id !== localId); if(!hasFirebase) saveToLocalStorage(); renderAll(); showToast("Baja Efectuada", "Contacto removido.");
         }
 
-        // --- CRUD FINANZAS ---
+        // --- CRUD FINANZAS (OPTIMISTA) ---
         function abrirAgregarFinanzasRapido(tipo) { document.getElementById("form-fin-tipo").value = tipo; document.getElementById("form-fin-monto").value = ""; document.getElementById("form-fin-detalle").value = ""; openModal("modalFinanzas"); }
         async function guardarFinanzas() {
             var tipo = document.getElementById("form-fin-tipo").value; var monto = parseInt(document.getElementById("form-fin-monto").value) || 0; var detalle = document.getElementById("form-fin-detalle").value; var mediopago = document.getElementById("form-fin-metodopago") ? document.getElementById("form-fin-metodopago").value : "Mercado Pago";
             if (!detalle || monto <= 0) { showToast("Error", "Asiento contable inválido.", true); return; }
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, fecha: hoy, medioPago: mediopago };
-            if (hasFirebase && authUser) { try{ await db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFin); } catch(e){} } 
-            else { appState.finanzas.unshift(nuevaFin); saveToLocalStorage(); renderAll(); updateCharts(); }
-            closeModal('modalFinanzas'); showToast("Libro Actualizado", `Transacción procesada.`);
+            
+            if (hasFirebase && authUser) { db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFin).catch(console.error); } 
+            appState.finanzas.unshift(nuevaFin); if(!hasFirebase) saveToLocalStorage(); 
+            closeModal('modalFinanzas'); renderAll(); updateCharts(); showToast("Libro Actualizado", `Transacción procesada.`);
         }
         function abrirEditarFinanzas(docId, localId) {
             var f = appState.finanzas.find(x => x.id === localId); if (!f) return;
@@ -2034,25 +1997,24 @@
             var docId = document.getElementById("edit-fin-id-doc").value; var localId = parseInt(document.getElementById("edit-fin-id-local").value);
             var tipo = document.getElementById("edit-fin-tipo").value; var monto = parseInt(document.getElementById("edit-fin-monto").value) || 0; var detalle = document.getElementById("edit-fin-detalle").value;
             var updatedData = { tipo: tipo, monto: monto, detalle: detalle };
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData); } catch(e) {} } 
-            else { var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData }; saveToLocalStorage(); renderAll(); updateCharts(); } }
-            closeModal('modalEditFinanzas'); showToast("Editado", `Registro corregido.`);
+            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData).catch(console.error); } 
+            var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData }; }
+            if(!hasFirebase) saveToLocalStorage(); closeModal('modalEditFinanzas'); renderAll(); updateCharts(); showToast("Editado", `Registro corregido.`);
         }
         async function eliminarFinanzas(docId, localId) {
             if (!confirm("⚠️ ¿Estás seguro de anular este asiento contable?")) return;
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).delete(); } catch(e){} } 
-            else { appState.finanzas = appState.finanzas.filter(f => f.id !== localId); saveToLocalStorage(); renderAll(); updateCharts(); }
-            showToast("Anulado", "Registro extraído del historial.");
+            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).delete().catch(console.error); } 
+            appState.finanzas = appState.finanzas.filter(f => f.id !== localId); if(!hasFirebase) saveToLocalStorage(); renderAll(); updateCharts(); showToast("Anulado", "Registro extraído del historial.");
         }
         async function cobrarDeuda(docId, localId) {
             var findItem = appState.finanzas.find(x => x.id === localId); if (!findItem) return;
             var updatedData = { tipo: "Ingreso", detalle: "Cobro Acreditado: " + findItem.detalle };
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData); } catch(e) {} }
-            else { var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx].tipo = "Ingreso"; appState.finanzas[idx].detalle = "Cobro Acreditado: " + appState.finanzas[idx].detalle; saveToLocalStorage(); renderAll(); updateCharts(); } }
-            showToast("Acreditado", "La cuenta se cobró con éxito.");
+            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData).catch(console.error); }
+            var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx].tipo = "Ingreso"; appState.finanzas[idx].detalle = "Cobro Acreditado: " + appState.finanzas[idx].detalle; }
+            if(!hasFirebase) saveToLocalStorage(); renderAll(); updateCharts(); showToast("Acreditado", "La cuenta se cobró con éxito.");
         }
 
-        // --- CRUD STOCK ---
+        // --- CRUD STOCK (OPTIMISTA) ---
         async function guardarStock() {
             var nombre = document.getElementById("form-stk-nombre").value; 
             var talle = document.getElementById("form-stk-talle").value || "U"; 
@@ -2081,19 +2043,13 @@
                     document.getElementById(targetModal).classList.add('active'); 
                 }, 100);
                 
-                returnToPedidoModalFromStock = false;
-                document.getElementById("form-stk-nombre").value = "";
-                showToast("Insumo Especial", `Prenda única cargada al carrito.`);
-                return; 
+                returnToPedidoModalFromStock = false; document.getElementById("form-stk-nombre").value = ""; showToast("Insumo Especial", `Prenda única cargada al carrito.`); return; 
             }
 
             var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
             
-            if (hasFirebase && authUser) { 
-                try { await db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo); } catch(e){} 
-            } else { 
-                appState.stock.push(nuevoInsumo); saveToLocalStorage(); renderAll(); 
-            }
+            if (hasFirebase && authUser) { db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo).catch(console.error); } 
+            appState.stock.push(nuevoInsumo); if(!hasFirebase) saveToLocalStorage(); 
             
             if(returnToPedidoModalFromStock) {
                 const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
@@ -2103,24 +2059,14 @@
                 populateDropdowns(); 
                 setTimeout(() => {
                     const select = document.getElementById(targetSelect);
-                    if(select) {
-                        for (let i = 0; i < select.options.length; i++) {
-                            if (select.options[i].text.includes(nombre) && select.options[i].text.includes(talle)) {
-                                select.selectedIndex = i; break;
-                            }
-                        }
-                    }
+                    if(select) { for (let i = 0; i < select.options.length; i++) { if (select.options[i].text.includes(nombre) && select.options[i].text.includes(talle)) { select.selectedIndex = i; break; } } }
                     document.getElementById(targetModal).classList.add('active'); 
                 }, 100);
                 returnToPedidoModalFromStock = false;
-            } else {
-                closeModal('modalStock'); 
-            }
+            } else { closeModal('modalStock'); }
 
-            document.getElementById("form-stk-nombre").value = "";
-            document.getElementById("form-stk-talle").value = "";
-            document.getElementById("form-stk-cant").value = "";
-            showToast("Cargado", `Lote ingresado al almacén.`);
+            document.getElementById("form-stk-nombre").value = ""; document.getElementById("form-stk-talle").value = ""; document.getElementById("form-stk-cant").value = "";
+            renderAll(); showToast("Cargado", `Lote ingresado al almacén.`);
         }
 
         function abrirEditarStock(docId, localId) {
@@ -2132,15 +2078,14 @@
             var docId = document.getElementById("edit-stk-id-doc").value; var localId = parseInt(document.getElementById("edit-stk-id-local").value);
             var nombre = document.getElementById("edit-stk-nombre").value; var talle = document.getElementById("edit-stk-talle").value; var cant = parseInt(document.getElementById("edit-stk-cant").value) || 0; var min = parseInt(document.getElementById("edit-stk-min").value) || 0;
             var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min };
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).update(updatedData); } catch(e) {} } 
-            else { var idx = appState.stock.findIndex(x => x.id === localId); if (idx !== -1) { appState.stock[idx] = { ...appState.stock[idx], ...updatedData }; saveToLocalStorage(); renderAll(); } }
-            closeModal('modalEditStock'); showToast("Ajustado", `Cantidades recalibradas.`);
+            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).update(updatedData).catch(console.error); } 
+            var idx = appState.stock.findIndex(x => x.id === localId); if (idx !== -1) { appState.stock[idx] = { ...appState.stock[idx], ...updatedData }; }
+            if(!hasFirebase) saveToLocalStorage(); closeModal('modalEditStock'); renderAll(); showToast("Ajustado", `Cantidades recalibradas.`);
         }
         async function eliminarStock(docId, localId) {
             if (!confirm("⚠️ ¿Dar de baja este SKU del almacén?")) return;
-            if (hasFirebase && authUser && docId) { try { await db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).delete(); } catch(e){} } 
-            else { appState.stock = appState.stock.filter(s => s.id !== localId); saveToLocalStorage(); renderAll(); }
-            showToast("Removido", "La ficha fue eliminada.");
+            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).delete().catch(console.error); } 
+            appState.stock = appState.stock.filter(s => s.id !== localId); if(!hasFirebase) saveToLocalStorage(); renderAll(); showToast("Removido", "La ficha fue eliminada.");
         }
 
         function limpiarConfigFirebaseCustom() {
@@ -2168,7 +2113,6 @@
             chart2.data.datasets[0].data = [ingresos, egresos]; chart2.update();
         }
 
-        // EXPORTACIONES A WINDOW
         window.toggleSidebar = toggleSidebar; window.switchTab = switchTab; window.openModal = openModal; window.closeModal = closeModal;
         window.guardarNuevoPedido = guardarNuevoPedido; window.guardarEdicionPedido = guardarEdicionPedido; window.eliminarPedido = eliminarPedido;
         window.guardarNuevoCliente = guardarNuevoCliente; window.guardarEdicionCliente = guardarEdicionCliente; window.eliminarCliente = eliminarCliente;
@@ -2180,10 +2124,7 @@
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
         window.playVoiceReport = playVoiceReport; 
         window.applyPedidosFilter = applyPedidosFilter; window.clearPedidosFilter = clearPedidosFilter; window.changePedidosPage = changePedidosPage;
-        
-        // Exponer nuevas funciones del mini-carrito
-        window.addOrderItem = addOrderItem;
-        window.removeOrderItem = removeOrderItem;
+        window.addOrderItem = addOrderItem; window.removeOrderItem = removeOrderItem;
         
     </script>
 </body>

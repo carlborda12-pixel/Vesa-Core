@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <!-- SDK de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -565,7 +566,12 @@
                     <div class="form-section-title" style="margin-top: 8px;">📦 Prendas, Talles y Precios (Auto-Stock)</div>
                     <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-end;">
                         <div class="form-group" style="flex: 2;">
-                            <select class="form-control" id="ped-add-item-select" style="padding: 10px; font-size: 12px;"></select>
+                            <div style="display: flex; gap: 6px;">
+                                <select class="form-control" id="ped-add-item-select" style="padding: 10px; font-size: 12px; flex: 1;"></select>
+                                <button class="btn" style="padding: 10px; border-radius: 10px; font-size: 12px;" onclick="openModalStockDesdePedido()" title="Crear un nuevo insumo sin salir del pedido">
+                                    <i class="fa-solid fa-plus"></i> Nuevo
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <input type="number" class="form-control" id="ped-add-item-qty" placeholder="Cant." style="padding: 10px; font-size: 12px;" min="1">
@@ -581,16 +587,6 @@
                         <div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>
                     </div>
 
-                    <div class="form-row" style="margin-top: 8px;">
-                        <div class="form-group">
-                            <label>Malla</label>
-                            <input type="text" class="form-control" id="form-ped-malla" placeholder="Ej: 43T o 62T">
-                        </div>
-                        <div class="form-group">
-                            <label>Tintas</label>
-                            <input type="text" class="form-control" id="form-ped-tintas" placeholder="Ej: Plastisol Blanco">
-                        </div>
-                    </div>
                     <div class="form-group">
                         <label>Referencia Visual</label>
                         <input type="file" class="form-control" id="form-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;" title="Sube una foto del diseño menor a 1MB">
@@ -620,12 +616,6 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Curado</label>
-                            <input type="text" class="form-control" id="form-ped-plancha" placeholder="Ej: 160°C - 15 seg">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
                             <label>Pago</label>
                             <select class="form-control" id="form-ped-metodopago">
                                 <option value="Mercado Pago" selected>Mercado Pago</option>
@@ -633,6 +623,8 @@
                                 <option value="Efectivo">Efectivo</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>Entrega</label>
                             <select class="form-control" id="form-ped-entrega">
@@ -640,10 +632,10 @@
                                 <option value="Envío">Logística Externa</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Ventana de Entrega (Hora)</label>
-                        <input type="text" class="form-control" id="form-ped-hora" placeholder="Ej: 16:30 hs">
+                        <div class="form-group">
+                            <label>Ventana de Entrega (Hora)</label>
+                            <input type="text" class="form-control" id="form-ped-hora" placeholder="Ej: 16:30 hs">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -668,14 +660,7 @@
                     <div class="form-group"><label>Cliente</label><select class="form-control" id="edit-ped-cliente"></select></div>
                     <div class="form-group"><label>Observaciones / Requerimiento</label><input type="text" class="form-control" id="edit-ped-detalle"></div>
                     
-                    <div class="form-row">
-                        <div class="form-group"><label>Malla</label><input type="text" class="form-control" id="edit-ped-malla"></div>
-                        <div class="form-group"><label>Tintas</label><input type="text" class="form-control" id="edit-ped-tintas"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Curado</label><input type="text" class="form-control" id="edit-ped-plancha"></div>
-                        <div class="form-group"><label>Actualizar Arte</label><input type="file" class="form-control" id="edit-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;" title="Si subís una nueva imagen se borrará la anterior"></div>
-                    </div>
+                    <div class="form-group"><label>Actualizar Arte</label><input type="file" class="form-control" id="edit-ped-arte-file" accept="image/*" style="font-size: 12px; padding: 10px;" title="Si subís una nueva imagen se borrará la anterior"></div>
                 </div>
                 
                 <div class="modal-col">
@@ -748,19 +733,10 @@
                 </div>
             </div>
             
-            <div style="margin-top: 20px;">
-                <h4 style="font-weight: 800; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; font-size: 12px;">ESPECIFICACIONES DE TALLER</h4>
-                <div class="technical-spec">
-                    <p style="margin-bottom: 8px; display: flex; align-items: center;"><strong style="width: 140px; color: #64748b;">[MATRIZ_HILOS]</strong>   <span id="ficha-malla" style="font-weight: 700; font-size: 13px;">NO ESPECIFICADO</span></p>
-                    <p style="margin-bottom: 8px; display: flex; align-items: center;"><strong style="width: 140px; color: #64748b;">[FORMULA_COLOR]</strong> <span id="ficha-tintas" style="font-weight: 700; font-size: 13px;">NO ESPECIFICADO</span></p>
-                    <p style="display: flex; align-items: center;"><strong style="width: 140px; color: #64748b;">[SETEO_CURADO]</strong>  <span id="ficha-plancha" style="font-weight: 700; font-size: 13px;">NO ESPECIFICADO</span></p>
-                </div>
-            </div>
-
             <div style="text-align: center; margin-top:30px; border-top:2px dashed #cbd5e1; padding-top:16px;">
                 <p style="font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">VESA Core OS - Sistema de Control Operativo</p>
             </div>
-            <button class="btn btn-primary" onclick="window.print()" style="margin-top:20px; width:100%; justify-content:center;" title="Abre el gestor de impresión para obtener la versión PDF"><i class="fa-solid fa-print"></i> Imprimir Documento</button>
+            <button class="btn btn-primary" id="btn-imprimir-ficha" style="margin-top:20px; width:100%; justify-content:center;" title="Generar archivo PDF de la Orden"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</button>
         </div>
     </div>
 
@@ -841,9 +817,11 @@
         var welcomeShown = sessionStorage.getItem("vesa_welcome_shown");
         var lastReportText = "";
 
-        var returnToPedidoModal = false;
+        // Flags para el retorno mágico de modales
+        var returnToPedidoModalFromCliente = false;
+        var returnToPedidoModalFromStock = false;
 
-        // NUEVO: Array para el mini-carrito de pedidos
+        // Array para el mini-carrito de pedidos
         var currentOrderItems = [];
 
         // ESTADO INICIAL
@@ -1144,13 +1122,22 @@
             document.getElementById("form-ped-monto").value = totalAuto;
         }
 
-        // Lógica para abrir modal de cliente desde el modal de pedido sin perder estado
+        // Lógicas para abrir modales desde el modal de pedido sin perder estado
         function openModalClienteDesdePedido() {
-            returnToPedidoModal = true;
+            returnToPedidoModalFromCliente = true;
             document.getElementById('modalPedido').classList.remove('active');
             document.getElementById("form-cli-nombre").value = "";
             document.getElementById("form-cli-tel").value = "";
             openModal('modalCliente');
+        }
+
+        function openModalStockDesdePedido() {
+            returnToPedidoModalFromStock = true;
+            document.getElementById('modalPedido').classList.remove('active');
+            document.getElementById("form-stk-nombre").value = "";
+            document.getElementById("form-stk-talle").value = "";
+            document.getElementById("form-stk-cant").value = "";
+            openModal('modalStock');
         }
 
         // --- RENDER PEDIDOS Y KANBAN ---
@@ -1242,9 +1229,14 @@
                 const activeModal = document.querySelector('.modal-overlay.active');
                 if (activeModal) { 
                     activeModal.classList.remove('active');
-                    if (returnToPedidoModal && activeModal.id === 'modalCliente') {
+                    
+                    // Lógica de retorno al pedido
+                    if (returnToPedidoModalFromCliente && activeModal.id === 'modalCliente') {
                         document.getElementById('modalPedido').classList.add('active');
-                        returnToPedidoModal = false;
+                        returnToPedidoModalFromCliente = false;
+                    } else if (returnToPedidoModalFromStock && activeModal.id === 'modalStock') {
+                        document.getElementById('modalPedido').classList.add('active');
+                        returnToPedidoModalFromStock = false;
                     }
                     return;
                 }
@@ -1260,15 +1252,19 @@
                 currentOrderItems = [];
                 renderOrderItems();
             }
-            if(id !== 'modalCliente') returnToPedidoModal = false;
+            if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
+            if(id !== 'modalStock') returnToPedidoModalFromStock = false;
             document.getElementById(id).classList.add('active'); 
         }
 
         function closeModal(id) { 
             document.getElementById(id).classList.remove('active'); 
-            if(id === 'modalCliente' && returnToPedidoModal) {
+            if(id === 'modalCliente' && returnToPedidoModalFromCliente) {
                 document.getElementById('modalPedido').classList.add('active');
-                returnToPedidoModal = false;
+                returnToPedidoModalFromCliente = false;
+            } else if(id === 'modalStock' && returnToPedidoModalFromStock) {
+                document.getElementById('modalPedido').classList.add('active');
+                returnToPedidoModalFromStock = false;
             }
         }
 
@@ -1295,7 +1291,7 @@
             showToast("Actualizado", `La orden #${id} avanzó a ${nuevoEstado}.`);
         }
 
-        // --- CRUD PEDIDOS CON MULTI-CARRITO Y SEÑA ---
+        // --- CRUD PEDIDOS ---
         async function guardarNuevoPedido() {
             var cliente = document.getElementById("form-ped-cliente").value; 
             var observaciones = document.getElementById("form-ped-detalle").value.trim();
@@ -1305,10 +1301,6 @@
             var mediopago = document.getElementById("form-ped-metodopago").value; 
             var entrega = document.getElementById("form-ped-entrega").value; 
             var hora = document.getElementById("form-ped-hora").value || "A coordinar";
-            
-            var malla = document.getElementById("form-ped-malla").value.trim();
-            var tintas = document.getElementById("form-ped-tintas").value.trim();
-            var plancha = document.getElementById("form-ped-plancha").value.trim();
 
             if (currentOrderItems.length === 0 && !observaciones) { 
                 showToast("Error", "Agregá prendas al carrito o escribí un detalle.", true); return; 
@@ -1330,7 +1322,7 @@
                 id: nuevoId, cliente: cliente, detalle: detalleString, estado: estado, 
                 monto: montoTotal, sena: sena, saldo: montoTotal - sena, items: currentOrderItems, 
                 fecha: hoy, tipoEntrega: entrega, horaEntrega: hora, medioPago: mediopago,
-                malla: malla, tintas: tintas, plancha: plancha, arte: arteUrl
+                arte: arteUrl
             };
 
             var nuevaFinanza = null;
@@ -1392,7 +1384,6 @@
             document.getElementById("edit-ped-monto").value = p.monto || 0; 
             document.getElementById("edit-ped-sena").value = p.sena || 0; 
             document.getElementById("edit-ped-estado").value = p.estado || 'Confirmado'; 
-            document.getElementById("edit-ped-malla").value = p.malla || ''; document.getElementById("edit-ped-tintas").value = p.tintas || ''; document.getElementById("edit-ped-plancha").value = p.plancha || '';
             openModal('modalEditPedido');
         }
 
@@ -1402,7 +1393,6 @@
             var monto = parseInt(document.getElementById("edit-ped-monto").value) || 0; 
             var sena = parseInt(document.getElementById("edit-ped-sena").value) || 0; 
             var estado = document.getElementById("edit-ped-estado").value; 
-            var malla = document.getElementById("edit-ped-malla").value.trim(); var tintas = document.getElementById("edit-ped-tintas").value.trim(); var plancha = document.getElementById("edit-ped-plancha").value.trim();
             
             // Reconstruir el detalle si hay items en el carrito (para pedidos viejos que se editan)
             let detalleString = currentOrderItems.map(i => `${i.cantidad}x ${i.nombre} (${i.talle})`).join(" + ");
@@ -1416,9 +1406,6 @@
                 monto: monto, 
                 sena: sena, 
                 saldo: monto - sena, 
-                malla: malla, 
-                tintas: tintas, 
-                plancha: plancha,
                 items: currentOrderItems // Guardamos los items actualizados
             };
 
@@ -1472,19 +1459,44 @@
             document.getElementById("ficha-sena").innerText = p.sena ? "$" + p.sena.toLocaleString('es-AR') : "$0";
             document.getElementById("ficha-saldo").innerText = p.saldo !== undefined ? "$" + p.saldo.toLocaleString('es-AR') : "$" + p.monto.toLocaleString('es-AR');
 
-            document.getElementById("ficha-malla").innerText = p.malla || "NO APLICADO"; document.getElementById("ficha-tintas").innerText = p.tintas || "NO APLICADO"; document.getElementById("ficha-plancha").innerText = p.plancha || "NO APLICADO";
+            // Asignar el idPedido al botón de descarga para que funcione desde adentro del modal
+            document.getElementById("btn-imprimir-ficha").onclick = function() { descargarFichaDirecta(idPedido); };
+
             openModal('modalFichaTecnica');
         }
 
         // --- FUNCIÓN PARA DESCARGA DIRECTA DE PDF ---
         function descargarFichaDirecta(idPedido) {
-            generarFichaTecnica(idPedido);
+            generarFichaTecnica(idPedido); // Asegura que los datos estén cargados
+            
             // Pequeño delay para dejar que el modal se renderice visualmente
             setTimeout(() => {
-                window.print();
-                // Opcional: Cerrar el modal después de que se abre la ventana de impresión
-                // setTimeout(() => closeModal('modalFichaTecnica'), 500); 
-            }, 100);
+                const element = document.getElementById('print-ficha-area');
+                
+                // Ocultar botones transitoriamente para la foto del PDF
+                const closeBtn = element.querySelector('.modal-close');
+                const printBtn = document.getElementById('btn-imprimir-ficha');
+                if(closeBtn) closeBtn.style.display = 'none';
+                if(printBtn) printBtn.style.display = 'none';
+
+                const opt = {
+                    margin:       10,
+                    filename:     `VESA_Orden_${idPedido}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                showToast("Procesando...", "Generando documento PDF");
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Restaurar botones después de descargar
+                    if(closeBtn) closeBtn.style.display = 'block';
+                    if(printBtn) printBtn.style.display = 'flex';
+                    closeModal('modalFichaTecnica');
+                    showToast("Descarga Exitosa", "El remito se guardó en tu dispositivo.");
+                });
+            }, 300);
         }
 
         function showToast(title, desc, isError = false) { 
@@ -1518,12 +1530,12 @@
                 appState.clientes.push(nuevoCli); saveToLocalStorage(); renderAll(); 
             }
             
-            if(returnToPedidoModal) {
+            if(returnToPedidoModalFromCliente) {
                 document.getElementById('modalCliente').classList.remove('active');
                 populateDropdowns(); 
                 document.getElementById('form-ped-cliente').value = nombre; 
                 document.getElementById('modalPedido').classList.add('active'); 
-                returnToPedidoModal = false;
+                returnToPedidoModalFromCliente = false;
             } else {
                 closeModal('modalCliente'); 
             }
@@ -1597,10 +1609,40 @@
             var nombre = document.getElementById("form-stk-nombre").value; var talle = document.getElementById("form-stk-talle").value || "U"; var cant = parseInt(document.getElementById("form-stk-cant").value) || 0; var min = parseInt(document.getElementById("form-stk-min").value) || 2;
             if (!nombre) { showToast("Error", "Falta nombre del artículo.", true); return; }
             var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
-            if (hasFirebase && authUser) { try{ await db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo); } catch(e){} } 
-            else { appState.stock.push(nuevoInsumo); saveToLocalStorage(); renderAll(); }
-            closeModal('modalStock'); showToast("Cargado", `Lote ingresado al almacén.`);
+            
+            if (hasFirebase && authUser) { 
+                try { await db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo); } catch(e){} 
+            } else { 
+                appState.stock.push(nuevoInsumo); saveToLocalStorage(); renderAll(); 
+            }
+            
+            // Lógica de retorno al modal de pedido
+            if(returnToPedidoModalFromStock) {
+                document.getElementById('modalStock').classList.remove('active');
+                populateDropdowns(); 
+                // Auto-seleccionar el insumo recién creado en el select del carrito
+                // Nota: Usamos setTimeout para asegurar que el renderizado de options termine
+                setTimeout(() => {
+                    const select = document.getElementById('ped-add-item-select');
+                    for (let i = 0; i < select.options.length; i++) {
+                        if (select.options[i].text.includes(nombre) && select.options[i].text.includes(talle)) {
+                            select.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    document.getElementById('modalPedido').classList.add('active'); 
+                }, 100);
+                returnToPedidoModalFromStock = false;
+            } else {
+                closeModal('modalStock'); 
+            }
+
+            document.getElementById("form-stk-nombre").value = "";
+            document.getElementById("form-stk-talle").value = "";
+            document.getElementById("form-stk-cant").value = "";
+            showToast("Cargado", `Lote ingresado al almacén.`);
         }
+
         function abrirEditarStock(docId, localId) {
             var s = appState.stock.find(x => x.id === localId); if (!s) return;
             document.getElementById("edit-stk-id-doc").value = docId || ''; document.getElementById("edit-stk-id-local").value = localId;
@@ -1653,7 +1695,7 @@
         window.guardarFinanzas = guardarFinanzas; window.guardarEdicionFinanzas = guardarEdicionFinanzas; window.eliminarFinanzas = eliminarFinanzas; window.cobrarDeuda = cobrarDeuda; window.abrirAgregarFinanzasRapido = abrirAgregarFinanzasRapido;
         window.guardarStock = guardarStock; window.guardarEdicionStock = guardarEdicionStock; window.eliminarStock = eliminarStock;
         window.abrirEditarCliente = abrirEditarCliente; window.abrirEditarStock = abrirEditarStock; window.abrirEditarFinanzas = abrirEditarFinanzas;
-        window.abrirEditarPedido = abrirEditarPedido; window.openModalClienteDesdePedido = openModalClienteDesdePedido;
+        window.abrirEditarPedido = abrirEditarPedido; window.openModalClienteDesdePedido = openModalClienteDesdePedido; window.openModalStockDesdePedido = openModalStockDesdePedido;
         window.generarFichaTecnica = generarFichaTecnica; window.descargarFichaDirecta = descargarFichaDirecta; window.allowDrop = allowDrop; window.drop = drop;
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
         window.playVoiceReport = playVoiceReport; 

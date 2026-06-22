@@ -774,25 +774,176 @@
             <div class="modal-header">
                 <h3>Alta de Cliente</h3>
                 <button class="modal-close" onclick="closeModal('modalCliente')"><i class="fa-solid fa-xmark"></i></button>
-    <div class="modal-overlay" id="modalStock"><div class="modal-box"><div class="modal-header"><h3>Adquisición de Insumos</h3><button class="modal-close" onclick="closeModal('modalStock')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-group"><label>Artículo</label><input type="text" class="form-control" id="form-stk-nombre"></div><div class="form-row"><div class="form-group"><label>Talle/Formato</label><input type="text" class="form-control" id="form-stk-talle"></div><div class="form-group"><label>Unidades</label><input type="number" class="form-control" id="form-stk-cant"></div></div><div class="form-group"><label>Alerta Mínima</label><input type="number" class="form-control" id="form-stk-min" title="Si la cantidad baja de este número, el panel mostrará una alerta roja"></div>
+            </div>
+            <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="form-cli-nombre"></div>
+            <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="form-cli-tel" placeholder="Ej: +54 9..."></div>
+            <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="form-cli-ig" placeholder="Ej: @usuario"></div>
+            <button type="button" class="btn btn-primary" onclick="guardarNuevoCliente()" style="margin-top:8px; justify-content:center;">Registrar Cliente</button>
+        </div>
+    </div>
     
-    <!-- NUEVO: CHECKBOX DE INSUMO DE UN SOLO USO -->
-    <div class="form-group" id="form-stk-oneoff-container" style="display:none; background: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 8px; border: 1px dashed var(--color-warning);">
-        <label style="display: flex; align-items: flex-start; gap: 10px; color: var(--color-warning); cursor: pointer; text-transform: none; letter-spacing: 0;">
-            <input type="checkbox" id="form-stk-oneoff" style="margin-top: 2px;"> 
-    <div class="modal-overlay" id="modalFinanzas"><div class="modal-box"><div class="modal-header"><h3>Registro Contable</h3><button class="modal-close" onclick="closeModal('modalFinanzas')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-row"><div class="form-group"><label>Operación</label><select class="form-control" id="form-fin-tipo"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso (-)</option><option value="Deuda">Cuenta por Cobrar (*)</option><option value="Fondo Privado">Capital Privado (Personal)</option></select></div><div class="form-group"><label>Monto ($)</label><input type="number" class="form-control" id="form-fin-monto"></div></div><div class="form-group"><label>Concepto</label><input type="text" class="form-control" id="form-fin-detalle"></div><button class="btn btn-primary" onclick="guardarFinanzas()" style="margin-top:8px; justify-content:center;" title="Carga el movimiento monetario en el libro diario">Asentar</button></div></div>
+    <div class="modal-overlay" id="modalFinanzas">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Registro Contable</h3>
+                <button class="modal-close" onclick="closeModal('modalFinanzas')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Operación</label>
+                    <select class="form-control" id="form-fin-tipo">
+                        <option value="Ingreso">Ingreso (+)</option>
+                        <option value="Egreso">Egreso (-)</option>
+                        <option value="Deuda">Cuenta por Cobrar (*)</option>
+                        <option value="Fondo Privado">Capital Privado (Personal)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Monto ($)</label>
+                    <input type="number" class="form-control" id="form-fin-monto">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Concepto</label>
+                <input type="text" class="form-control" id="form-fin-detalle">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="guardarFinanzas()" style="margin-top:8px; justify-content:center;" title="Carga el movimiento monetario en el libro diario">Asentar</button>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="modalStock"><div class="modal-box"><div class="modal-header"><h3>Adquisición de Insumos</h3><button class="modal-close" onclick="closeModal('modalStock')"><i class="fa-solid fa-xmark"></i></button></div><div class="form-group"><label>Artículo</label><input type="text" class="form-control" id="form-stk-nombre"></div><div class="form-row"><div class="form-group"><label>Talle/Formato</label><input type="text" class="form-control" id="form-stk-talle"></div><div class="form-group"><label>Unidades</label><input type="number" class="form-control" id="form-stk-cant"></div></div><div class="form-group"><label>Alerta Mínima</label><input type="number" class="form-control" id="form-stk-min" title="Si la cantidad baja de este número, el panel mostrará una alerta roja"></div>
+    <div class="modal-overlay" id="modalStock">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Adquisición de Insumos</h3>
+                <button class="modal-close" onclick="closeModal('modalStock')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Artículo</label>
+                <input type="text" class="form-control" id="form-stk-nombre">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Talle/Formato</label>
+                    <input type="text" class="form-control" id="form-stk-talle">
+                </div>
+                <div class="form-group">
+                    <label>Unidades</label>
+                    <input type="number" class="form-control" id="form-stk-cant">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Alerta Mínima</label>
+                <input type="number" class="form-control" id="form-stk-min" title="Si la cantidad baja de este número, el panel mostrará una alerta roja">
+            </div>
 
-    <button type="button" class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar Insumo</button></div></div>
+            <!-- CHECKBOX DE INSUMO DE UN SOLO USO -->
+            <div class="form-group" id="form-stk-oneoff-container" style="display:none; background-color: rgba(245, 158, 11, 0.1); padding: 12px; border-radius: 8px; border: 1px dashed var(--color-warning);">
+                <label style="display: flex; align-items: flex-start; gap: 10px; color: var(--color-warning); cursor: pointer; text-transform: none; letter-spacing: 0;">
+                    <input type="checkbox" id="form-stk-oneoff" style="margin-top: 2px;"> 
+                    <span style="font-size: 12px; font-weight: 500;">Es un insumo de única vez. Solo agregar al pedido actual (No sumar al stock global del taller).</span>
+                </label>
+            </div>
 
-    <div class="modal-overlay" id="modalEditCliente"><div class="modal-box"><div class="modal-header"><h3>Editar Cliente</h3><button class="modal-close" onclick="closeModal('modalEditCliente')"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" id="edit-cli-id-doc"><input type="hidden" id="edit-cli-id-local"><div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="edit-cli-nombre"></div><div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="edit-cli-tel"></div><div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="edit-cli-ig"></div><button class="btn btn-primary" onclick="guardarEdicionCliente()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button></div></div>
+            <button type="button" class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar Insumo</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEditCliente">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Cliente</h3>
+                <button class="modal-close" onclick="closeModal('modalEditCliente')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="edit-cli-id-doc">
+            <input type="hidden" id="edit-cli-id-local">
+            <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="edit-cli-nombre"></div>
+            <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="edit-cli-tel"></div>
+            <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="edit-cli-ig"></div>
+            <button type="button" class="btn btn-primary" onclick="guardarEdicionCliente()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
+        </div>
+    </div>
     
-    <div class="modal-overlay" id="modalEditFinanzas"><div class="modal-box"><div class="modal-header"><h3>Editar Registro Contable</h3><button class="modal-close" onclick="closeModal('modalEditFinanzas')"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" id="edit-fin-id-doc"><input type="hidden" id="edit-fin-id-local"><div class="form-row"><div class="form-group"><label>Operación</label><select class="form-control" id="edit-fin-tipo"><option value="Ingreso">Ingreso (+)</option><option value="Egreso">Egreso (-)</option><option value="Deuda">Cuenta por Cobrar (*)</option><option value="Fondo Privado">Capital Privado (Personal)</option></select></div><div class="form-group"><label>Monto ($)</label><input type="number" class="form-control" id="edit-fin-monto"></div></div><div class="form-group"><label>Concepto</label><input type="text" class="form-control" id="edit-fin-detalle"></div><button class="btn btn-primary" onclick="guardarEdicionFinanzas()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button></div></div>
+    <div class="modal-overlay" id="modalEditFinanzas">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Registro Contable</h3>
+                <button class="modal-close" onclick="closeModal('modalEditFinanzas')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="edit-fin-id-doc">
+            <input type="hidden" id="edit-fin-id-local">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Operación</label>
+                    <select class="form-control" id="edit-fin-tipo">
+                        <option value="Ingreso">Ingreso (+)</option>
+                        <option value="Egreso">Egreso (-)</option>
+                        <option value="Deuda">Cuenta por Cobrar (*)</option>
+                        <option value="Fondo Privado">Capital Privado (Personal)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Monto ($)</label>
+                    <input type="number" class="form-control" id="edit-fin-monto">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Concepto</label>
+                <input type="text" class="form-control" id="edit-fin-detalle">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="guardarEdicionFinanzas()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="modalEditStock"><div class="modal-box"><div class="modal-header"><h3>Editar Insumo</h3><button class="modal-close" onclick="closeModal('modalEditStock')"><i class="fa-solid fa-xmark"></i></button></div><input type="hidden" id="edit-stk-id-doc"><input type="hidden" id="edit-stk-id-local"><div class="form-group"><label>Artículo</label><input type="text" class="form-control" id="edit-stk-nombre"></div><div class="form-row"><div class="form-group"><label>Talle/Formato</label><input type="text" class="form-control" id="edit-stk-talle"></div><div class="form-group"><label>Unidades</label><input type="number" class="form-control" id="edit-stk-cant"></div></div><div class="form-group"><label>Alerta Mínima</label><input type="number" class="form-control" id="edit-stk-min"></div><button class="btn btn-primary" onclick="guardarEdicionStock()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button></div></div>
+    <div class="modal-overlay" id="modalEditStock">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Insumo</h3>
+                <button class="modal-close" onclick="closeModal('modalEditStock')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="edit-stk-id-doc">
+            <input type="hidden" id="edit-stk-id-local">
+            <div class="form-group">
+                <label>Artículo</label>
+                <input type="text" class="form-control" id="edit-stk-nombre">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Talle/Formato</label>
+                    <input type="text" class="form-control" id="edit-stk-talle">
+                </div>
+                <div class="form-group">
+                    <label>Unidades</label>
+                    <input type="number" class="form-control" id="edit-stk-cant">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Alerta Mínima</label>
+                <input type="number" class="form-control" id="edit-stk-min">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="guardarEdicionStock()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="modalConfigFirebase"><div class="modal-box"><div class="modal-header"><h3>Acceso a Base de Datos</h3><button class="modal-close" onclick="closeModal('modalConfigFirebase')"><i class="fa-solid fa-xmark"></i></button></div><p style="font-size:12px; color:var(--color-text-secondary); line-height: 1.4;">Infraestructura gestionada por Vercel. Uso manual exclusivo para depuración técnica.</p><div class="form-group"><label>Clúster ID (Sala)</label><input type="text" class="form-control" id="form-fb-appid-custom" readonly></div><div class="form-group"><label>Estado</label><input type="text" class="form-control" id="form-fb-status" value="Gestionado por Backend" readonly style="color: var(--color-success);"></div><div style="display:flex;gap:10px; margin-top: 8px;"><button class="btn btn-danger" onclick="limpiarConfigFirebaseCustom()" style="flex:1; justify-content:center;" title="Fuerza un reinicio de la conexión segura"><i class="fa-solid fa-rotate-left"></i> Resetear Red</button></div></div></div>
+    <div class="modal-overlay" id="modalConfigFirebase">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Acceso a Base de Datos</h3>
+                <button class="modal-close" onclick="closeModal('modalConfigFirebase')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size:12px; color:var(--color-text-secondary); line-height: 1.4;">Infraestructura gestionada por Vercel. Uso manual exclusivo para depuración técnica.</p>
+            <div class="form-group">
+                <label>Clúster ID (Sala)</label>
+                <input type="text" class="form-control" id="form-fb-appid-custom" readonly>
+            </div>
+            <div class="form-group">
+                <label>Estado</label>
+                <input type="text" class="form-control" id="form-fb-status" value="Gestionado por Backend" readonly style="color: var(--color-success);">
+            </div>
+            <div style="display:flex;gap:10px; margin-top: 8px;">
+                <button type="button" class="btn btn-danger" onclick="limpiarConfigFirebaseCustom()" style="flex:1; justify-content:center;" title="Fuerza un reinicio de la conexión segura"><i class="fa-solid fa-rotate-left"></i> Resetear Red</button>
+            </div>
+        </div>
+    </div>
 
     <!-- PANTALLA DE SESIÓN VENCIDA -->
     <div id="session-expired-screen">
@@ -849,8 +1000,9 @@
         var returnToPedidoModalFromCliente = false;
         var returnToPedidoModalFromStock = false;
 
-        // Array para el mini-carrito de pedidos
+        // Array para el mini-carrito de pedidos y stock temporal
         var currentOrderItems = [];
+        var tempStockItems = [];
 
         // ESTADO INICIAL
         var defaultState = { 
@@ -1086,8 +1238,10 @@
             stockSelects.forEach(stockSelect => {
                 if(stockSelect) {
                     stockSelect.innerHTML = `<option value="" disabled selected>Seleccionar prenda/insumo...</option>`;
-                    appState.stock.forEach(s => {
-                        stockSelect.innerHTML += `<option value="${s.id}">${s.item} (Talle: ${s.talle}) - Disp: ${s.cantidad}</option>`;
+                    let allStock = [...appState.stock, ...tempStockItems];
+                    allStock.forEach(s => {
+                        let indicator = s.isTemp ? " ⭐ (Única vez)" : ` - Disp: ${s.cantidad}`;
+                        stockSelect.innerHTML += `<option value="${s.id}">${s.item} (Talle: ${s.talle})${indicator}</option>`;
                     });
                 }
             });
@@ -1105,7 +1259,8 @@
             }
             
             const stockId = parseInt(select.value);
-            const stockItem = appState.stock.find(s => s.id === stockId);
+            let allStock = [...appState.stock, ...tempStockItems];
+            const stockItem = allStock.find(s => s.id === stockId);
             
             currentOrderItems.push({
                 stockId: stockId,
@@ -1113,7 +1268,8 @@
                 talle: stockItem.talle,
                 cantidad: qty,
                 precioUnitario: price,
-                subtotal: qty * price
+                subtotal: qty * price,
+                isTemp: stockItem.isTemp || false
             });
             
             document.getElementById(`${prefix}ped-add-item-qty`).value = "";
@@ -1138,11 +1294,13 @@
             } else {
                 currentOrderItems.forEach((item, index) => {
                     totalAuto += item.subtotal;
+                    let badgeTemp = item.isTemp ? `<span class="badge" style="background-color:rgba(245, 158, 11, 0.15); color:var(--color-warning); font-size:9px; padding:2px 6px; margin-left: 6px;">Uso Único</span>` : '';
                     htmlContent += `
                         <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-size: 12px;">
                             <div style="display:flex; align-items:center;">
                                 <strong style="color: var(--color-accent); font-size: 13px; margin-right: 6px;">${item.cantidad}x</strong> 
                                 ${item.nombre} (Talle: ${item.talle})
+                                ${badgeTemp}
                             </div>
                             <div style="display: flex; align-items: center; gap: 14px;">
                                 <span style="font-weight: 700;">$${item.subtotal.toLocaleString('es-AR')}</span>
@@ -1179,6 +1337,17 @@
             document.getElementById("form-stk-talle").value = "";
             document.getElementById("form-stk-cant").value = "1";
             document.getElementById("form-stk-min").value = "0";
+            
+            // Mostrar la opción de USO ÚNICO
+            const container = document.getElementById("form-stk-oneoff-container");
+            const checkbox = document.getElementById("form-stk-oneoff");
+            if (container && checkbox) {
+                container.style.display = "block";
+                checkbox.checked = true; // Por defecto lo marcamos como temporal
+            }
+
+            // Cambiar visualmente a la pestaña Stock antes de abrir el modal
+            switchTab('stock');
             
             openModal('modalStock');
         }
@@ -1296,6 +1465,13 @@
                 currentOrderItems = [];
                 renderOrderItems();
             }
+            if(id === 'modalStock' && !returnToPedidoModalFromStock) {
+                // Ocultar la opción de Uso Único si venimos directo del Dashboard/Pestaña de Stock
+                const container = document.getElementById("form-stk-oneoff-container");
+                const checkbox = document.getElementById("form-stk-oneoff");
+                if (container) container.style.display = "none";
+                if (checkbox) checkbox.checked = false;
+            }
             if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
             if(id !== 'modalStock') returnToPedidoModalFromStock = false;
             document.getElementById(id).classList.add('active'); 
@@ -1387,6 +1563,7 @@
                     
                     // Descuento inmediato de inventario en la nube
                     for (let item of currentOrderItems) {
+                        if (item.isTemp) continue; // Ignoramos los de uso único (No existen en BD)
                         let stockItem = appState.stock.find(s => s.id === item.stockId);
                         if (stockItem && stockItem.docId) {
                             let nuevaCant = Math.max(0, stockItem.cantidad - item.cantidad);
@@ -1400,6 +1577,7 @@
                 
                 // Descuento inmediato de inventario en Local
                 for (let item of currentOrderItems) {
+                    if (item.isTemp) continue; // Ignoramos los de uso único
                     let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
                     if (sIdx !== -1) {
                         appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
@@ -1468,8 +1646,8 @@
             let oldItems = appState.pedidos[idx].items || [];
             let stockUpdates = {}; // Mapa de ID Insumo -> Cambio Neto (Positivo es devolver, Negativo es descontar)
             
-            oldItems.forEach(i => { stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) + i.cantidad; });
-            currentOrderItems.forEach(i => { stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) - i.cantidad; });
+            oldItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) + i.cantidad; });
+            currentOrderItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) - i.cantidad; });
 
             if (hasFirebase && authUser && docId) { 
                 try { 
@@ -1697,6 +1875,34 @@
             
             if (!nombre) { showToast("Error", "Falta nombre del artículo.", true); return; }
 
+            // VERIFICAMOS SI ES UN INSUMO TEMPORAL (Solo para un pedido)
+            const isOneOffEl = document.getElementById("form-stk-oneoff");
+            const isOneOff = isOneOffEl && isOneOffEl.checked && returnToPedidoModalFromStock;
+
+            if (isOneOff) {
+                // Creamos un ID aleatorio alto para no chocar con el stock real
+                const tempId = Date.now(); 
+                const nuevoInsumoTemp = { id: tempId, item: nombre, talle: talle, cantidad: cant, minimo: min, isTemp: true };
+                tempStockItems.push(nuevoInsumoTemp);
+                
+                const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
+                const targetSelect = returnToPedidoModalFromStock === 'edit' ? 'edit-ped-add-item-select' : 'ped-add-item-select';
+
+                document.getElementById('modalStock').classList.remove('active');
+                populateDropdowns(); 
+                
+                setTimeout(() => {
+                    const select = document.getElementById(targetSelect);
+                    if(select) select.value = tempId;
+                    document.getElementById(targetModal).classList.add('active'); 
+                }, 100);
+                
+                returnToPedidoModalFromStock = false;
+                document.getElementById("form-stk-nombre").value = "";
+                showToast("Insumo Especial", `Prenda única cargada al carrito.`);
+                return; // Cortamos la función para que no guarde en Firebase General
+            }
+
             // FLUJO NORMAL (Guardar en stock general de la empresa SIEMPRE)
             var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
             
@@ -1706,7 +1912,7 @@
                 appState.stock.push(nuevoInsumo); saveToLocalStorage(); renderAll(); 
             }
             
-            // Lógica de retorno al modal de pedido (Si era desde el botón Nuevo)
+            // Lógica de retorno al modal de pedido (Si era desde el botón Nuevo y eligió Stock Global)
             if(returnToPedidoModalFromStock) {
                 const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
                 const targetSelect = returnToPedidoModalFromStock === 'edit' ? 'edit-ped-add-item-select' : 'ped-add-item-select';

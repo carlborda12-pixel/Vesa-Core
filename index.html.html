@@ -1261,6 +1261,29 @@
             populateDropdowns();
         }
 
+        // --- FUNCIÓN RESTAURADA: RELLENA LOS SELECTORES DE CLIENTES Y STOCK ---
+        function populateDropdowns() {
+            var selectsCli = [document.getElementById("form-ped-cliente"), document.getElementById("edit-ped-cliente")];
+            selectsCli.forEach(sel => { 
+                if (!sel) return; 
+                sel.innerHTML = ""; 
+                if (appState.clientes.length === 0) { sel.innerHTML = `<option value="" disabled selected>Registrá un cliente antes</option>`; return; } 
+                appState.clientes.forEach(c => sel.innerHTML += `<option value="${c.nombre}">${sanitizeHTML(c.nombre)}</option>`); 
+            });
+
+            var stockSelects = [document.getElementById("ped-add-item-select"), document.getElementById("edit-ped-add-item-select")];
+            stockSelects.forEach(stockSelect => {
+                if(stockSelect) {
+                    stockSelect.innerHTML = `<option value="" disabled selected>Seleccionar prenda/insumo...</option>`;
+                    let allStock = [...appState.stock, ...tempStockItems];
+                    allStock.forEach(s => {
+                        let indicator = s.isTemp ? " ⭐ (Única vez)" : ` - Disp: ${s.cantidad}`;
+                        stockSelect.innerHTML += `<option value="${s.id}">${sanitizeHTML(s.item)} (Talle: ${sanitizeHTML(s.talle)})${indicator}</option>`;
+                    });
+                }
+            });
+        }
+
         function renderMetrics() {
             document.getElementById("val-pendientes").innerText = appState.pedidos.filter(p=>p.estado !== "Entregado").length;
             var ventasTotal = appState.pedidos.reduce((acc, p) => acc + p.monto, 0);
@@ -1296,14 +1319,19 @@
             
             var ultimos = appState.pedidos.slice(0, 4); 
             ultimos.forEach(p => {
+                var docIdSegura = p.docId ? `'${p.docId}'` : 'null';
                 var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
-                // Aplicamos sanitizeHTML para evitar que caracteres raros rompan la grilla
                 tbody.innerHTML += `<tr>
                     <td>#${p.id}</td>
                     <td style="font-weight:700;">${sanitizeHTML(p.cliente)}</td>
                     <td style="color: var(--color-text-secondary); font-size: 11px;">${sanitizeHTML(p.detalle)}</td>
                     <td><span class="badge ${badgeClass}">${p.estado}</span></td>
-                    <td><button class="btn btn-primary btn-small" style="padding: 4px 8px;" onclick="generarFichaTecnica(${p.id})" title="Generar PDF"><i class="fa-solid fa-file-pdf"></i></button></td>
+                    <td>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn btn-primary btn-small" style="padding: 4px 8px;" onclick="generarFichaTecnica(${p.id})" title="Generar PDF"><i class="fa-solid fa-file-pdf"></i></button>
+                            <button class="btn btn-small" style="background:rgba(255,255,255,0.03); padding: 4px 8px;" onclick="abrirEditarPedido(${docIdSegura}, ${p.id})" title="Editar Orden"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                    </td>
                 </tr>`;
             });
             if(ultimos.length === 0) tbody.innerHTML = `<tr><td colspan="5" class="empty-placeholder">No hay pedidos recientes.</td></tr>`;
@@ -1781,51 +1809,86 @@
             }
         }
 
-        function abrirEditarPedido(docId, localId) {
-            var p = appState.pedidos.find(x => x.id === localId); if (!p) return;
-            document.getElementById("edit-ped-id-doc").value = docId || ''; document.getElementById("edit-ped-id-local").value = localId;
-            populateDropdowns(); 
-            
-            let clientSelect = document.getElementById("edit-ped-cliente");
-            if (clientSelect) clientSelect.value = p.cliente; 
-            
-            currentOrderItems = p.items ? JSON.parse(JSON.stringify(p.items)) : []; 
-            renderOrderItems();
-
-            // Lógica inteligente para no duplicar "Nota: ..."
-            let extractedNote = "";
-            if (p.detalle) {
-                if (p.detalle.includes("| Nota:")) {
-                    extractedNote = p.detalle.split("| Nota:")[1].trim();
-                } else if (!p.items || p.items.length === 0) {
-                    extractedNote = p.detalle; // Es un pedido antiguo sin carrito
+        window.abrirEditarPedido = function(docId, localId) {
+            try {
+                // Forzamos comparación estricta de textos para evitar fallas por tipo de dato (Número vs Texto)
+                var p = appState.pedidos.find(x => String(x.id) === String(localId)); 
+                if (!p) {
+                    showToast("Error", "No se encontró el pedido en la memoria.", true);
+                    return;
                 }
+                
+                document.getElementById("edit-ped-id-doc").value = docId || ''; 
+                document.getElementById("edit-ped-id-local").value = localId;
+                
+                populateDropdowns(); 
+                
+                let clientSelect = document.getElementById("edit-ped-cliente");
+                if (clientSelect) clientSelect.value = p.cliente || ""; 
+                
+                currentOrderItems = p.items ? JSON.parse(JSON.stringify(p.items)) : []; 
+                renderOrderItems();
+
+                // Lógica inteligente y segura para extraer Notas
+                let extractedNote = "";
+                if (p.detalle) {
+                    let detStr = String(p.detalle);
+                    if (detStr.includes("| Nota:")) {
+                        extractedNote = detStr.split("| Nota:")[1].trim();
+                    } else if (!p.items || p.items.length === 0) {
+                        extractedNote = detStr; 
+                    }
+                }
+                var txtDetalle = document.getElementById("edit-ped-detalle");
+                if(txtDetalle) txtDetalle.value = extractedNote; 
+                
+                var mEl = document.getElementById("edit-ped-monto"); if(mEl) mEl.value = p.monto || 0; 
+                var sEl = document.getElementById("edit-ped-sena"); if(sEl) sEl.value = p.sena || 0; 
+                
+                var estEl = document.getElementById("edit-ped-estado"); 
+                if(estEl) {
+                    let optionExists = Array.from(estEl.options).some(opt => opt.value === p.estado);
+                    estEl.value = optionExists ? p.estado : 'Confirmado';
+                }
+                
+                openModal('modalEditPedido');
+            } catch (e) {
+                console.error("Fallo abriendo modal de edición:", e);
+                showToast("Error", "Fallo al abrir el panel de edición.", true);
             }
-            document.getElementById("edit-ped-detalle").value = extractedNote; 
-            
-            var mEl = document.getElementById("edit-ped-monto"); if(mEl) mEl.value = p.monto || 0; 
-            var sEl = document.getElementById("edit-ped-sena"); if(sEl) sEl.value = p.sena || 0; 
-            document.getElementById("edit-ped-estado").value = p.estado || 'Confirmado'; 
-            openModal('modalEditPedido');
         }
 
-        async function guardarEdicionPedido() {
+        window.guardarEdicionPedido = async function() {
             const btnEdit = document.getElementById("btn-edit-pedido");
             try {
                 if(btnEdit) { btnEdit.disabled = true; btnEdit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; }
                 
-                var docId = document.getElementById("edit-ped-id-doc").value; var localId = parseInt(document.getElementById("edit-ped-id-local").value);
-                var idx = appState.pedidos.findIndex(x => x.id === localId); if (idx === -1) return;
+                var docId = document.getElementById("edit-ped-id-doc").value; 
+                var localId = document.getElementById("edit-ped-id-local").value;
                 
-                var cliente = document.getElementById("edit-ped-cliente").value; var observaciones = document.getElementById("edit-ped-detalle").value.trim(); 
-                var mEl = document.getElementById("edit-ped-monto"); var sEl = document.getElementById("edit-ped-sena");
+                var idx = appState.pedidos.findIndex(x => String(x.id) === String(localId)); 
+                if (idx === -1) {
+                    showToast("Error", "No se encontró la orden a editar.", true);
+                    return;
+                }
+                
+                var clEl = document.getElementById("edit-ped-cliente");
+                var cliente = clEl ? clEl.value : appState.pedidos[idx].cliente; 
+                
+                var detEl = document.getElementById("edit-ped-detalle");
+                var observaciones = detEl ? detEl.value.trim() : ""; 
+                
+                var mEl = document.getElementById("edit-ped-monto"); 
+                var sEl = document.getElementById("edit-ped-sena");
                 var monto = mEl ? parseInt(mEl.value) || 0 : 0; 
                 var sena = sEl ? parseInt(sEl.value) || 0 : 0; 
-                var estado = document.getElementById("edit-ped-estado").value; 
+                
+                var estEl = document.getElementById("edit-ped-estado");
+                var estado = estEl ? estEl.value : appState.pedidos[idx].estado; 
                 
                 let detalleString = currentOrderItems.map(i => `${i.cantidad}x ${i.nombre} (${i.talle})`).join(" + ");
                 if (observaciones) detalleString = detalleString ? `${detalleString} | Nota: ${observaciones}` : observaciones;
-                if(!detalleString) detalleString = observaciones;
+                if (!detalleString) detalleString = observaciones;
 
                 var updatedData = { 
                     cliente: cliente, detalle: detalleString, estado: estado, 
@@ -1844,22 +1907,20 @@
                 oldItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) + i.cantidad; });
                 currentOrderItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) - i.cantidad; });
 
-                // 1. ACTUALIZACIÓN OPTIMISTA LOCAL
                 appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; 
                 for (let sId in stockUpdates) {
                     let change = stockUpdates[sId];
                     if (change === 0) continue;
-                    let sIdx = appState.stock.findIndex(s => s.id === parseInt(sId));
+                    let sIdx = appState.stock.findIndex(s => String(s.id) === String(sId));
                     if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad + change);
                 }
 
-                // 2. SINCRONIZACIÓN
                 if (hasFirebase && authUser && docId) { 
                     db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).update(updatedData).catch(console.error); 
                     for (let sId in stockUpdates) {
                         let change = stockUpdates[sId];
                         if (change === 0) continue;
-                        let stockItem = appState.stock.find(s => s.id === parseInt(sId));
+                        let stockItem = appState.stock.find(s => String(s.id) === String(sId));
                         if (stockItem && stockItem.docId) {
                             let nuevaCant = Math.max(0, stockItem.cantidad + change);
                             db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);

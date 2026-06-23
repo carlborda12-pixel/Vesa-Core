@@ -1077,11 +1077,10 @@
         function getFileBase64(file) {
             return new Promise((resolve) => {
                 if (!file.type.match(/image.*/)) {
-                    resolve(""); // Ignora archivos que no son imagen en modo local
+                    resolve(""); 
                     return;
                 }
                 
-                // Bloqueo de seguridad: Evita que fotos inmensas colapsen la RAM del dispositivo
                 if (file.size > 15 * 1024 * 1024) {
                     showToast("Atención", "Una imagen supera los 15MB y fue omitida para evitar bloqueos.", true);
                     resolve("");
@@ -1089,13 +1088,13 @@
                 }
 
                 const image = new Image();
-                const objectUrl = URL.createObjectURL(file); // Más rápido y liviano que FileReader
+                const objectUrl = URL.createObjectURL(file); 
                 
                 image.onload = () => {
-                    URL.revokeObjectURL(objectUrl); // Liberar memoria RAM instantáneamente
+                    URL.revokeObjectURL(objectUrl); 
                     try {
                         const canvas = document.createElement('canvas');
-                        const maxSize = 800; // Calidad óptima visual
+                        const maxSize = 800; 
                         let width = image.width; let height = image.height;
                         if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; } 
                         else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
@@ -1104,7 +1103,6 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(image, 0, 0, width, height);
                         
-                        // JPEG al 60% reduce el peso drásticamente, salvando el LocalStorage
                         resolve(canvas.toDataURL('image/jpeg', 0.6));
                     } catch(err) {
                         console.error("Error en compresión visual", err);
@@ -1113,7 +1111,7 @@
                 };
                 image.onerror = () => {
                     URL.revokeObjectURL(objectUrl);
-                    resolve(""); // Fallback seguro sin dejar promesas colgadas
+                    resolve(""); 
                 };
                 image.src = objectUrl;
             });
@@ -1140,11 +1138,10 @@
         // --- PROCESADOR MULTI-ARCHIVO SEGURO ---
         async function processMultipleFiles(fileList) {
             let urls = [];
-            let limit = Math.min(fileList.length, 5); // Tope de 5 archivos máximo
+            let limit = Math.min(fileList.length, 5); 
             for(let i = 0; i < limit; i++) {
                 if (hasFirebase && authUser) {
                     try {
-                        // TIMEOUT DE 10 SEG para no dejar colgada la interfaz si el internet falla
                         let url = await Promise.race([
                             uploadImageToStorage(fileList[i]),
                             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Red")), 10000))
@@ -1156,7 +1153,6 @@
                         if(localUrl) urls.push(localUrl);
                     }
                 } else {
-                    // Compresión directa si no hay Nube habilitada
                     let localUrl = await getFileBase64(fileList[i]);
                     if(localUrl) urls.push(localUrl);
                 }
@@ -1254,7 +1250,6 @@
                 localStorage.setItem("vesa_stock", JSON.stringify(appState.stock));
                 localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
             } catch(e) {
-                // Captura el límite de 5MB si no usa Firebase
                 throw new Error("QUOTA_EXCEEDED");
             }
         }
@@ -1318,18 +1313,13 @@
 
         // --- FUNCIONES DE NAVEGACIÓN RÁPIDA ---
         function goToStockAndHighlight() {
-            // Saltamos a la pestaña de Stock
             switchTab('stock');
             showToast("Auditoría Requerida", "Verificá los insumos marcados en rojo.", true);
-            
-            // Le damos un pequeño delay (200ms) para que el navegador renderice la tabla
-            // y luego hacemos parpadear las filas críticas
             setTimeout(() => {
                 const rows = document.querySelectorAll('#stock-tbody tr');
                 rows.forEach(row => {
                     if (row.innerHTML.includes('var(--color-danger)')) {
                         row.classList.add('flash-danger');
-                        // El parpadeo dura 2 segundos, luego limpiamos la clase
                         setTimeout(() => row.classList.remove('flash-danger'), 2000);
                     }
                 });
@@ -1396,10 +1386,11 @@
             if (list1) list1.innerHTML = htmlContent;
             if (list2) list2.innerHTML = htmlContent;
             
+            // SOLUCIÓN BUG CARRITO VACÍO: Si borramos todo, forzamos a que vuelva a vacío/cero.
             const montoInput1 = document.getElementById("form-ped-monto");
             const montoInput2 = document.getElementById("edit-ped-monto");
-            if (montoInput1 && currentOrderItems.length > 0) montoInput1.value = totalAuto;
-            if (montoInput2 && currentOrderItems.length > 0) montoInput2.value = totalAuto;
+            if (montoInput1) montoInput1.value = totalAuto > 0 ? totalAuto : "";
+            if (montoInput2) montoInput2.value = totalAuto > 0 ? totalAuto : "";
         }
 
         function openModalClienteDesdePedido() {
@@ -1573,7 +1564,9 @@
             if (event.key === 'Backspace' && !isInput) { event.preventDefault(); goBackTab(); }
         });
 
+        // SOLUCIÓN BUG INSUMOS FANTASMAS: Limpiamos tempStockItems al abrir modales
         function openModal(id) { 
+            if(id === 'modalPedido' || id === 'modalEditPedido') { tempStockItems = []; }
             if(id === 'modalPedido') { currentOrderItems = []; renderOrderItems(); }
             if(id === 'modalStock' && !returnToPedidoModalFromStock) { const container = document.getElementById("form-stk-oneoff-container"); const checkbox = document.getElementById("form-stk-oneoff"); if (container) container.style.display = "none"; if (checkbox) checkbox.checked = false; }
             if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
@@ -1600,7 +1593,6 @@
             // Actualización Optimista Local
             pedido.estado = nuevoEstado;
             
-            // Sincronización en la nube silenciosa
             if (hasFirebase && authUser && pedido.docId) { 
                 db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ estado: nuevoEstado }).catch(console.error); 
             } else { 
@@ -1611,13 +1603,12 @@
         }
 
         // ==========================================
-        // --- CRUD DE PEDIDOS (CON PROTECCIÓN MEMORIA RAM Y DOBLE CLIC) ---
+        // --- CRUD DE PEDIDOS (PROTEGIDO) ---
         // ==========================================
         async function guardarNuevoPedido() {
             const btnSubmit = document.getElementById("btn-submit-pedido");
             
             try {
-                // Bloquear botón para evitar 2 clics seguidos que dupliquen el pedido
                 if(btnSubmit) { btnSubmit.disabled = true; btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...'; }
 
                 var cliente = document.getElementById("form-ped-cliente").value; 
@@ -1677,6 +1668,7 @@
                     };
                 }
 
+                // SOLUCIÓN CONFLICTO DOBLE RENDER: División estricta entre Nube y Local
                 if (hasFirebase && authUser) {
                     db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed).catch(console.error); 
                     if (nuevaFinanza) db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza).catch(console.error);
@@ -1689,27 +1681,23 @@
                             db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
                         }
                     }
-                } 
-
-                appState.pedidos.unshift(nuevoPed); 
-                if (nuevaFinanza) appState.finanzas.unshift(nuevaFinanza);
-                for (let item of currentOrderItems) {
-                    if (item.isTemp) continue; 
-                    let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
-                    if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
-                }
-                
-                // Defensa contra Memoria Llena sin Firebase
-                if (!hasFirebase) {
+                } else {
+                    appState.pedidos.unshift(nuevoPed); 
+                    if (nuevaFinanza) appState.finanzas.unshift(nuevaFinanza);
+                    for (let item of currentOrderItems) {
+                        if (item.isTemp) continue; 
+                        let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
+                        if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
+                    }
+                    
                     try {
                         saveToLocalStorage(); 
                     } catch(e) {
-                        // Revertimos cambios para no engañar a la interfaz
                         appState.pedidos.shift();
                         if (nuevaFinanza) appState.finanzas.shift();
                         showToast("Memoria Local Llena", "No entran más fotos pesadas. Conectá el sistema a Firebase.", true);
                         if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i> Generar Orden'; }
-                        return; // Frenamos acá
+                        return; 
                     }
                 }
                 
@@ -1718,6 +1706,7 @@
                 if(senaEl) senaEl.value = ""; 
                 if(fileInput) fileInput.value = ""; 
                 currentOrderItems = []; 
+                tempStockItems = [];
                 
                 closeModal('modalPedido'); 
                 renderAll(); 
@@ -1729,7 +1718,6 @@
                 console.error("Error crítico al guardar:", error);
                 showToast("Error", "El archivo de imagen no pudo ser procesado.", true);
             } finally {
-                // Restauramos el botón a la normalidad PASE LO QUE PASE
                 if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i> Generar Orden'; }
             }
         }
@@ -1796,28 +1784,27 @@
                             db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
                         }
                     }
-                } 
-                
-                appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; 
-                for (let sId in stockUpdates) {
-                    let change = stockUpdates[sId];
-                    if (change === 0) continue;
-                    let sIdx = appState.stock.findIndex(s => s.id === parseInt(sId));
-                    if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad + change);
-                }
-                
-                if(!hasFirebase) {
+                } else {
+                    appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; 
+                    for (let sId in stockUpdates) {
+                        let change = stockUpdates[sId];
+                        if (change === 0) continue;
+                        let sIdx = appState.stock.findIndex(s => s.id === parseInt(sId));
+                        if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad + change);
+                    }
+                    
                     try {
                         saveToLocalStorage(); 
                     } catch(e) {
                         showToast("Memoria Local Llena", "Límite de memoria alcanzado. No se pudieron registrar los cambios gráficos.", true);
                         if(btnEdit) { btnEdit.disabled = false; btnEdit.innerHTML = 'Aplicar Cambios'; }
-                        return; // Frenamos sin colgar
+                        return; 
                     }
                 }
                 
                 if(fileInput) fileInput.value = ""; 
                 currentOrderItems = [];
+                tempStockItems = [];
                 closeModal('modalEditPedido'); 
                 renderAll(); updateCharts(); 
                 showToast("Actualizado", `La orden y su stock fueron reajustados al instante.`);
@@ -1826,18 +1813,43 @@
                 console.error("Fallo de edición:", e);
                 showToast("Error", "No se pudo completar la edición por un error interno.", true);
             } finally {
-                // Pase lo que pase, el botón revive
                 if(btnEdit) { btnEdit.disabled = false; btnEdit.innerHTML = 'Aplicar Cambios'; }
             }
         }
 
         async function eliminarPedido(docId, localId) {
-            if (!confirm("⚠️ ¿Eliminar de forma irreversible esta orden de trabajo?")) return;
-            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete().catch(console.error); } 
-            appState.pedidos = appState.pedidos.filter(p => p.id !== localId); 
-            if(!hasFirebase) saveToLocalStorage(); 
+            // SOLUCIÓN FUGA DE STOCK: Al borrar pedido, devolvemos stock.
+            if (!confirm("⚠️ ¿Eliminar de forma irreversible esta orden? (El stock será devuelto al almacén)")) return;
+            
+            var p = appState.pedidos.find(x => x.id === localId);
+            
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete().catch(console.error); 
+                
+                if (p && p.items) {
+                    for (let item of p.items) {
+                        if (item.isTemp) continue;
+                        let stockItem = appState.stock.find(s => s.id === item.stockId);
+                        if (stockItem && stockItem.docId) {
+                            let nuevaCant = stockItem.cantidad + item.cantidad;
+                            db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
+                        }
+                    }
+                }
+            } else {
+                if (p && p.items) {
+                    for (let item of p.items) {
+                        if (item.isTemp) continue;
+                        let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
+                        if (sIdx !== -1) appState.stock[sIdx].cantidad += item.cantidad;
+                    }
+                }
+                appState.pedidos = appState.pedidos.filter(ped => ped.id !== localId); 
+                try { saveToLocalStorage(); } catch(e) {}
+            }
+            
             renderAll(); updateCharts();
-            showToast("Borrado", "La orden fue removida del historial.");
+            showToast("Borrado", "La orden fue removida y el stock fue devuelto.");
         }
 
         // --- FICHA TÉCNICA PDF CON DETALLE DE PRODUCTOS ---
@@ -1929,15 +1941,19 @@
             }
         }
 
-        // --- CRUD CLIENTES (OPTIMISTA) ---
+        // --- CRUD CLIENTES (CON PROTECCIÓN DE DOBLE RENDER) ---
         async function guardarNuevoCliente() {
             var nombre = document.getElementById("form-cli-nombre").value; var whatsapp = document.getElementById("form-cli-tel").value; var ig = document.getElementById("form-cli-ig") ? document.getElementById("form-cli-ig").value : "";
             if (!nombre || !whatsapp) { showToast("Error", "Razón Social y WhatsApp son obligatorios.", true); return; }
             var nuevoId = appState.clientes.length > 0 ? Math.max(...appState.clientes.map(c=>c.id)) + 1 : 1;
             var nuevoCli = { id: nuevoId, nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
             
-            if (hasFirebase && authUser) { db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli).catch(console.error); } 
-            appState.clientes.push(nuevoCli); if(!hasFirebase) saveToLocalStorage(); 
+            if (hasFirebase && authUser) { 
+                db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli).catch(console.error); 
+            } else {
+                appState.clientes.push(nuevoCli); 
+                try { saveToLocalStorage(); } catch(e){} 
+            }
             
             if(returnToPedidoModalFromCliente) {
                 document.getElementById('modalCliente').classList.remove('active');
@@ -1961,22 +1977,26 @@
             var nombre = document.getElementById("edit-cli-nombre").value.trim(); var whatsapp = document.getElementById("edit-cli-tel").value.trim(); var ig = document.getElementById("edit-cli-ig") ? document.getElementById("edit-cli-ig").value.trim() : "";
             var updatedData = { nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
             
-            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).update(updatedData).catch(console.error); } 
-            var idx = appState.clientes.findIndex(x => x.id === localId); 
-            if (idx !== -1) { 
-                var viejoNombre = appState.clientes[idx].nombre; appState.clientes[idx] = { ...appState.clientes[idx], ...updatedData }; 
-                appState.pedidos.forEach((p, pIdx) => { if (p.cliente === viejoNombre) { appState.pedidos[pIdx].cliente = nombre; } }); 
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).update(updatedData).catch(console.error); 
+            } else {
+                var idx = appState.clientes.findIndex(x => x.id === localId); 
+                if (idx !== -1) { 
+                    var viejoNombre = appState.clientes[idx].nombre; appState.clientes[idx] = { ...appState.clientes[idx], ...updatedData }; 
+                    appState.pedidos.forEach((p, pIdx) => { if (p.cliente === viejoNombre) { appState.pedidos[pIdx].cliente = nombre; } }); 
+                }
+                try { saveToLocalStorage(); } catch(e){} 
             }
-            if(!hasFirebase) saveToLocalStorage(); 
             closeModal('modalEditCliente'); renderAll(); showToast("Guardado", `Cambios aplicados.`);
         }
         async function eliminarCliente(docId, localId) {
             if (!confirm("⚠️ ¿Expulsar a esta entidad del directorio?")) return;
             if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).delete().catch(console.error); } 
-            appState.clientes = appState.clientes.filter(c => c.id !== localId); if(!hasFirebase) saveToLocalStorage(); renderAll(); showToast("Baja Efectuada", "Contacto removido.");
+            else { appState.clientes = appState.clientes.filter(c => c.id !== localId); try{ saveToLocalStorage(); }catch(e){} }
+            renderAll(); showToast("Baja Efectuada", "Contacto removido.");
         }
 
-        // --- CRUD FINANZAS (OPTIMISTA) ---
+        // --- CRUD FINANZAS ---
         function abrirAgregarFinanzasRapido(tipo) { document.getElementById("form-fin-tipo").value = tipo; document.getElementById("form-fin-monto").value = ""; document.getElementById("form-fin-detalle").value = ""; openModal("modalFinanzas"); }
         async function guardarFinanzas() {
             var tipo = document.getElementById("form-fin-tipo").value; var monto = parseInt(document.getElementById("form-fin-monto").value) || 0; var detalle = document.getElementById("form-fin-detalle").value; var mediopago = document.getElementById("form-fin-metodopago") ? document.getElementById("form-fin-metodopago").value : "Mercado Pago";
@@ -1984,8 +2004,11 @@
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, fecha: hoy, medioPago: mediopago };
             
-            if (hasFirebase && authUser) { db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFin).catch(console.error); } 
-            appState.finanzas.unshift(nuevaFin); if(!hasFirebase) saveToLocalStorage(); 
+            if (hasFirebase && authUser) { 
+                db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFin).catch(console.error); 
+            } else { 
+                appState.finanzas.unshift(nuevaFin); try{ saveToLocalStorage(); }catch(e){} 
+            }
             closeModal('modalFinanzas'); renderAll(); updateCharts(); showToast("Libro Actualizado", `Transacción procesada.`);
         }
         function abrirEditarFinanzas(docId, localId) {
@@ -1997,24 +2020,33 @@
             var docId = document.getElementById("edit-fin-id-doc").value; var localId = parseInt(document.getElementById("edit-fin-id-local").value);
             var tipo = document.getElementById("edit-fin-tipo").value; var monto = parseInt(document.getElementById("edit-fin-monto").value) || 0; var detalle = document.getElementById("edit-fin-detalle").value;
             var updatedData = { tipo: tipo, monto: monto, detalle: detalle };
-            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData).catch(console.error); } 
-            var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData }; }
-            if(!hasFirebase) saveToLocalStorage(); closeModal('modalEditFinanzas'); renderAll(); updateCharts(); showToast("Editado", `Registro corregido.`);
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData).catch(console.error); 
+            } else { 
+                var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData }; }
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
+            closeModal('modalEditFinanzas'); renderAll(); updateCharts(); showToast("Editado", `Registro corregido.`);
         }
         async function eliminarFinanzas(docId, localId) {
             if (!confirm("⚠️ ¿Estás seguro de anular este asiento contable?")) return;
             if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).delete().catch(console.error); } 
-            appState.finanzas = appState.finanzas.filter(f => f.id !== localId); if(!hasFirebase) saveToLocalStorage(); renderAll(); updateCharts(); showToast("Anulado", "Registro extraído del historial.");
+            else { appState.finanzas = appState.finanzas.filter(f => f.id !== localId); try{ saveToLocalStorage(); }catch(e){} }
+            renderAll(); updateCharts(); showToast("Anulado", "Registro extraído del historial.");
         }
         async function cobrarDeuda(docId, localId) {
             var findItem = appState.finanzas.find(x => x.id === localId); if (!findItem) return;
             var updatedData = { tipo: "Ingreso", detalle: "Cobro Acreditado: " + findItem.detalle };
-            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData).catch(console.error); }
-            var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx].tipo = "Ingreso"; appState.finanzas[idx].detalle = "Cobro Acreditado: " + appState.finanzas[idx].detalle; }
-            if(!hasFirebase) saveToLocalStorage(); renderAll(); updateCharts(); showToast("Acreditado", "La cuenta se cobró con éxito.");
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData).catch(console.error); 
+            } else { 
+                var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx].tipo = "Ingreso"; appState.finanzas[idx].detalle = "Cobro Acreditado: " + appState.finanzas[idx].detalle; }
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
+            renderAll(); updateCharts(); showToast("Acreditado", "La cuenta se cobró con éxito.");
         }
 
-        // --- CRUD STOCK (OPTIMISTA) ---
+        // --- CRUD STOCK ---
         async function guardarStock() {
             var nombre = document.getElementById("form-stk-nombre").value; 
             var talle = document.getElementById("form-stk-talle").value || "U"; 
@@ -2048,8 +2080,11 @@
 
             var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
             
-            if (hasFirebase && authUser) { db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo).catch(console.error); } 
-            appState.stock.push(nuevoInsumo); if(!hasFirebase) saveToLocalStorage(); 
+            if (hasFirebase && authUser) { 
+                db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo).catch(console.error); 
+            } else { 
+                appState.stock.push(nuevoInsumo); try{ saveToLocalStorage(); }catch(e){} 
+            }
             
             if(returnToPedidoModalFromStock) {
                 const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido';
@@ -2078,14 +2113,20 @@
             var docId = document.getElementById("edit-stk-id-doc").value; var localId = parseInt(document.getElementById("edit-stk-id-local").value);
             var nombre = document.getElementById("edit-stk-nombre").value; var talle = document.getElementById("edit-stk-talle").value; var cant = parseInt(document.getElementById("edit-stk-cant").value) || 0; var min = parseInt(document.getElementById("edit-stk-min").value) || 0;
             var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min };
-            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).update(updatedData).catch(console.error); } 
-            var idx = appState.stock.findIndex(x => x.id === localId); if (idx !== -1) { appState.stock[idx] = { ...appState.stock[idx], ...updatedData }; }
-            if(!hasFirebase) saveToLocalStorage(); closeModal('modalEditStock'); renderAll(); showToast("Ajustado", `Cantidades recalibradas.`);
+            
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).update(updatedData).catch(console.error); 
+            } else { 
+                var idx = appState.stock.findIndex(x => x.id === localId); if (idx !== -1) { appState.stock[idx] = { ...appState.stock[idx], ...updatedData }; }
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
+            closeModal('modalEditStock'); renderAll(); showToast("Ajustado", `Cantidades recalibradas.`);
         }
         async function eliminarStock(docId, localId) {
             if (!confirm("⚠️ ¿Dar de baja este SKU del almacén?")) return;
             if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).delete().catch(console.error); } 
-            appState.stock = appState.stock.filter(s => s.id !== localId); if(!hasFirebase) saveToLocalStorage(); renderAll(); showToast("Removido", "La ficha fue eliminada.");
+            else { appState.stock = appState.stock.filter(s => s.id !== localId); try{ saveToLocalStorage(); }catch(e){} }
+            renderAll(); showToast("Removido", "La ficha fue eliminada.");
         }
 
         function limpiarConfigFirebaseCustom() {
@@ -2135,4 +2176,5 @@
         
     </script>
 </body>
+</html>
 </html>

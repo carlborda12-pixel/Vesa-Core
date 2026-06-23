@@ -1316,27 +1316,27 @@
             var profitTotal = sumI - sumE; var profitEl = document.getElementById("fin-profit-total"); profitEl.innerText = "$" + profitTotal.toLocaleString('es-AR'); profitEl.style.color = profitTotal >= 0 ? "var(--color-accent)" : "var(--color-danger)"; 
         }
 
-        function populateDropdowns() {
-            var selectsCli = [document.getElementById("form-ped-cliente"), document.getElementById("edit-ped-cliente")];
-            selectsCli.forEach(sel => { 
-                if (!sel) return; 
-                sel.innerHTML = ""; 
-                if (appState.clientes.length === 0) { sel.innerHTML = `<option value="" disabled selected>Registrá un cliente antes</option>`; return; } 
-                appState.clientes.forEach(c => sel.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`); 
-            });
-
-            var stockSelects = [document.getElementById("ped-add-item-select"), document.getElementById("edit-ped-add-item-select")];
-            stockSelects.forEach(stockSelect => {
-                if(stockSelect) {
-                    stockSelect.innerHTML = `<option value="" disabled selected>Seleccionar prenda/insumo...</option>`;
-                    let allStock = [...appState.stock, ...tempStockItems];
-                    allStock.forEach(s => {
-                        let indicator = s.isTemp ? " ⭐ (Única vez)" : ` - Disp: ${s.cantidad}`;
-                        stockSelect.innerHTML += `<option value="${s.id}">${s.item} (Talle: ${s.talle})${indicator}</option>`;
-                    });
-                }
-            });
+        // --- FUNCIONES DE NAVEGACIÓN RÁPIDA ---
+        function goToStockAndHighlight() {
+            // Saltamos a la pestaña de Stock
+            switchTab('stock');
+            showToast("Auditoría Requerida", "Verificá los insumos marcados en rojo.", true);
+            
+            // Le damos un pequeño delay (200ms) para que el navegador renderice la tabla
+            // y luego hacemos parpadear las filas críticas
+            setTimeout(() => {
+                const rows = document.querySelectorAll('#stock-tbody tr');
+                rows.forEach(row => {
+                    if (row.innerHTML.includes('var(--color-danger)')) {
+                        row.classList.add('flash-danger');
+                        // El parpadeo dura 2 segundos, luego limpiamos la clase
+                        setTimeout(() => row.classList.remove('flash-danger'), 2000);
+                    }
+                });
+            }, 200);
         }
+
+        // --- SISTEMA DE CARRITO PARA PEDIDOS ---
 
         function addOrderItem(isEdit = false) {
             const prefix = isEdit ? "edit-" : "";
@@ -2113,6 +2113,7 @@
             chart2.data.datasets[0].data = [ingresos, egresos]; chart2.update();
         }
 
+        // EXPORTACIONES A WINDOW (Asegurando que la UI conecte con las funciones)
         window.toggleSidebar = toggleSidebar; window.switchTab = switchTab; window.openModal = openModal; window.closeModal = closeModal;
         window.guardarNuevoPedido = guardarNuevoPedido; window.guardarEdicionPedido = guardarEdicionPedido; window.eliminarPedido = eliminarPedido;
         window.guardarNuevoCliente = guardarNuevoCliente; window.guardarEdicionCliente = guardarEdicionCliente; window.eliminarCliente = eliminarCliente;
@@ -2123,8 +2124,14 @@
         window.generarFichaTecnica = generarFichaTecnica; window.descargarFichaDirecta = descargarFichaDirecta; window.allowDrop = allowDrop; window.drop = drop;
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
         window.playVoiceReport = playVoiceReport; 
+        
+        // Paginación y Filtros
         window.applyPedidosFilter = applyPedidosFilter; window.clearPedidosFilter = clearPedidosFilter; window.changePedidosPage = changePedidosPage;
-        window.addOrderItem = addOrderItem; window.removeOrderItem = removeOrderItem;
+        
+        // Navegación, Carrito y Multi-Archivos
+        window.goToStockAndHighlight = goToStockAndHighlight;
+        window.addOrderItem = addOrderItem;
+        window.removeOrderItem = removeOrderItem;
         
     </script>
 </body>

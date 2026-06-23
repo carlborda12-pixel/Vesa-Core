@@ -986,6 +986,7 @@
         const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById("current-date-display").innerText = new Date().toLocaleDateString('es-AR', dateOptions);
 
+        // ESCUDO ANTI-ROTURAS: Limpia cualquier símbolo raro (<, >, &, ") que pueda romper la vista
         function sanitizeHTML(str) { if (!str) return ''; return String(str).replace(/[&<>'"]/g, function(tag) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag);}); }
 
         // =========================================================================
@@ -1073,7 +1074,6 @@
             setTimeout(() => { playVoiceReport(window.lastReportText); }, 600); 
         }
 
-        // --- MOTOR HÍBRIDO DE COMPRESIÓN (MEMORIA OPTIMIZADA ANTI-CRASH) ---
         function getFileBase64(file) {
             return new Promise((resolve) => {
                 if (!file.type.match(/image.*/)) {
@@ -1117,7 +1117,6 @@
             });
         }
 
-        // --- SUBIDA A FIREBASE (STORAGE) ---
         async function uploadImageToStorage(file) {
             return new Promise((resolve, reject) => {
                 if (hasFirebase && authUser && firebase.storage) {
@@ -1135,7 +1134,6 @@
             });
         }
 
-        // --- PROCESADOR MULTI-ARCHIVO SEGURO ---
         async function processMultipleFiles(fileList) {
             let urls = [];
             let limit = Math.min(fileList.length, 5); 
@@ -1174,25 +1172,28 @@
                 }
             } catch (error) {}
 
-            if (!hasFirebase && MI_FIREBASE_CONFIG && MI_FIREBASE_CONFIG.apiKey !== "TU_API_KEY_AQUI") {
-                firebaseConfig = MI_FIREBASE_CONFIG; appId = MI_SALA_ID; hasFirebase = true;
+            if (!hasFirebase && typeof MI_FIREBASE_CONFIG !== 'undefined' && MI_FIREBASE_CONFIG.apiKey !== "TU_API_KEY_AQUI") {
+                firebaseConfig = MI_FIREBASE_CONFIG; appId = typeof MI_SALA_ID !== 'undefined' ? MI_SALA_ID : "vesa-core-os"; hasFirebase = true;
             }
 
             if (hasFirebase && firebaseConfig && firebaseConfig.apiKey) {
                 try {
-                    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-                    auth = firebase.auth(); db = firebase.firestore();
-                    
-                    auth.onAuthStateChanged(function(user) {
-                        if (user) {
-                            authUser = user;
-                            statusBadge.className = "db-status online"; statusText.innerText = "Nube: Segura";
-                            bindFirebaseCollections();
-                        } else {
-                            setupLocalStorageFallback();
-                        }
-                    });
-                    await auth.signInAnonymously();
+                    if (typeof firebase !== 'undefined' && !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                    if (typeof firebase !== 'undefined') {
+                        auth = firebase.auth(); db = firebase.firestore();
+                        auth.onAuthStateChanged(function(user) {
+                            if (user) {
+                                authUser = user;
+                                statusBadge.className = "db-status online"; statusText.innerText = "Nube: Segura";
+                                bindFirebaseCollections();
+                            } else {
+                                setupLocalStorageFallback();
+                            }
+                        });
+                        await auth.signInAnonymously();
+                    } else {
+                        setupLocalStorageFallback();
+                    }
                 } catch (err) { setupLocalStorageFallback(); }
             } else { setupLocalStorageFallback(); }
             setTimeout(showWelcomeSummary, 500);
@@ -1268,15 +1269,74 @@
             var lowStock = appState.stock.filter(s=>s.cantidad <= s.minimo).length;
             document.getElementById("val-stock").innerText = lowStock; 
         }
-        function renderDashboardAlerts() { document.getElementById("dash-alerts").innerHTML = ""; }
-        function renderDashboardOrders() { document.getElementById("dash-pedidos-tbody").innerHTML = ""; }
-        function renderDashboardStock() { document.getElementById("dash-stock-list").innerHTML = ""; }
+
+        function renderDashboardAlerts() { 
+            var container = document.getElementById("dash-alerts"); 
+            if (!container) return;
+            container.innerHTML = ""; 
+            
+            var stockBajo = appState.stock.filter(s => s.cantidad <= s.minimo);
+            var atrasados = appState.pedidos.filter(p => p.estado === "En diseño" || p.estado === "Confirmado");
+
+            if (atrasados.length > 0) {
+                container.innerHTML += `<div class="alert-item danger"><div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div><div class="alert-text"><h4>${atrasados.length} pedidos atrasados</h4><p>Revisá pre-prensa y confirmaciones.</p></div></div>`;
+            }
+            if (stockBajo.length > 0) {
+                container.innerHTML += `<div class="alert-item"><div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="alert-text"><h4>${stockBajo.length} insumos en crítico</h4><p>Materia prima por debajo del límite.</p></div></div>`;
+            }
+            if (atrasados.length === 0 && stockBajo.length === 0) {
+                container.innerHTML += `<div class="alert-item success" style="border-left-color: var(--color-success);"><div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div><div class="alert-text"><h4>Todo en orden</h4><p>Operación óptima sin retrasos.</p></div></div>`;
+            }
+        }
+
+        function renderDashboardOrders() { 
+            var tbody = document.getElementById("dash-pedidos-tbody"); 
+            if (!tbody) return;
+            tbody.innerHTML = ""; 
+            
+            var ultimos = appState.pedidos.slice(0, 4); 
+            ultimos.forEach(p => {
+                var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
+                // Aplicamos sanitizeHTML para evitar que caracteres raros rompan la grilla
+                tbody.innerHTML += `<tr>
+                    <td>#${p.id}</td>
+                    <td style="font-weight:700;">${sanitizeHTML(p.cliente)}</td>
+                    <td style="color: var(--color-text-secondary); font-size: 11px;">${sanitizeHTML(p.detalle)}</td>
+                    <td><span class="badge ${badgeClass}">${p.estado}</span></td>
+                    <td><button class="btn btn-primary btn-small" style="padding: 4px 8px;" onclick="generarFichaTecnica(${p.id})" title="Generar PDF"><i class="fa-solid fa-file-pdf"></i></button></td>
+                </tr>`;
+            });
+            if(ultimos.length === 0) tbody.innerHTML = `<tr><td colspan="5" class="empty-placeholder">No hay pedidos recientes.</td></tr>`;
+        }
+
+        function renderDashboardStock() { 
+            var container = document.getElementById("dash-stock-list"); 
+            if (!container) return;
+            container.innerHTML = ""; 
+            
+            var criticos = appState.stock.filter(s => s.cantidad <= s.minimo).slice(0, 4); 
+            if (criticos.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--color-text-secondary); font-size: 12px;">El stock general está saludable.</div>`;
+                return;
+            }
+            criticos.forEach(s => {
+                container.innerHTML += `
+                    <div class="stock-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <div class="stock-info">
+                            <h5 style="font-size:13px; font-weight:700;">${sanitizeHTML(s.item)}</h5>
+                            <p style="font-size:11px; color:var(--color-text-secondary); font-family: 'Space Mono', monospace;">Talle: ${sanitizeHTML(s.talle)}</p>
+                        </div>
+                        <div class="stock-qty" style="color:var(--color-danger); font-weight:800; font-family:'Space Mono', monospace;">${s.cantidad} un.</div>
+                    </div>
+                `;
+            });
+        }
         
         function renderClientesTable() {
             var tbody = document.getElementById("clientes-tbody"); tbody.innerHTML = "";
             appState.clientes.forEach(function(c) {
                 var docIdSegura = c.docId ? `'${c.docId}'` : 'null';
-                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${c.nombre}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${c.whatsapp}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${c.instagram}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${sanitizeHTML(c.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.whatsapp)}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${sanitizeHTML(c.instagram)}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
         function renderStockTable() {
@@ -1285,7 +1345,7 @@
                 var docIdSegura = s.docId ? `'${s.docId}'` : 'null';
                 var isLow = s.cantidad <= s.minimo;
                 var badge = isLow ? `<span class="badge" style="background:rgba(244, 63, 94, 0.1); color:var(--color-danger); border-color: rgba(244, 63, 94, 0.3);">Quiebre</span>` : `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color: rgba(16, 185, 129, 0.3);">Estable</span>`;
-                tbody.innerHTML += `<tr><td>#${s.id}</td><td style="font-weight:700;">${s.item}</td><td>${s.talle}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td>${badge}</td><td><div style="display:flex; gap:6px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})" title="Modificar cantidades o límites"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})" title="Remover insumo de la base de datos"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbody.innerHTML += `<tr><td>#${s.id}</td><td style="font-weight:700;">${sanitizeHTML(s.item)}</td><td>${sanitizeHTML(s.talle)}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td>${badge}</td><td><div style="display:flex; gap:6px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})" title="Modificar cantidades o límites"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})" title="Remover insumo de la base de datos"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
         function renderFinanzasTable() {
@@ -1302,7 +1362,7 @@
                 else if (f.tipo === 'Ingreso') { colorMonto = 'var(--color-success)'; badgeHtml = `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color:rgba(16, 185, 129, 0.3);">Venta</span>`; iconHtml = `<i class="fa-solid fa-arrow-up" style="color:var(--color-success); font-size:16px; width:20px; text-align:center;"></i>`; sumI += f.monto; }
                 else { colorMonto = 'var(--color-text-secondary)'; badgeHtml = `<span class="badge" style="background:rgba(255, 255, 255, 0.1); color:white;">Otro</span>`; iconHtml = `<i class="fa-solid fa-circle-question" style="color:white; font-size:16px; width:20px; text-align:center;"></i>`; }
 
-                tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<span style="font-weight:700; color:white;">${f.detalle}</span></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${f.tipo === 'Deuda' ? `<button class="btn btn-small" style="background:var(--color-success); color:black; border:none;" onclick="cobrarDeuda(${docIdSegura}, ${f.id})" title="Marcar deuda como cobrada a favor"><i class="fa-solid fa-check"></i></button>` : ''}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarFinanzas(${docIdSegura}, ${f.id})" title="Editar monto o detalle del registro"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarFinanzas(${docIdSegura}, ${f.id})" title="Eliminar registro contable"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<span style="font-weight:700; color:white;">${sanitizeHTML(f.detalle)}</span></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${f.tipo === 'Deuda' ? `<button class="btn btn-small" style="background:var(--color-success); color:black; border:none;" onclick="cobrarDeuda(${docIdSegura}, ${f.id})" title="Marcar deuda como cobrada a favor"><i class="fa-solid fa-check"></i></button>` : ''}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarFinanzas(${docIdSegura}, ${f.id})" title="Editar monto o detalle del registro"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarFinanzas(${docIdSegura}, ${f.id})" title="Eliminar registro contable"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
             if (tbodyMain.innerHTML === "") tbodyMain.innerHTML = `<tr><td colspan="6" class="empty-placeholder"><i class="fa-solid fa-money-bill-transfer"></i>Libro contable vacío.</td></tr>`;
             document.getElementById("fin-total-ingresos").innerText = "$" + sumI.toLocaleString('es-AR'); document.getElementById("fin-total-egresos").innerText = "$" + sumE.toLocaleString('es-AR'); document.getElementById("fin-total-deudas").innerText = "$" + sumD.toLocaleString('es-AR');
@@ -1311,7 +1371,6 @@
             var profitTotal = sumI - sumE; var profitEl = document.getElementById("fin-profit-total"); profitEl.innerText = "$" + profitTotal.toLocaleString('es-AR'); profitEl.style.color = profitTotal >= 0 ? "var(--color-accent)" : "var(--color-danger)"; 
         }
 
-        // --- FUNCIONES DE NAVEGACIÓN RÁPIDA ---
         function goToStockAndHighlight() {
             switchTab('stock');
             showToast("Auditoría Requerida", "Verificá los insumos marcados en rojo.", true);
@@ -1372,7 +1431,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-size: 12px;">
                             <div style="display:flex; align-items:center;">
                                 <strong style="color: var(--color-accent); font-size: 13px; margin-right: 6px;">${item.cantidad}x</strong> 
-                                ${item.nombre} (Talle: ${item.talle})
+                                ${sanitizeHTML(item.nombre)} (Talle: ${sanitizeHTML(item.talle)})
                                 ${badgeTemp}
                             </div>
                             <div style="display: flex; align-items: center; gap: 14px;">
@@ -1386,7 +1445,6 @@
             if (list1) list1.innerHTML = htmlContent;
             if (list2) list2.innerHTML = htmlContent;
             
-            // SOLUCIÓN BUG CARRITO VACÍO: Si borramos todo, forzamos a que vuelva a vacío/cero.
             const montoInput1 = document.getElementById("form-ped-monto");
             const montoInput2 = document.getElementById("edit-ped-monto");
             if (montoInput1) montoInput1.value = totalAuto > 0 ? totalAuto : "";
@@ -1463,8 +1521,8 @@
                     var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
                     tbody.innerHTML += `
                         <tr>
-                            <td>#${p.id}</td><td style="font-family:'Space Mono'; color:var(--color-text-secondary); font-size:11px;">${p.fecha}</td><td style="font-weight:800;">${p.cliente}</td>
-                            <td style="color:var(--color-text-secondary);">${p.detalle}</td><td><span class="badge ${badgeClass}">${p.estado}</span></td>
+                            <td>#${p.id}</td><td style="font-family:'Space Mono'; color:var(--color-text-secondary); font-size:11px;">${p.fecha}</td><td style="font-weight:800;">${sanitizeHTML(p.cliente)}</td>
+                            <td style="color:var(--color-text-secondary);">${sanitizeHTML(p.detalle)}</td><td><span class="badge ${badgeClass}">${p.estado}</span></td>
                             <td style="font-weight:800; font-family:'Space Mono'; color:var(--color-accent);">$${p.monto.toLocaleString('es-AR')}</td>
                             <td>
                                 <div style="display:flex; gap:6px;">
@@ -1564,7 +1622,6 @@
             if (event.key === 'Backspace' && !isInput) { event.preventDefault(); goBackTab(); }
         });
 
-        // SOLUCIÓN BUG INSUMOS FANTASMAS: Limpiamos tempStockItems al abrir modales
         function openModal(id) { 
             if(id === 'modalPedido' || id === 'modalEditPedido') { tempStockItems = []; }
             if(id === 'modalPedido') { currentOrderItems = []; renderOrderItems(); }
@@ -1590,7 +1647,6 @@
             var pedido = appState.pedidos.find(p => p.id === id); 
             if (!pedido || pedido.estado === nuevoEstado) return;
             
-            // Actualización Optimista Local
             pedido.estado = nuevoEstado;
             
             if (hasFirebase && authUser && pedido.docId) { 
@@ -1668,7 +1724,6 @@
                     };
                 }
 
-                // SOLUCIÓN CONFLICTO DOBLE RENDER: División estricta entre Nube y Local
                 if (hasFirebase && authUser) {
                     db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed).catch(console.error); 
                     if (nuevaFinanza) db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza).catch(console.error);
@@ -1818,14 +1873,11 @@
         }
 
         async function eliminarPedido(docId, localId) {
-            // SOLUCIÓN FUGA DE STOCK: Al borrar pedido, devolvemos stock.
             if (!confirm("⚠️ ¿Eliminar de forma irreversible esta orden? (El stock será devuelto al almacén)")) return;
-            
             var p = appState.pedidos.find(x => x.id === localId);
             
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete().catch(console.error); 
-                
                 if (p && p.items) {
                     for (let item of p.items) {
                         if (item.isTemp) continue;
@@ -1857,10 +1909,10 @@
             var p = appState.pedidos.find(x => x.id === idPedido); if (!p) return;
             var elFichaId = document.getElementById("ficha-id"); if(elFichaId) elFichaId.innerText = "OT#" + p.id; 
             var elFichaFecha = document.getElementById("ficha-fecha"); if(elFichaFecha) elFichaFecha.innerText = "Expedido: " + new Date().toLocaleDateString('es-AR');
-            var elFichaCliente = document.getElementById("ficha-cliente"); if(elFichaCliente) elFichaCliente.innerText = p.cliente; 
+            var elFichaCliente = document.getElementById("ficha-cliente"); if(elFichaCliente) elFichaCliente.innerText = sanitizeHTML(p.cliente); 
             
             const nota = p.detalle ? (p.detalle.includes("| Nota:") ? p.detalle.split("| Nota:")[1].trim() : p.detalle) : "-";
-            var elFichaDetalle = document.getElementById("ficha-detalle"); if(elFichaDetalle) elFichaDetalle.innerText = "Obs: " + nota;
+            var elFichaDetalle = document.getElementById("ficha-detalle"); if(elFichaDetalle) elFichaDetalle.innerText = "Obs: " + sanitizeHTML(nota);
 
             const tbodyItems = document.getElementById("comp-items-tbody");
             if(tbodyItems) {
@@ -1869,7 +1921,7 @@
                     p.items.forEach(item => {
                         tbodyItems.innerHTML += `
                             <tr>
-                                <td><strong>${item.cantidad}x</strong> ${item.nombre} (Talle ${item.talle})</td>
+                                <td><strong>${item.cantidad}x</strong> ${sanitizeHTML(item.nombre)} (Talle ${sanitizeHTML(item.talle)})</td>
                                 <td style="text-align: right;">$${item.precioUnitario.toLocaleString('es-AR')}</td>
                                 <td style="text-align: right; font-weight: 700;">$${item.subtotal.toLocaleString('es-AR')}</td>
                             </tr>
@@ -1891,6 +1943,11 @@
         }
 
         function descargarFichaDirecta(idPedido) {
+            if (typeof html2pdf === 'undefined') {
+                showToast("Error de Conexión", "El generador de PDF requiere internet para funcionar.", true);
+                return;
+            }
+
             generarFichaTecnica(idPedido); 
             setTimeout(() => {
                 const element = document.getElementById('print-ficha-area');
@@ -1941,7 +1998,7 @@
             }
         }
 
-        // --- CRUD CLIENTES (CON PROTECCIÓN DE DOBLE RENDER) ---
+        // --- CRUD CLIENTES ---
         async function guardarNuevoCliente() {
             var nombre = document.getElementById("form-cli-nombre").value; var whatsapp = document.getElementById("form-cli-tel").value; var ig = document.getElementById("form-cli-ig") ? document.getElementById("form-cli-ig").value : "";
             if (!nombre || !whatsapp) { showToast("Error", "Razón Social y WhatsApp son obligatorios.", true); return; }
@@ -2135,6 +2192,11 @@
         }
 
         function initCharts() {
+            if (typeof Chart === 'undefined') {
+                console.warn("Chart.js no cargó (Modo Offline). Gráficos omitidos.");
+                return;
+            }
+
             if(document.getElementById('chartPedidos')) {
                 var ctx1 = document.getElementById('chartPedidos').getContext('2d');
                 chart1 = new Chart(ctx1, { type: 'doughnut', data: { labels: ['En diseño', 'Producción', 'Estampado', 'Listo', 'Entregado'], datasets: [{ data: [1, 1, 1, 1, 1], backgroundColor: ['#a855f7', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9'], borderWidth: 2, borderColor: '#0b1120' }] }, options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } } } } } });
@@ -2146,12 +2208,28 @@
         }
 
         function updateCharts() {
-            if (!chart1 || !chart2) { initCharts(); return; }
+            if (typeof Chart === 'undefined') return;
+
+            if (!chart1 || !chart2) { 
+                initCharts(); 
+            }
+            if (!chart1 || !chart2) return; 
+
             var stateCounts = { Diseñando: 0, Produccion: 0, Estampado: 0, Listo: 0, Entregado: 0 };
-            appState.pedidos.forEach(p => { if (p.estado === "En diseño") stateCounts.Diseñando++; else if (p.estado === "En producción" || p.estado === "Producción") stateCounts.Produccion++; else if (p.estado === "Estampado") stateCounts.Estampado++; else if (p.estado === "Listo") stateCounts.Listo++; else stateCounts.Entregado++; });
-            chart1.data.datasets[0].data = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado]; chart1.update();
-            var ingresos = appState.finanzas.filter(f => f.tipo === "Ingreso").reduce((acc, f) => acc + f.monto, 0); var egresos = appState.finanzas.filter(f => f.tipo === "Egreso").reduce((acc, f) => acc + f.monto, 0);
-            chart2.data.datasets[0].data = [ingresos, egresos]; chart2.update();
+            appState.pedidos.forEach(p => { 
+                if (p.estado === "En diseño" || p.estado === "Confirmado" || p.estado === "Presupuesto") stateCounts.Diseñando++; 
+                else if (p.estado === "En producción" || p.estado === "Producción") stateCounts.Produccion++; 
+                else if (p.estado === "Estampado") stateCounts.Estampado++; 
+                else if (p.estado === "Listo") stateCounts.Listo++; 
+                else stateCounts.Entregado++; 
+            });
+            chart1.data.datasets[0].data = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado]; 
+            chart1.update();
+
+            var ingresos = appState.finanzas.filter(f => f.tipo === "Ingreso").reduce((acc, f) => acc + f.monto, 0); 
+            var egresos = appState.finanzas.filter(f => f.tipo === "Egreso").reduce((acc, f) => acc + f.monto, 0);
+            chart2.data.datasets[0].data = [ingresos, egresos]; 
+            chart2.update();
         }
 
         // EXPORTACIONES A WINDOW (Asegurando que la UI conecte con las funciones)
@@ -2176,5 +2254,4 @@
         
     </script>
 </body>
-</html>
 </html>

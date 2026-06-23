@@ -1241,7 +1241,7 @@
                 appState.pedidos = [...defaultState.pedidos]; appState.clientes = [...defaultState.clientes];
                 appState.stock = [...defaultState.stock]; appState.finanzas = [...defaultState.finanzas];
             }
-            renderAll(); initCharts();
+            renderAll(); updateCharts(); // SOLUCIÓN: Cargar con la función Update en lugar de Init para reflejar datos reales
         }
 
         function saveToLocalStorage() {
@@ -1661,6 +1661,8 @@
         // ==========================================
         // --- CRUD DE PEDIDOS (PROTEGIDO) ---
         // ==========================================
+        // --- CRUD DE PEDIDOS (OPTIMISTA Y SEGURO) ---
+        // ==========================================
         async function guardarNuevoPedido() {
             const btnSubmit = document.getElementById("btn-submit-pedido");
             
@@ -1724,6 +1726,16 @@
                     };
                 }
 
+                // 1. ACTUALIZACIÓN OPTIMISTA (La pantalla se actualiza en 1ms)
+                appState.pedidos.unshift(nuevoPed); 
+                if (nuevaFinanza) appState.finanzas.unshift(nuevaFinanza);
+                for (let item of currentOrderItems) {
+                    if (item.isTemp) continue; 
+                    let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
+                    if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
+                }
+
+                // 2. SINCRONIZACIÓN EN LA NUBE (De fondo)
                 if (hasFirebase && authUser) {
                     db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed).catch(console.error); 
                     if (nuevaFinanza) db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza).catch(console.error);
@@ -1737,19 +1749,11 @@
                         }
                     }
                 } else {
-                    appState.pedidos.unshift(nuevoPed); 
-                    if (nuevaFinanza) appState.finanzas.unshift(nuevaFinanza);
-                    for (let item of currentOrderItems) {
-                        if (item.isTemp) continue; 
-                        let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
-                        if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
-                    }
-                    
                     try {
                         saveToLocalStorage(); 
                     } catch(e) {
-                        appState.pedidos.shift();
-                        if (nuevaFinanza) appState.finanzas.shift();
+                        // Rollback si no hay espacio
+                        appState.pedidos.shift(); if (nuevaFinanza) appState.finanzas.shift();
                         showToast("Memoria Local Llena", "No entran más fotos pesadas. Conectá el sistema a Firebase.", true);
                         if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i> Generar Orden'; }
                         return; 
@@ -1781,12 +1785,24 @@
             var p = appState.pedidos.find(x => x.id === localId); if (!p) return;
             document.getElementById("edit-ped-id-doc").value = docId || ''; document.getElementById("edit-ped-id-local").value = localId;
             populateDropdowns(); 
-            document.getElementById("edit-ped-cliente").value = p.cliente; 
+            
+            let clientSelect = document.getElementById("edit-ped-cliente");
+            if (clientSelect) clientSelect.value = p.cliente; 
             
             currentOrderItems = p.items ? JSON.parse(JSON.stringify(p.items)) : []; 
             renderOrderItems();
 
-            document.getElementById("edit-ped-detalle").value = p.detalle || ''; 
+            // Lógica inteligente para no duplicar "Nota: ..."
+            let extractedNote = "";
+            if (p.detalle) {
+                if (p.detalle.includes("| Nota:")) {
+                    extractedNote = p.detalle.split("| Nota:")[1].trim();
+                } else if (!p.items || p.items.length === 0) {
+                    extractedNote = p.detalle; // Es un pedido antiguo sin carrito
+                }
+            }
+            document.getElementById("edit-ped-detalle").value = extractedNote; 
+            
             var mEl = document.getElementById("edit-ped-monto"); if(mEl) mEl.value = p.monto || 0; 
             var sEl = document.getElementById("edit-ped-sena"); if(sEl) sEl.value = p.sena || 0; 
             document.getElementById("edit-ped-estado").value = p.estado || 'Confirmado'; 
@@ -1828,6 +1844,16 @@
                 oldItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) + i.cantidad; });
                 currentOrderItems.forEach(i => { if (!i.isTemp) stockUpdates[i.stockId] = (stockUpdates[i.stockId] || 0) - i.cantidad; });
 
+                // 1. ACTUALIZACIÓN OPTIMISTA LOCAL
+                appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; 
+                for (let sId in stockUpdates) {
+                    let change = stockUpdates[sId];
+                    if (change === 0) continue;
+                    let sIdx = appState.stock.findIndex(s => s.id === parseInt(sId));
+                    if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad + change);
+                }
+
+                // 2. SINCRONIZACIÓN
                 if (hasFirebase && authUser && docId) { 
                     db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).update(updatedData).catch(console.error); 
                     for (let sId in stockUpdates) {
@@ -1840,21 +1866,7 @@
                         }
                     }
                 } else {
-                    appState.pedidos[idx] = { ...appState.pedidos[idx], ...updatedData }; 
-                    for (let sId in stockUpdates) {
-                        let change = stockUpdates[sId];
-                        if (change === 0) continue;
-                        let sIdx = appState.stock.findIndex(s => s.id === parseInt(sId));
-                        if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad + change);
-                    }
-                    
-                    try {
-                        saveToLocalStorage(); 
-                    } catch(e) {
-                        showToast("Memoria Local Llena", "Límite de memoria alcanzado. No se pudieron registrar los cambios gráficos.", true);
-                        if(btnEdit) { btnEdit.disabled = false; btnEdit.innerHTML = 'Aplicar Cambios'; }
-                        return; 
-                    }
+                    try { saveToLocalStorage(); } catch(e) { }
                 }
                 
                 if(fileInput) fileInput.value = ""; 
@@ -1876,6 +1888,17 @@
             if (!confirm("⚠️ ¿Eliminar de forma irreversible esta orden? (El stock será devuelto al almacén)")) return;
             var p = appState.pedidos.find(x => x.id === localId);
             
+            // 1. ACTUALIZACIÓN OPTIMISTA
+            if (p && p.items) {
+                for (let item of p.items) {
+                    if (item.isTemp) continue;
+                    let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
+                    if (sIdx !== -1) appState.stock[sIdx].cantidad += item.cantidad;
+                }
+            }
+            appState.pedidos = appState.pedidos.filter(ped => ped.id !== localId); 
+            
+            // 2. SINCRONIZACIÓN
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete().catch(console.error); 
                 if (p && p.items) {
@@ -1883,20 +1906,12 @@
                         if (item.isTemp) continue;
                         let stockItem = appState.stock.find(s => s.id === item.stockId);
                         if (stockItem && stockItem.docId) {
-                            let nuevaCant = stockItem.cantidad + item.cantidad;
+                            let nuevaCant = stockItem.cantidad + item.cantidad; // Usamos el valor real optimista
                             db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
                         }
                     }
                 }
             } else {
-                if (p && p.items) {
-                    for (let item of p.items) {
-                        if (item.isTemp) continue;
-                        let sIdx = appState.stock.findIndex(s => s.id === item.stockId);
-                        if (sIdx !== -1) appState.stock[sIdx].cantidad += item.cantidad;
-                    }
-                }
-                appState.pedidos = appState.pedidos.filter(ped => ped.id !== localId); 
                 try { saveToLocalStorage(); } catch(e) {}
             }
             
@@ -2005,10 +2020,12 @@
             var nuevoId = appState.clientes.length > 0 ? Math.max(...appState.clientes.map(c=>c.id)) + 1 : 1;
             var nuevoCli = { id: nuevoId, nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
             
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.clientes.push(nuevoCli); 
+            
             if (hasFirebase && authUser) { 
                 db.collection('artifacts/' + appId + '/public/data/clientes').add(nuevoCli).catch(console.error); 
             } else {
-                appState.clientes.push(nuevoCli); 
                 try { saveToLocalStorage(); } catch(e){} 
             }
             
@@ -2024,32 +2041,45 @@
             if (document.getElementById("form-cli-ig")) document.getElementById("form-cli-ig").value = "";
             renderAll(); showToast("Carga Lista", `Cliente agendado.`);
         }
+
         function abrirEditarCliente(docId, localId) {
             var c = appState.clientes.find(x => x.id === localId); if (!c) return;
             document.getElementById("edit-cli-id-doc").value = docId || ''; document.getElementById("edit-cli-id-local").value = localId;
             document.getElementById("edit-cli-nombre").value = c.nombre; document.getElementById("edit-cli-tel").value = c.whatsapp; if(document.getElementById("edit-cli-ig")) document.getElementById("edit-cli-ig").value = c.instagram; openModal('modalEditCliente');
         }
+
         async function guardarEdicionCliente() {
             var docId = document.getElementById("edit-cli-id-doc").value; var localId = parseInt(document.getElementById("edit-cli-id-local").value);
             var nombre = document.getElementById("edit-cli-nombre").value.trim(); var whatsapp = document.getElementById("edit-cli-tel").value.trim(); var ig = document.getElementById("edit-cli-ig") ? document.getElementById("edit-cli-ig").value.trim() : "";
             var updatedData = { nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
             
+            // ACTUALIZACIÓN OPTIMISTA
+            var idx = appState.clientes.findIndex(x => x.id === localId); 
+            if (idx !== -1) { 
+                var viejoNombre = appState.clientes[idx].nombre; 
+                appState.clientes[idx] = { ...appState.clientes[idx], ...updatedData }; 
+                appState.pedidos.forEach((p, pIdx) => { if (p.cliente === viejoNombre) { appState.pedidos[pIdx].cliente = nombre; } }); 
+            }
+
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).update(updatedData).catch(console.error); 
             } else {
-                var idx = appState.clientes.findIndex(x => x.id === localId); 
-                if (idx !== -1) { 
-                    var viejoNombre = appState.clientes[idx].nombre; appState.clientes[idx] = { ...appState.clientes[idx], ...updatedData }; 
-                    appState.pedidos.forEach((p, pIdx) => { if (p.cliente === viejoNombre) { appState.pedidos[pIdx].cliente = nombre; } }); 
-                }
                 try { saveToLocalStorage(); } catch(e){} 
             }
             closeModal('modalEditCliente'); renderAll(); showToast("Guardado", `Cambios aplicados.`);
         }
+
         async function eliminarCliente(docId, localId) {
             if (!confirm("⚠️ ¿Expulsar a esta entidad del directorio?")) return;
-            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).delete().catch(console.error); } 
-            else { appState.clientes = appState.clientes.filter(c => c.id !== localId); try{ saveToLocalStorage(); }catch(e){} }
+            
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.clientes = appState.clientes.filter(c => c.id !== localId); 
+
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).delete().catch(console.error); 
+            } else { 
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
             renderAll(); showToast("Baja Efectuada", "Contacto removido.");
         }
 
@@ -2061,43 +2091,68 @@
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, fecha: hoy, medioPago: mediopago };
             
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.finanzas.unshift(nuevaFin); 
+
             if (hasFirebase && authUser) { 
                 db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFin).catch(console.error); 
             } else { 
-                appState.finanzas.unshift(nuevaFin); try{ saveToLocalStorage(); }catch(e){} 
+                try{ saveToLocalStorage(); }catch(e){} 
             }
             closeModal('modalFinanzas'); renderAll(); updateCharts(); showToast("Libro Actualizado", `Transacción procesada.`);
         }
+
         function abrirEditarFinanzas(docId, localId) {
             var f = appState.finanzas.find(x => x.id === localId); if (!f) return;
             document.getElementById("edit-fin-id-doc").value = docId || ''; document.getElementById("edit-fin-id-local").value = localId;
             document.getElementById("edit-fin-tipo").value = f.tipo; document.getElementById("edit-fin-monto").value = f.monto; document.getElementById("edit-fin-detalle").value = f.detalle; openModal('modalEditFinanzas');
         }
+
         async function guardarEdicionFinanzas() {
             var docId = document.getElementById("edit-fin-id-doc").value; var localId = parseInt(document.getElementById("edit-fin-id-local").value);
             var tipo = document.getElementById("edit-fin-tipo").value; var monto = parseInt(document.getElementById("edit-fin-monto").value) || 0; var detalle = document.getElementById("edit-fin-detalle").value;
             var updatedData = { tipo: tipo, monto: monto, detalle: detalle };
+            
+            // ACTUALIZACIÓN OPTIMISTA
+            var idx = appState.finanzas.findIndex(x => x.id === localId); 
+            if (idx !== -1) { appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData }; }
+
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData).catch(console.error); 
             } else { 
-                var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData }; }
                 try{ saveToLocalStorage(); }catch(e){} 
             }
             closeModal('modalEditFinanzas'); renderAll(); updateCharts(); showToast("Editado", `Registro corregido.`);
         }
+
         async function eliminarFinanzas(docId, localId) {
             if (!confirm("⚠️ ¿Estás seguro de anular este asiento contable?")) return;
-            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).delete().catch(console.error); } 
-            else { appState.finanzas = appState.finanzas.filter(f => f.id !== localId); try{ saveToLocalStorage(); }catch(e){} }
+            
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.finanzas = appState.finanzas.filter(f => f.id !== localId); 
+
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).delete().catch(console.error); 
+            } else { 
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
             renderAll(); updateCharts(); showToast("Anulado", "Registro extraído del historial.");
         }
+
         async function cobrarDeuda(docId, localId) {
             var findItem = appState.finanzas.find(x => x.id === localId); if (!findItem) return;
             var updatedData = { tipo: "Ingreso", detalle: "Cobro Acreditado: " + findItem.detalle };
+            
+            // ACTUALIZACIÓN OPTIMISTA
+            var idx = appState.finanzas.findIndex(x => x.id === localId); 
+            if (idx !== -1) { 
+                appState.finanzas[idx].tipo = "Ingreso"; 
+                appState.finanzas[idx].detalle = "Cobro Acreditado: " + appState.finanzas[idx].detalle; 
+            }
+
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).update(updatedData).catch(console.error); 
             } else { 
-                var idx = appState.finanzas.findIndex(x => x.id === localId); if (idx !== -1) { appState.finanzas[idx].tipo = "Ingreso"; appState.finanzas[idx].detalle = "Cobro Acreditado: " + appState.finanzas[idx].detalle; }
                 try{ saveToLocalStorage(); }catch(e){} 
             }
             renderAll(); updateCharts(); showToast("Acreditado", "La cuenta se cobró con éxito.");
@@ -2137,10 +2192,13 @@
 
             var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
             
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.stock.push(nuevoInsumo); 
+
             if (hasFirebase && authUser) { 
                 db.collection('artifacts/' + appId + '/public/data/stock').add(nuevoInsumo).catch(console.error); 
             } else { 
-                appState.stock.push(nuevoInsumo); try{ saveToLocalStorage(); }catch(e){} 
+                try{ saveToLocalStorage(); }catch(e){} 
             }
             
             if(returnToPedidoModalFromStock) {
@@ -2166,23 +2224,35 @@
             document.getElementById("edit-stk-id-doc").value = docId || ''; document.getElementById("edit-stk-id-local").value = localId;
             document.getElementById("edit-stk-nombre").value = s.item; document.getElementById("edit-stk-talle").value = s.talle; document.getElementById("edit-stk-cant").value = s.cantidad; document.getElementById("edit-stk-min").value = s.minimo; openModal('modalEditStock');
         }
+
         async function guardarEdicionStock() {
             var docId = document.getElementById("edit-stk-id-doc").value; var localId = parseInt(document.getElementById("edit-stk-id-local").value);
             var nombre = document.getElementById("edit-stk-nombre").value; var talle = document.getElementById("edit-stk-talle").value; var cant = parseInt(document.getElementById("edit-stk-cant").value) || 0; var min = parseInt(document.getElementById("edit-stk-min").value) || 0;
             var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min };
             
+            // ACTUALIZACIÓN OPTIMISTA
+            var idx = appState.stock.findIndex(x => x.id === localId); 
+            if (idx !== -1) { appState.stock[idx] = { ...appState.stock[idx], ...updatedData }; }
+
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).update(updatedData).catch(console.error); 
             } else { 
-                var idx = appState.stock.findIndex(x => x.id === localId); if (idx !== -1) { appState.stock[idx] = { ...appState.stock[idx], ...updatedData }; }
                 try{ saveToLocalStorage(); }catch(e){} 
             }
             closeModal('modalEditStock'); renderAll(); showToast("Ajustado", `Cantidades recalibradas.`);
         }
+
         async function eliminarStock(docId, localId) {
             if (!confirm("⚠️ ¿Dar de baja este SKU del almacén?")) return;
-            if (hasFirebase && authUser && docId) { db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).delete().catch(console.error); } 
-            else { appState.stock = appState.stock.filter(s => s.id !== localId); try{ saveToLocalStorage(); }catch(e){} }
+            
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.stock = appState.stock.filter(s => s.id !== localId); 
+
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).delete().catch(console.error); 
+            } else { 
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
             renderAll(); showToast("Removido", "La ficha fue eliminada.");
         }
 
@@ -2223,11 +2293,23 @@
                 else if (p.estado === "Listo") stateCounts.Listo++; 
                 else stateCounts.Entregado++; 
             });
-            chart1.data.datasets[0].data = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado]; 
+
+            var totalPedidos = stateCounts.Diseñando + stateCounts.Produccion + stateCounts.Estampado + stateCounts.Listo + stateCounts.Entregado;
+            if (totalPedidos === 0) {
+                chart1.data.labels = ['Sin Órdenes'];
+                chart1.data.datasets[0].data = [1];
+                chart1.data.datasets[0].backgroundColor = ['rgba(255,255,255,0.05)'];
+            } else {
+                chart1.data.labels = ['En diseño', 'Producción', 'Estampado', 'Listo', 'Entregado'];
+                chart1.data.datasets[0].data = [stateCounts.Diseñando, stateCounts.Produccion, stateCounts.Estampado, stateCounts.Listo, stateCounts.Entregado]; 
+                chart1.data.datasets[0].backgroundColor = ['#a855f7', '#ec4899', '#f59e0b', '#10b981', '#0ea5e9'];
+            }
             chart1.update();
 
             var ingresos = appState.finanzas.filter(f => f.tipo === "Ingreso").reduce((acc, f) => acc + f.monto, 0); 
             var egresos = appState.finanzas.filter(f => f.tipo === "Egreso").reduce((acc, f) => acc + f.monto, 0);
+            
+            chart2.options.scales.y.suggestedMax = Math.max(ingresos, egresos, 100000);
             chart2.data.datasets[0].data = [ingresos, egresos]; 
             chart2.update();
         }
@@ -2254,4 +2336,5 @@
         
     </script>
 </body>
+</html>
 </html>

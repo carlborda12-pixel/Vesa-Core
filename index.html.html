@@ -6,6 +6,7 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <title>VESA Core OS - Sistema Inteligente</title>
     
+    <!-- Fuentes e Iconos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -13,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
+    <!-- SDK de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -264,19 +266,23 @@
 </head>
 <body>
 
+    <!-- FONDOS AMBIENTALES -->
     <div class="grid-pattern"></div>
     <div class="ambient-bg">
         <div class="glow-blob glow-1"></div>
         <div class="glow-blob glow-2"></div>
     </div>
 
+    <!-- CONTENEDOR DE LA APP -->
     <div id="app-wrapper">
 
+        <!-- MENÚ MÓVIL -->
         <div class="mobile-navbar">
             <div class="mobile-logo">VESA<span>.</span></div>
             <button class="menu-toggle-btn" onclick="toggleSidebar(true)"><i class="fa-solid fa-bars-staggered"></i></button>
         </div>
 
+        <!-- SIDEBAR -->
         <div class="sidebar" id="app-sidebar">
             <button class="sidebar-close-btn" onclick="toggleSidebar(false)"><i class="fa-solid fa-xmark"></i></button>
             <div class="logo-section">
@@ -321,7 +327,9 @@
                     </div>
                 </div>
 
+                <!-- VISTA DASHBOARD -->
                 <div id="section-dashboard" class="view-section active">
+                    <!-- TARJETAS DE MÉTRICAS -->
                     <div class="metrics-grid">
                         <div class="metric-card" title="Total de pedidos que aún no han sido entregados al cliente">
                             <div class="metric-title">Órdenes Activas <div class="metric-icon-box"><i class="fa-solid fa-basket-shopping"></i></div></div>
@@ -376,11 +384,13 @@
                     </div>
                 </div>
 
+                <!-- VISTA PEDIDOS -->
                 <div id="section-pedidos" class="view-section">
                     <div class="panel-block">
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-folder-open"></i> Historial de Pedidos</h3>
                             
+                            <!-- FILTROS DE FECHA Y PAGINACIÓN -->
                             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                 <div style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.02); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border-glass);">
                                     <i class="fa-regular fa-calendar" style="color: var(--color-text-secondary); font-size: 12px;"></i>
@@ -409,6 +419,7 @@
                             </table>
                         </div>
                         
+                        <!-- CONTROLES DE PAGINACIÓN -->
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border-glass); margin-top: 8px;">
                             <span id="ped-page-info" style="font-size: 11px; font-weight: 700; color: var(--color-text-secondary); letter-spacing: 0.5px;">Cargando registros...</span>
                             <div style="display: flex; gap: 8px;">
@@ -419,6 +430,7 @@
                     </div>
                 </div>
 
+                <!-- VISTA KANBAN -->
                 <div id="section-kanban" class="view-section">
                     <div class="panel-block" style="background: transparent; border: none; padding: 0; box-shadow: none;">
                         <div class="kanban-board">
@@ -442,6 +454,7 @@
                     </div>
                 </div>
 
+                <!-- VISTA CLIENTES -->
                 <div id="section-clientes" class="view-section">
                     <div class="panel-block">
                         <div class="panel-header"><h3><i class="fa-solid fa-address-book"></i> Lista de Clientes</h3></div>
@@ -454,6 +467,7 @@
                     </div>
                 </div>
 
+                <!-- VISTA STOCK -->
                 <div id="section-stock" class="view-section">
                     <div class="panel-block">
                         <div class="panel-header">
@@ -469,6 +483,7 @@
                     </div>
                 </div>
 
+                <!-- VISTA FINANZAS -->
                 <div id="section-finanzas" class="view-section">
                     <div class="finanzas-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px;">
                         <div class="metric-card" style="border-top: 3px solid var(--color-success);" title="Totalidad de dinero que entró a caja">
@@ -514,6 +529,7 @@
 
             </div>
 
+            <!-- BOTONERA INFERIOR -->
             <div class="bottom-actions">
                 <button class="btn btn-primary" onclick="openModal('modalPedido')" title="Abre el asistente para crear una orden de trabajo y sumarla al tablero"><i class="fa-solid fa-plus"></i> Ingresar Orden</button>
                 <button class="btn" onclick="openModal('modalCliente')" title="Añade un nuevo cliente a la base de datos central"><i class="fa-solid fa-user-plus"></i> Alta Cliente</button>
@@ -521,7 +537,11 @@
             </div>
         </div>
 
-    </div> <div class="modal-overlay" id="modalWelcomeAlert">
+    </div> <!-- FIN APP WRAPPER -->
+
+    <!-- === MODALES === -->
+    
+    <div class="modal-overlay" id="modalWelcomeAlert">
         <div class="modal-box" style="border-top: 4px solid var(--color-accent);">
             <div class="modal-header">
                 <h3 style="display: flex; align-items: center;"><i class="fa-solid fa-shield-halved" style="color: var(--color-accent); margin-right: 10px; font-size: 20px;"></i> Reporte de Estado</h3>
@@ -537,6 +557,7 @@
         </div>
     </div>
 
+    <!-- MÓDULO 1: NUEVO PEDIDO CON MULTI-CARRITO Y SEÑA -->
     <div class="modal-overlay" id="modalPedido">
         <div class="modal-box wide">
             <div class="modal-header">
@@ -545,6 +566,7 @@
             </div>
             
             <div class="modal-body-grid">
+                <!-- Columna Izquierda (Prendas y Detalles) -->
                 <div class="modal-col">
                     <div class="form-section-title" style="margin-top: 0;">Cliente y Observaciones</div>
                     <div class="form-group">
@@ -561,6 +583,7 @@
                         <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: Logo frente blanco, espalda full color" title="Cualquier nota extra para el taller">
                     </div>
 
+                    <!-- CARRITO MÚLTIPLE DE PRENDAS Y TALLES -->
                     <div class="form-section-title" style="margin-top: 8px;">📦 Prendas, Talles y Precios (Auto-Stock)</div>
                     <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-end;">
                         <div class="form-group" style="flex: 2;">
@@ -580,6 +603,7 @@
                         <button class="btn btn-primary" onclick="addOrderItem()" style="padding: 10px; height: 38px; border-radius: 10px;" title="Agregar esta prenda al pedido actual"><i class="fa-solid fa-plus"></i></button>
                     </div>
                     
+                    <!-- Lista de Prendas Agregadas -->
                     <div id="ped-items-list" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; min-height: 50px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px;">
                         <div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>
                     </div>
@@ -590,6 +614,7 @@
                     </div>
                 </div>
 
+                <!-- Columna Derecha (Facturación) -->
                 <div class="modal-col">
                     <div class="form-section-title" style="margin-top: 0;">Facturación y Logística</div>
                     <div class="form-row">
@@ -640,6 +665,7 @@
         </div>
     </div>
 
+    <!-- MÓDULO 1: EDITAR PEDIDO -->
     <div class="modal-overlay" id="modalEditPedido">
         <div class="modal-box wide">
             <div class="modal-header">
@@ -655,6 +681,7 @@
                     <div class="form-group"><label>Cliente</label><select class="form-control" id="edit-ped-cliente"></select></div>
                     <div class="form-group"><label>Observaciones / Requerimiento</label><input type="text" class="form-control" id="edit-ped-detalle"></div>
                     
+                    <!-- CARRITO MÚLTIPLE DE PRENDAS PARA EDICIÓN -->
                     <div class="form-section-title" style="margin-top: 8px;">📦 Prendas, Talles y Precios (Auto-Stock)</div>
                     <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-end;">
                         <div class="form-group" style="flex: 2;">
@@ -674,6 +701,7 @@
                         <button class="btn btn-primary" onclick="addOrderItem(true)" style="padding: 10px; height: 38px; border-radius: 10px;" title="Agregar esta prenda al pedido"><i class="fa-solid fa-plus"></i></button>
                     </div>
                     
+                    <!-- Lista de Prendas Agregadas en Edición -->
                     <div id="edit-ped-items-list" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; min-height: 50px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px;">
                         <div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>
                     </div>
@@ -698,6 +726,7 @@
         </div>
     </div>
 
+    <!-- MÓDULO 1: FICHA TÉCNICA PDF -->
     <div class="modal-overlay" id="modalFichaTecnica">
         <div class="voucher-box" id="print-ficha-area">
             <div style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: -15px;">
@@ -720,6 +749,7 @@
                 <p id="ficha-detalle" style="font-size: 13px; color: #475569; font-weight: 500;">-</p>
             </div>
 
+            <!-- TABLA DETALLADA DE PRODUCTOS -->
             <div style="margin-top: 20px;">
                 <table class="voucher-table">
                     <thead>
@@ -730,7 +760,8 @@
                         </tr>
                     </thead>
                     <tbody id="comp-items-tbody">
-                        </tbody>
+                        <!-- Llenado dinámico -->
+                    </tbody>
                 </table>
 
                 <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
@@ -758,6 +789,7 @@
         </div>
     </div>
 
+    <!-- Otros Modales Básicos -->
     <div class="modal-overlay" id="modalCliente">
         <div class="modal-box">
             <div class="modal-header">
@@ -926,6 +958,7 @@
         </div>
     </div>
 
+    <!-- PANTALLA DE SESIÓN VENCIDA -->
     <div id="session-expired-screen">
         <div class="expired-box">
             <div class="expired-icon"><i class="fa-solid fa-lock"></i></div>
@@ -937,6 +970,7 @@
         </div>
     </div>
 
+    <!-- NOTIFICACIÓN EN TIEMPO REAL -->
     <div class="notification-toast" id="toast">
         <div style="background: rgba(0, 229, 255, 0.1); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0, 229, 255, 0.2);" id="toast-icon-box">
             <i class="fa-solid fa-check" style="color: var(--color-accent); font-size: 16px;" id="toast-icon"></i>
@@ -947,6 +981,7 @@
         </div>
     </div>
 
+    <!-- LÓGICA CORE DEL SISTEMA (ACTUALIZACIÓN OPTIMISTA Y ANTI-CUELGUES) -->
     <script>
         const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById("current-date-display").innerText = new Date().toLocaleDateString('es-AR', dateOptions);
@@ -1294,7 +1329,7 @@
                     <td>
                         <div style="display:flex; gap:6px;">
                             <button class="btn btn-primary btn-small" style="padding: 4px 8px;" onclick="generarFichaTecnica(${p.id})" title="Generar PDF"><i class="fa-solid fa-file-pdf"></i></button>
-                            ${p.estado === 'Listo' ? `<button class="btn btn-small" style="background:rgba(37, 211, 102, 0.1); color: #25D366; border-color: rgba(37, 211, 102, 0.3); padding: 4px 8px;" onclick="avisarPorWhatsApp('${sanitizeHTML(p.cliente)}', ${p.id})" title="Avisar por WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>` : ''}
+                            ${(p.estado === 'Listo' || p.estado === 'Entregado') ? `<button class="btn btn-small" style="background:rgba(37, 211, 102, 0.1); color: #25D366; border-color: rgba(37, 211, 102, 0.3); padding: 4px 8px;" onclick="avisarPorWhatsApp(${p.id})" title="Avisar por WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>` : ''}
                             <button class="btn btn-small" style="background:rgba(255,255,255,0.03); padding: 4px 8px;" onclick="abrirEditarPedido(${docIdSegura}, ${p.id})" title="Editar Orden"><i class="fa-solid fa-pen"></i></button>
                         </div>
                     </td>
@@ -1522,7 +1557,7 @@
                                 <div style="display:flex; gap:6px;">
                                     <button class="btn btn-small" style="background:rgba(56, 189, 248, 0.1); color: var(--color-accent); border-color: rgba(56, 189, 248, 0.3);" onclick="generarFichaTecnica(${p.id})" title="Ver Ficha Técnica"><i class="fa-solid fa-eye"></i></button>
                                     <button class="btn btn-small" style="background:rgba(16, 185, 129, 0.1); color: var(--color-success); border-color: rgba(16, 185, 129, 0.3);" onclick="descargarFichaDirecta(${p.id})" title="Descargar Ficha en PDF"><i class="fa-solid fa-download"></i></button>
-                                    ${p.estado === 'Listo' ? `<button class="btn btn-small" style="background:rgba(37, 211, 102, 0.1); color: #25D366; border-color: rgba(37, 211, 102, 0.3);" onclick="avisarPorWhatsApp('${sanitizeHTML(p.cliente)}', ${p.id})" title="Avisar retiro por WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>` : ''}
+                                    ${(p.estado === 'Listo' || p.estado === 'Entregado') ? `<button class="btn btn-small" style="background:rgba(37, 211, 102, 0.1); color: #25D366; border-color: rgba(37, 211, 102, 0.3);" onclick="avisarPorWhatsApp(${p.id})" title="Avisar retiro por WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>` : ''}
                                     <button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarPedido(${docIdSegura}, ${p.id})" title="Editar parámetros técnicos o de facturación"><i class="fa-solid fa-pen"></i></button>
                                     <button class="btn btn-small btn-danger" onclick="eliminarPedido(${docIdSegura}, ${p.id})" title="Eliminar orden por completo"><i class="fa-solid fa-trash"></i></button>
                                 </div>
@@ -1574,9 +1609,18 @@
                     }
                 }
 
-                var card = document.createElement('div'); card.className = 'kanban-card'; card.draggable = true; card.id = 'kcard-' + p.id;
+                var wppHtml = '';
+                if (p.estado === 'Listo' || p.estado === 'Entregado') {
+                    wppHtml = `<button class="btn btn-small" style="background:rgba(37, 211, 102, 0.1); color: #25D366; border-color: rgba(37, 211, 102, 0.3); width: 100%; justify-content: center; margin-top: 8px;" onclick="avisarPorWhatsApp(${p.id}); event.stopPropagation();" title="Avisar por WhatsApp"><i class="fa-brands fa-whatsapp"></i> Notificar Cliente</button>`;
+                }
+
+                var card = document.createElement('div'); 
+                card.className = 'kanban-card'; 
+                card.draggable = true; 
+                card.id = 'kcard-' + p.id;
                 card.addEventListener('dragstart', function(e) { e.dataTransfer.setData('text/plain', p.id); });
-                card.innerHTML = `${imageHtml}<div class="k-card-title"><span>#${p.id}</span> <span>${sanitizeHTML(p.cliente)}</span></div><div class="k-card-desc">${sanitizeHTML(p.detalle)}</div>`;
+                
+                card.innerHTML = `${imageHtml}<div class="k-card-title"><span>#${p.id}</span> <span>${sanitizeHTML(p.cliente)}</span></div><div class="k-card-desc">${sanitizeHTML(p.detalle)}</div>${wppHtml}`;
                 col.appendChild(card);
             });
 
@@ -2340,13 +2384,18 @@
             chart2.update();
         }
 
-        // Añadida nueva función de WhatsApp
-        function avisarPorWhatsApp(nombreCliente, idPedido) {
-            let cliente = appState.clientes.find(c => c.nombre === nombreCliente);
+        // Añadida nueva función de WhatsApp (Actualizada para usar ID)
+        function avisarPorWhatsApp(idPedido) {
+            let pedido = appState.pedidos.find(p => p.id === idPedido);
+            if (!pedido) return;
+            
+            let cliente = appState.clientes.find(c => c.nombre === pedido.cliente);
+            
             if (!cliente || !cliente.whatsapp) {
                 showToast("Error", "El cliente no tiene un número de WhatsApp registrado.", true);
                 return;
             }
+
             let numeroLimpio = cliente.whatsapp.replace(/[^0-9]/g, '');
             let mensaje = `¡Hola! Te avisamos desde VESA que tu orden #${idPedido} ya está lista. ¡Te esperamos para el retiro!`;
             window.open(`https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`, '_blank');

@@ -460,7 +460,7 @@
                         <div class="panel-header"><h3><i class="fa-solid fa-address-book"></i> Lista de Clientes</h3></div>
                         <div class="table-wrapper">
                             <table>
-                                <thead><tr><th>ID</th><th>Razón Social / Nombre</th><th>WhatsApp</th><th>Instagram</th><th>Acciones</th></tr></thead>
+                                <thead><tr><th>ID</th><th>Razón Social / Nombre</th><th>WhatsApp</th><th>Instagram</th><th>Nacimiento</th><th>Acciones</th></tr></thead>
                                 <tbody id="clientes-tbody"></tbody>
                             </table>
                         </div>
@@ -499,7 +499,7 @@
                             <div class="metric-value" id="fin-total-deudas">$0</div>
                         </div>
                         <div class="metric-card" style="border-top: 3px solid var(--color-purple);" title="Dinero de Santiago invertido por fuera del ecosistema del taller o ahorros personales">
-                            <div class="metric-title" style="color: var(--color-purple);">Inversiones <div class="metric-icon-box" style="color: var(--color-purple); border-color: rgba(168, 85, 247, 0.2); background: rgba(168, 85, 247, 0.05);"><i class="fa-solid fa-user-tie"></i></div></div>
+                            <div class="metric-title" style="color: var(--color-purple);">Capital Privado <div class="metric-icon-box" style="color: var(--color-purple); border-color: rgba(168, 85, 247, 0.2); background: rgba(168, 85, 247, 0.05);"><i class="fa-solid fa-user-tie"></i></div></div>
                             <div class="metric-value" id="fin-fondo-privado">$0</div>
                         </div>
                         <div class="metric-card" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(56,189,248,0.05), rgba(15,23,42,0.6));" title="Ingresos reales menos Egresos (Rentabilidad neta del Taller)">
@@ -798,7 +798,10 @@
             </div>
             <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="form-cli-nombre"></div>
             <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="form-cli-tel" placeholder="Ej: +54 9..."></div>
-            <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="form-cli-ig" placeholder="Ej: @usuario"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="form-cli-ig" placeholder="Ej: @usuario"></div>
+                <div class="form-group"><label>Nacimiento <span style="color:var(--color-accent)">(Opcional)</span></label><input type="date" class="form-control" id="form-cli-cumple"></div>
+            </div>
             <button type="button" class="btn btn-primary" onclick="guardarNuevoCliente()" style="margin-top:8px; justify-content:center;">Registrar Cliente</button>
         </div>
     </div>
@@ -871,7 +874,10 @@
             <input type="hidden" id="edit-cli-id-local">
             <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="edit-cli-nombre"></div>
             <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="edit-cli-tel"></div>
-            <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="edit-cli-ig"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="edit-cli-ig"></div>
+                <div class="form-group"><label>Nacimiento</label><input type="date" class="form-control" id="edit-cli-cumple"></div>
+            </div>
             <button type="button" class="btn btn-primary" onclick="guardarEdicionCliente()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
         </div>
     </div>
@@ -981,17 +987,13 @@
         </div>
     </div>
 
-    <!-- LÓGICA CORE DEL SISTEMA (ACTUALIZACIÓN OPTIMISTA Y ANTI-CUELGUES) -->
+    <!-- LÓGICA CORE DEL SISTEMA -->
     <script>
         const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById("current-date-display").innerText = new Date().toLocaleDateString('es-AR', dateOptions);
 
-        // ESCUDO ANTI-ROTURAS: Limpia cualquier símbolo raro (<, >, &, ") que pueda romper la vista
         function sanitizeHTML(str) { if (!str) return ''; return String(str).replace(/[&<>'"]/g, function(tag) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag);}); }
 
-        // =========================================================================
-        // CONFIGURACIÓN AUTOMÁTICA DE FIREBASE 
-        // =========================================================================
         const MI_FIREBASE_CONFIG = {
             apiKey: "AIzaSyDzfpvdhpjqRE4rmVqR-0PtdLqGPhIzDpA",
             authDomain: "vesa-core-os.firebaseapp.com",
@@ -1001,7 +1003,6 @@
             appId: "1:771153299932:web:6c6a94cada1a08403b6719"
         };
         const MI_SALA_ID = "vesa-core-os"; 
-        // =========================================================================
 
         var hasFirebase = false; 
         var firebaseConfig = null;
@@ -1035,8 +1036,7 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 var msg = new SpeechSynthesisUtterance(); 
-                msg.text = text; msg.lang = 'es-ES'; msg.rate = 1.2;
-                msg.pitch = 0.9;
+                msg.text = text; msg.lang = 'es-ES'; msg.rate = 1.2; msg.pitch = 0.9;
                 var voices = window.speechSynthesis.getVoices();
                 var preferredVoice = voices.find(v => v.lang.includes('es') && (v.name.includes('Lola') || v.name.includes('Monica') || v.name.includes('female')));
                 if (!preferredVoice) preferredVoice = voices.find(v => v.lang.includes('es'));
@@ -1068,6 +1068,17 @@
                     container.innerHTML += `<div class="alert-item warning"><div class="alert-icon warning"><i class="fa-solid fa-boxes-stacked"></i></div><div class="alert-text"><h4>${stockBajo.length} Alertas de Inventario</h4><p>Materia prima por debajo del umbral de seguridad.</p></div></div>`;
                 }
             }
+
+            // ALERTA DE CUMPLEAÑOS
+            var d = new Date();
+            var cumpleHoyMes = String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            var cumpleaneros = appState.clientes.filter(c => c.cumple && c.cumple.endsWith(cumpleHoyMes));
+            
+            if (cumpleaneros.length > 0) {
+                voiceText += ` Un aviso especial: hoy es el cumpleaños de ${cumpleaneros.map(c=>c.nombre).join(" y ")}.`;
+                container.innerHTML = `<div class="alert-item" style="border-left-color: var(--color-purple);"><div class="alert-icon" style="color: var(--color-purple);"><i class="fa-solid fa-cake-candles"></i></div><div class="alert-text"><h4>¡Cumpleaños de Cliente!</h4><p>Hoy celebran: <strong>${cumpleaneros.map(c=>sanitizeHTML(c.nombre)).join(", ")}</strong>.</p></div></div>` + container.innerHTML;
+            }
+
             window.lastReportText = voiceText;
             openModal('modalWelcomeAlert'); 
             sessionStorage.setItem("vesa_welcome_shown", "true"); welcomeShown = "true";
@@ -1076,43 +1087,22 @@
 
         function getFileBase64(file) {
             return new Promise((resolve) => {
-                if (!file.type.match(/image.*/)) {
-                    resolve(""); 
-                    return;
-                }
-                
-                if (file.size > 15 * 1024 * 1024) {
-                    showToast("Atención", "Una imagen supera los 15MB y fue omitida para evitar bloqueos.", true);
-                    resolve("");
-                    return;
-                }
-
-                const image = new Image();
-                const objectUrl = URL.createObjectURL(file); 
-                
+                if (!file.type.match(/image.*/)) { resolve(""); return; }
+                if (file.size > 15 * 1024 * 1024) { showToast("Atención", "Una imagen supera los 15MB y fue omitida para evitar bloqueos.", true); resolve(""); return; }
+                const image = new Image(); const objectUrl = URL.createObjectURL(file); 
                 image.onload = () => {
                     URL.revokeObjectURL(objectUrl); 
                     try {
-                        const canvas = document.createElement('canvas');
-                        const maxSize = 800; 
+                        const canvas = document.createElement('canvas'); const maxSize = 800; 
                         let width = image.width; let height = image.height;
                         if (width > height && width > maxSize) { height *= maxSize / width; width = maxSize; } 
                         else if (height > maxSize) { width *= maxSize / height; height = maxSize; }
                         canvas.width = width; canvas.height = height;
-                        
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(image, 0, 0, width, height);
-                        
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0, width, height);
                         resolve(canvas.toDataURL('image/jpeg', 0.6));
-                    } catch(err) {
-                        console.error("Error en compresión visual", err);
-                        resolve(""); 
-                    }
+                    } catch(err) { resolve(""); }
                 };
-                image.onerror = () => {
-                    URL.revokeObjectURL(objectUrl);
-                    resolve(""); 
-                };
+                image.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(""); };
                 image.src = objectUrl;
             });
         }
@@ -1124,9 +1114,7 @@
                         const storageRef = firebase.storage().ref();
                         const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
                         const fileRef = storageRef.child(`artifacts/${appId}/pedidos/disenos/${Date.now()}_${cleanFileName}`);
-                        fileRef.put(file).then((snapshot) => {
-                            snapshot.ref.getDownloadURL().then(resolve).catch(reject);
-                        }).catch(reject);
+                        fileRef.put(file).then((snapshot) => { snapshot.ref.getDownloadURL().then(resolve).catch(reject); }).catch(reject);
                     } catch(err) { reject(err); }
                 } else {
                     getFileBase64(file).then(resolve).catch(() => resolve(""));
@@ -1135,24 +1123,17 @@
         }
 
         async function processMultipleFiles(fileList) {
-            let urls = [];
-            let limit = Math.min(fileList.length, 5); 
+            let urls = []; let limit = Math.min(fileList.length, 5); 
             for(let i = 0; i < limit; i++) {
                 if (hasFirebase && authUser) {
                     try {
-                        let url = await Promise.race([
-                            uploadImageToStorage(fileList[i]),
-                            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Red")), 10000))
-                        ]);
+                        let url = await Promise.race([ uploadImageToStorage(fileList[i]), new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Red")), 10000)) ]);
                         if (url) urls.push(url);
                     } catch(e) {
-                        console.warn("Falla en la red/nube. Usando compresor local offline para: " + fileList[i].name);
-                        let localUrl = await getFileBase64(fileList[i]);
-                        if(localUrl) urls.push(localUrl);
+                        let localUrl = await getFileBase64(fileList[i]); if(localUrl) urls.push(localUrl);
                     }
                 } else {
-                    let localUrl = await getFileBase64(fileList[i]);
-                    if(localUrl) urls.push(localUrl);
+                    let localUrl = await getFileBase64(fileList[i]); if(localUrl) urls.push(localUrl);
                 }
             }
             return urls;
@@ -1161,15 +1142,10 @@
         window.addEventListener('DOMContentLoaded', () => { initApexCore(); });
 
         async function initApexCore() {
-            var statusBadge = document.getElementById("status-badge");
-            var statusText = document.getElementById("status-text");
-            
+            var statusBadge = document.getElementById("status-badge"); var statusText = document.getElementById("status-text");
             try {
                 const response = await fetch('/api/config');
-                if (response.ok) {
-                    firebaseConfig = await response.json();
-                    hasFirebase = true; appId = "vesa-core-os";
-                }
+                if (response.ok) { firebaseConfig = await response.json(); hasFirebase = true; appId = "vesa-core-os"; }
             } catch (error) {}
 
             if (!hasFirebase && typeof MI_FIREBASE_CONFIG !== 'undefined' && MI_FIREBASE_CONFIG.apiKey !== "TU_API_KEY_AQUI") {
@@ -1182,77 +1158,39 @@
                     if (typeof firebase !== 'undefined') {
                         auth = firebase.auth(); db = firebase.firestore();
                         auth.onAuthStateChanged(function(user) {
-                            if (user) {
-                                authUser = user;
-                                statusBadge.className = "db-status online"; statusText.innerText = "Nube: Segura";
-                                bindFirebaseCollections();
-                            } else {
-                                setupLocalStorageFallback();
-                            }
+                            if (user) { authUser = user; statusBadge.className = "db-status online"; statusText.innerText = "Nube: Segura"; bindFirebaseCollections(); } 
+                            else { setupLocalStorageFallback(); }
                         });
                         await auth.signInAnonymously();
-                    } else {
-                        setupLocalStorageFallback();
-                    }
+                    } else { setupLocalStorageFallback(); }
                 } catch (err) { setupLocalStorageFallback(); }
             } else { setupLocalStorageFallback(); }
             setTimeout(showWelcomeSummary, 500);
         }
 
-        window.addEventListener('offline', () => {
-            document.getElementById("status-badge").className = "db-status local";
-            document.getElementById("status-text").innerText = "Sin Conexión";
-            showToast("Modo Offline", "Trabajando sin red. Se sincronizará automáticamente al volver.", true);
-        });
-        
-        window.addEventListener('online', () => {
-            document.getElementById("status-badge").className = "db-status online";
-            document.getElementById("status-text").innerText = "Nube: Segura";
-            showToast("Conexión Restablecida", "Datos sincronizados con éxito.");
-        });
+        window.addEventListener('offline', () => { document.getElementById("status-badge").className = "db-status local"; document.getElementById("status-text").innerText = "Sin Conexión"; showToast("Modo Offline", "Trabajando sin red. Se sincronizará automáticamente al volver.", true); });
+        window.addEventListener('online', () => { document.getElementById("status-badge").className = "db-status online"; document.getElementById("status-text").innerText = "Nube: Segura"; showToast("Conexión Restablecida", "Datos sincronizados con éxito."); });
 
         function bindFirebaseCollections() {
-            db.collection('artifacts/' + appId + '/public/data/pedidos').onSnapshot(function(snapshot) {
-                var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
-                appState.pedidos = list.sort(function(a,b) { return b.id - a.id; }); renderAll(); updateCharts();
-            });
-            db.collection('artifacts/' + appId + '/public/data/clientes').onSnapshot(function(snapshot) {
-                var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
-                appState.clientes = list.sort(function(a,b) { return b.id - a.id; }); renderAll();
-            });
-            db.collection('artifacts/' + appId + '/public/data/stock').onSnapshot(function(snapshot) {
-                var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
-                appState.stock = list.sort(function(a,b) { return a.id - b.id; }); renderAll();
-            });
-            db.collection('artifacts/' + appId + '/public/data/finanzas').onSnapshot(function(snapshot) {
-                var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
-                appState.finanzas = list.sort(function(a,b) { return b.id - a.id; }); renderAll(); updateCharts();
-            });
+            db.collection('artifacts/' + appId + '/public/data/pedidos').onSnapshot(function(snapshot) { var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); }); appState.pedidos = list.sort(function(a,b) { return b.id - a.id; }); renderAll(); updateCharts(); });
+            db.collection('artifacts/' + appId + '/public/data/clientes').onSnapshot(function(snapshot) { var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); }); appState.clientes = list.sort(function(a,b) { return b.id - a.id; }); renderAll(); });
+            db.collection('artifacts/' + appId + '/public/data/stock').onSnapshot(function(snapshot) { var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); }); appState.stock = list.sort(function(a,b) { return a.id - b.id; }); renderAll(); });
+            db.collection('artifacts/' + appId + '/public/data/finanzas').onSnapshot(function(snapshot) { var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); }); appState.finanzas = list.sort(function(a,b) { return b.id - a.id; }); renderAll(); updateCharts(); });
         }
 
         function setupLocalStorageFallback() {
             document.getElementById("status-badge").className = "db-status local"; document.getElementById("status-text").innerText = "Local (Aislado)";
             if (localStorage.getItem("vesa_pedidos")) {
-                appState.pedidos = JSON.parse(localStorage.getItem("vesa_pedidos"));
-                appState.clientes = JSON.parse(localStorage.getItem("vesa_clientes"));
-                appState.stock = JSON.parse(localStorage.getItem("vesa_stock"));
-                appState.finanzas = JSON.parse(localStorage.getItem("vesa_finanzas"));
+                appState.pedidos = JSON.parse(localStorage.getItem("vesa_pedidos")); appState.clientes = JSON.parse(localStorage.getItem("vesa_clientes")); appState.stock = JSON.parse(localStorage.getItem("vesa_stock")); appState.finanzas = JSON.parse(localStorage.getItem("vesa_finanzas"));
             } else {
-                appState.pedidos = [...defaultState.pedidos]; appState.clientes = [...defaultState.clientes];
-                appState.stock = [...defaultState.stock]; appState.finanzas = [...defaultState.finanzas];
+                appState.pedidos = [...defaultState.pedidos]; appState.clientes = [...defaultState.clientes]; appState.stock = [...defaultState.stock]; appState.finanzas = [...defaultState.finanzas];
             }
-            renderAll(); updateCharts(); // SOLUCIÓN: Cargar con la función Update en lugar de Init para reflejar datos reales
+            renderAll(); updateCharts();
         }
 
         function saveToLocalStorage() {
-            try {
-                localStorage.setItem("vesa_pedidos", JSON.stringify(appState.pedidos));
-                localStorage.setItem("vesa_clientes", JSON.stringify(appState.clientes));
-                localStorage.setItem("vesa_stock", JSON.stringify(appState.stock));
-                localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
-            } catch(e) {
-                throw new Error("QUOTA_EXCEEDED");
-            }
+            try { localStorage.setItem("vesa_pedidos", JSON.stringify(appState.pedidos)); localStorage.setItem("vesa_clientes", JSON.stringify(appState.clientes)); localStorage.setItem("vesa_stock", JSON.stringify(appState.stock)); localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas)); } 
+            catch(e) { throw new Error("QUOTA_EXCEEDED"); }
         }
 
         function renderAll() {
@@ -1261,12 +1199,10 @@
             populateDropdowns();
         }
 
-        // --- FUNCIÓN RESTAURADA: RELLENA LOS SELECTORES DE CLIENTES Y STOCK ---
         function populateDropdowns() {
             var selectsCli = [document.getElementById("form-ped-cliente"), document.getElementById("edit-ped-cliente")];
             selectsCli.forEach(sel => { 
-                if (!sel) return; 
-                sel.innerHTML = ""; 
+                if (!sel) return; sel.innerHTML = ""; 
                 if (appState.clientes.length === 0) { sel.innerHTML = `<option value="" disabled selected>Registrá un cliente antes</option>`; return; } 
                 appState.clientes.forEach(c => sel.innerHTML += `<option value="${c.nombre}">${sanitizeHTML(c.nombre)}</option>`); 
             });
@@ -1298,18 +1234,28 @@
             if (!container) return;
             container.innerHTML = ""; 
             
+            // ALERTAS DE CUMPLEAÑOS
+            var d = new Date();
+            var cumpleHoyMes = String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            var cumpleaneros = appState.clientes.filter(c => c.cumple && c.cumple.endsWith(cumpleHoyMes));
+            
+            if (cumpleaneros.length > 0) {
+                let cumpleBtns = cumpleaneros.map(c => {
+                    if(!c.whatsapp) return sanitizeHTML(c.nombre);
+                    let num = c.whatsapp.replace(/[^0-9]/g, '');
+                    let msg = `¡Hola ${c.nombre}! De parte de todo el equipo de VESA te deseamos un muy feliz cumpleaños 🎂 Que pases un excelente día. ¡Aprovechamos para regalarte un 15% de descuento en tu próximo pedido válido por hoy! 😉`;
+                    return `<a href="https://wa.me/${num}?text=${encodeURIComponent(msg)}" target="_blank" style="color:var(--color-purple); text-decoration:none; font-weight:800; border-bottom: 1px dashed var(--color-purple);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.nombre)}</a>`;
+                }).join(", ");
+                
+                container.innerHTML += `<div class="alert-item" style="border-left-color: var(--color-purple); background: rgba(168, 85, 247, 0.05);"><div class="alert-icon" style="color: var(--color-purple);"><i class="fa-solid fa-cake-candles"></i></div><div class="alert-text"><h4 style="color:var(--color-purple);">¡Cumpleaños Hoy!</h4><p>Saludá y regalá promo: ${cumpleBtns}</p></div></div>`;
+            }
+
             var stockBajo = appState.stock.filter(s => s.cantidad <= s.minimo);
             var atrasados = appState.pedidos.filter(p => p.estado === "En diseño" || p.estado === "Confirmado");
 
-            if (atrasados.length > 0) {
-                container.innerHTML += `<div class="alert-item danger"><div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div><div class="alert-text"><h4>${atrasados.length} pedidos atrasados</h4><p>Revisá pre-prensa y confirmaciones.</p></div></div>`;
-            }
-            if (stockBajo.length > 0) {
-                container.innerHTML += `<div class="alert-item"><div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="alert-text"><h4>${stockBajo.length} insumos en crítico</h4><p>Materia prima por debajo del límite.</p></div></div>`;
-            }
-            if (atrasados.length === 0 && stockBajo.length === 0) {
-                container.innerHTML += `<div class="alert-item success" style="border-left-color: var(--color-success);"><div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div><div class="alert-text"><h4>Todo en orden</h4><p>Operación óptima sin retrasos.</p></div></div>`;
-            }
+            if (atrasados.length > 0) container.innerHTML += `<div class="alert-item danger"><div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div><div class="alert-text"><h4>${atrasados.length} pedidos atrasados</h4><p>Revisá pre-prensa y confirmaciones.</p></div></div>`;
+            if (stockBajo.length > 0) container.innerHTML += `<div class="alert-item"><div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="alert-text"><h4>${stockBajo.length} insumos en crítico</h4><p>Materia prima por debajo del límite.</p></div></div>`;
+            if (atrasados.length === 0 && stockBajo.length === 0 && cumpleaneros.length === 0) container.innerHTML += `<div class="alert-item success" style="border-left-color: var(--color-success);"><div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div><div class="alert-text"><h4>Todo en orden</h4><p>Operación óptima sin retrasos.</p></div></div>`;
         }
 
         function renderDashboardOrders() { 
@@ -1365,7 +1311,10 @@
             var tbody = document.getElementById("clientes-tbody"); tbody.innerHTML = "";
             appState.clientes.forEach(function(c) {
                 var docIdSegura = c.docId ? `'${c.docId}'` : 'null';
-                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${sanitizeHTML(c.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.whatsapp)}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${sanitizeHTML(c.instagram)}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                
+                let cumpleHtml = c.cumple ? `<span style="color:var(--color-purple); font-weight:700;"><i class="fa-solid fa-cake-candles" style="margin-right:4px;"></i>${c.cumple.split('-').reverse().join('/')}</span>` : `<span style="color:var(--color-text-secondary); font-size:11px;">-</span>`;
+
+                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${sanitizeHTML(c.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.whatsapp)}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${sanitizeHTML(c.instagram)}</td><td>${cumpleHtml}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
         function renderStockTable() {
@@ -1763,7 +1712,6 @@
                     };
                 }
 
-                // 1. ACTUALIZACIÓN OPTIMISTA (La pantalla se actualiza en 1ms)
                 appState.pedidos.unshift(nuevoPed); 
                 if (nuevaFinanza) appState.finanzas.unshift(nuevaFinanza);
                 for (let item of currentOrderItems) {
@@ -1772,7 +1720,6 @@
                     if (sIdx !== -1) appState.stock[sIdx].cantidad = Math.max(0, appState.stock[sIdx].cantidad - item.cantidad);
                 }
 
-                // 2. SINCRONIZACIÓN EN LA NUBE (De fondo)
                 if (hasFirebase && authUser) {
                     db.collection('artifacts/' + appId + '/public/data/pedidos').add(nuevoPed).catch(console.error); 
                     if (nuevaFinanza) db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza).catch(console.error);
@@ -1789,7 +1736,6 @@
                     try {
                         saveToLocalStorage(); 
                     } catch(e) {
-                        // Rollback si no hay espacio
                         appState.pedidos.shift(); if (nuevaFinanza) appState.finanzas.shift();
                         showToast("Memoria Local Llena", "No entran más fotos pesadas. Conectá el sistema a Firebase.", true);
                         if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = '<i class="fa-solid fa-check"></i> Generar Orden'; }
@@ -1820,7 +1766,6 @@
 
         window.abrirEditarPedido = function(docId, localId) {
             try {
-                // Forzamos comparación estricta de textos para evitar fallas por tipo de dato (Número vs Texto)
                 var p = appState.pedidos.find(x => String(x.id) === String(localId)); 
                 if (!p) {
                     showToast("Error", "No se encontró el pedido en la memoria.", true);
@@ -1838,7 +1783,6 @@
                 currentOrderItems = p.items ? JSON.parse(JSON.stringify(p.items)) : []; 
                 renderOrderItems();
 
-                // Lógica inteligente y segura para extraer Notas
                 let extractedNote = "";
                 if (p.detalle) {
                     let detStr = String(p.detalle);
@@ -1958,7 +1902,6 @@
             if (!confirm("⚠️ ¿Eliminar de forma irreversible esta orden? (El stock será devuelto al almacén)")) return;
             var p = appState.pedidos.find(x => x.id === localId);
             
-            // 1. ACTUALIZACIÓN OPTIMISTA
             if (p && p.items) {
                 for (let item of p.items) {
                     if (item.isTemp) continue;
@@ -1968,7 +1911,6 @@
             }
             appState.pedidos = appState.pedidos.filter(ped => ped.id !== localId); 
             
-            // 2. SINCRONIZACIÓN
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/pedidos').doc(docId).delete().catch(console.error); 
                 if (p && p.items) {
@@ -1976,7 +1918,7 @@
                         if (item.isTemp) continue;
                         let stockItem = appState.stock.find(s => s.id === item.stockId);
                         if (stockItem && stockItem.docId) {
-                            let nuevaCant = stockItem.cantidad + item.cantidad; // Usamos el valor real optimista
+                            let nuevaCant = stockItem.cantidad + item.cantidad; 
                             db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
                         }
                     }
@@ -2083,14 +2025,17 @@
             }
         }
 
-        // --- CRUD CLIENTES ---
+        // --- CRUD CLIENTES (MODIFICADO CON CUMPLEAÑOS) ---
         async function guardarNuevoCliente() {
-            var nombre = document.getElementById("form-cli-nombre").value; var whatsapp = document.getElementById("form-cli-tel").value; var ig = document.getElementById("form-cli-ig") ? document.getElementById("form-cli-ig").value : "";
+            var nombre = document.getElementById("form-cli-nombre").value; 
+            var whatsapp = document.getElementById("form-cli-tel").value; 
+            var ig = document.getElementById("form-cli-ig") ? document.getElementById("form-cli-ig").value : "";
+            var cumple = document.getElementById("form-cli-cumple") ? document.getElementById("form-cli-cumple").value : "";
+
             if (!nombre || !whatsapp) { showToast("Error", "Razón Social y WhatsApp son obligatorios.", true); return; }
             var nuevoId = appState.clientes.length > 0 ? Math.max(...appState.clientes.map(c=>c.id)) + 1 : 1;
-            var nuevoCli = { id: nuevoId, nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
+            var nuevoCli = { id: nuevoId, nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado", cumple: cumple };
             
-            // ACTUALIZACIÓN OPTIMISTA
             appState.clientes.push(nuevoCli); 
             
             if (hasFirebase && authUser) { 
@@ -2107,23 +2052,34 @@
                 returnToPedidoModalFromCliente = false;
             } else { closeModal('modalCliente'); }
             
-            document.getElementById("form-cli-nombre").value = ""; document.getElementById("form-cli-tel").value = "";
+            document.getElementById("form-cli-nombre").value = ""; 
+            document.getElementById("form-cli-tel").value = "";
             if (document.getElementById("form-cli-ig")) document.getElementById("form-cli-ig").value = "";
+            if (document.getElementById("form-cli-cumple")) document.getElementById("form-cli-cumple").value = "";
             renderAll(); showToast("Carga Lista", `Cliente agendado.`);
         }
 
         function abrirEditarCliente(docId, localId) {
             var c = appState.clientes.find(x => x.id === localId); if (!c) return;
-            document.getElementById("edit-cli-id-doc").value = docId || ''; document.getElementById("edit-cli-id-local").value = localId;
-            document.getElementById("edit-cli-nombre").value = c.nombre; document.getElementById("edit-cli-tel").value = c.whatsapp; if(document.getElementById("edit-cli-ig")) document.getElementById("edit-cli-ig").value = c.instagram; openModal('modalEditCliente');
+            document.getElementById("edit-cli-id-doc").value = docId || ''; 
+            document.getElementById("edit-cli-id-local").value = localId;
+            document.getElementById("edit-cli-nombre").value = c.nombre; 
+            document.getElementById("edit-cli-tel").value = c.whatsapp; 
+            if(document.getElementById("edit-cli-ig")) document.getElementById("edit-cli-ig").value = c.instagram; 
+            if(document.getElementById("edit-cli-cumple")) document.getElementById("edit-cli-cumple").value = c.cumple || ""; 
+            openModal('modalEditCliente');
         }
 
         async function guardarEdicionCliente() {
-            var docId = document.getElementById("edit-cli-id-doc").value; var localId = parseInt(document.getElementById("edit-cli-id-local").value);
-            var nombre = document.getElementById("edit-cli-nombre").value.trim(); var whatsapp = document.getElementById("edit-cli-tel").value.trim(); var ig = document.getElementById("edit-cli-ig") ? document.getElementById("edit-cli-ig").value.trim() : "";
-            var updatedData = { nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado" };
+            var docId = document.getElementById("edit-cli-id-doc").value; 
+            var localId = parseInt(document.getElementById("edit-cli-id-local").value);
+            var nombre = document.getElementById("edit-cli-nombre").value.trim(); 
+            var whatsapp = document.getElementById("edit-cli-tel").value.trim(); 
+            var ig = document.getElementById("edit-cli-ig") ? document.getElementById("edit-cli-ig").value.trim() : "";
+            var cumple = document.getElementById("edit-cli-cumple") ? document.getElementById("edit-cli-cumple").value : "";
+
+            var updatedData = { nombre: nombre, whatsapp: whatsapp, instagram: ig || "No registrado", cumple: cumple };
             
-            // ACTUALIZACIÓN OPTIMISTA
             var idx = appState.clientes.findIndex(x => x.id === localId); 
             if (idx !== -1) { 
                 var viejoNombre = appState.clientes[idx].nombre; 
@@ -2141,10 +2097,7 @@
 
         async function eliminarCliente(docId, localId) {
             if (!confirm("⚠️ ¿Expulsar a esta entidad del directorio?")) return;
-            
-            // ACTUALIZACIÓN OPTIMISTA
             appState.clientes = appState.clientes.filter(c => c.id !== localId); 
-
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/clientes').doc(docId).delete().catch(console.error); 
             } else { 
@@ -2161,7 +2114,6 @@
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, fecha: hoy, medioPago: mediopago };
             
-            // ACTUALIZACIÓN OPTIMISTA
             appState.finanzas.unshift(nuevaFin); 
 
             if (hasFirebase && authUser) { 
@@ -2183,7 +2135,6 @@
             var tipo = document.getElementById("edit-fin-tipo").value; var monto = parseInt(document.getElementById("edit-fin-monto").value) || 0; var detalle = document.getElementById("edit-fin-detalle").value;
             var updatedData = { tipo: tipo, monto: monto, detalle: detalle };
             
-            // ACTUALIZACIÓN OPTIMISTA
             var idx = appState.finanzas.findIndex(x => x.id === localId); 
             if (idx !== -1) { appState.finanzas[idx] = { ...appState.finanzas[idx], ...updatedData }; }
 
@@ -2197,10 +2148,7 @@
 
         async function eliminarFinanzas(docId, localId) {
             if (!confirm("⚠️ ¿Estás seguro de anular este asiento contable?")) return;
-            
-            // ACTUALIZACIÓN OPTIMISTA
             appState.finanzas = appState.finanzas.filter(f => f.id !== localId); 
-
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/finanzas').doc(docId).delete().catch(console.error); 
             } else { 
@@ -2213,7 +2161,6 @@
             var findItem = appState.finanzas.find(x => x.id === localId); if (!findItem) return;
             var updatedData = { tipo: "Ingreso", detalle: "Cobro Acreditado: " + findItem.detalle };
             
-            // ACTUALIZACIÓN OPTIMISTA
             var idx = appState.finanzas.findIndex(x => x.id === localId); 
             if (idx !== -1) { 
                 appState.finanzas[idx].tipo = "Ingreso"; 
@@ -2262,7 +2209,6 @@
 
             var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
             
-            // ACTUALIZACIÓN OPTIMISTA
             appState.stock.push(nuevoInsumo); 
 
             if (hasFirebase && authUser) { 
@@ -2300,7 +2246,6 @@
             var nombre = document.getElementById("edit-stk-nombre").value; var talle = document.getElementById("edit-stk-talle").value; var cant = parseInt(document.getElementById("edit-stk-cant").value) || 0; var min = parseInt(document.getElementById("edit-stk-min").value) || 0;
             var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min };
             
-            // ACTUALIZACIÓN OPTIMISTA
             var idx = appState.stock.findIndex(x => x.id === localId); 
             if (idx !== -1) { appState.stock[idx] = { ...appState.stock[idx], ...updatedData }; }
 
@@ -2314,10 +2259,7 @@
 
         async function eliminarStock(docId, localId) {
             if (!confirm("⚠️ ¿Dar de baja este SKU del almacén?")) return;
-            
-            // ACTUALIZACIÓN OPTIMISTA
             appState.stock = appState.stock.filter(s => s.id !== localId); 
-
             if (hasFirebase && authUser && docId) { 
                 db.collection('artifacts/' + appId + '/public/data/stock').doc(docId).delete().catch(console.error); 
             } else { 
@@ -2384,7 +2326,6 @@
             chart2.update();
         }
 
-        // Añadida nueva función de WhatsApp (Actualizada para usar ID)
         function avisarPorWhatsApp(idPedido) {
             let pedido = appState.pedidos.find(p => p.id === idPedido);
             if (!pedido) return;
@@ -2412,7 +2353,7 @@
         window.generarFichaTecnica = generarFichaTecnica; window.descargarFichaDirecta = descargarFichaDirecta; window.allowDrop = allowDrop; window.drop = drop;
         window.limpiarConfigFirebaseCustom = limpiarConfigFirebaseCustom;
         window.playVoiceReport = playVoiceReport; 
-        window.avisarPorWhatsApp = avisarPorWhatsApp; // <-- NUEVA EXPORTACIÓN AÑADIDA
+        window.avisarPorWhatsApp = avisarPorWhatsApp; 
         
         // Paginación y Filtros
         window.applyPedidosFilter = applyPedidosFilter; window.clearPedidosFilter = clearPedidosFilter; window.changePedidosPage = changePedidosPage;

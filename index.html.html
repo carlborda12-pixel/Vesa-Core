@@ -121,10 +121,19 @@
         .dashboard-row-1 { display: grid; grid-template-columns: 1.2fr 1.6fr 1.2fr; gap: 20px; }
         .dashboard-row-2 { display: grid; grid-template-columns: 2.2fr 1fr; gap: 20px; }
         
-        .panel-block { background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .panel-block { background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px; transition: padding-bottom 0.3s ease; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px; flex-wrap: wrap; gap: 10px; transition: border-bottom 0.3s; }
         .panel-header h3 { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
         .panel-header h3 i { color: var(--color-accent); background: rgba(56,189,248,0.1); padding: 8px; border-radius: 8px; font-size: 14px; }
+
+        /* Estilos para colapsar paneles */
+        .panel-block.collapsed { padding-bottom: 24px; gap: 0; }
+        .panel-block.collapsed .panel-header { border-bottom-color: transparent; padding-bottom: 0; }
+        .panel-block.collapsed > *:not(.panel-header) { display: none !important; }
+        .collapse-btn { background: transparent; border: none; color: var(--color-text-secondary); cursor: pointer; transition: background 0.2s, color 0.2s; font-size: 14px; padding: 6px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+        .collapse-btn:hover { color: var(--color-text-primary); background: rgba(255,255,255,0.05); }
+        .collapse-btn i { transition: transform 0.3s ease; }
+        .panel-block.collapsed .collapse-btn i { transform: rotate(180deg); }
 
         /* --- TABLAS --- */
         .table-wrapper { overflow-x: auto; width: 100%; padding-bottom: 10px; }
@@ -355,21 +364,36 @@
 
                     <div class="dashboard-row-1">
                         <div class="panel-block">
-                            <div class="panel-header"><h3><i class="fa-solid fa-chart-pie"></i> Distribución Operativa</h3></div>
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-chart-pie"></i> Distribución Operativa</h3>
+                                <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
+                            </div>
                             <div class="chart-container"><canvas id="chartPedidos" title="Porcentaje de pedidos en cada etapa de producción"></canvas></div>
                         </div>
                         <div class="panel-block">
-                            <div class="panel-header"><h3><i class="fa-solid fa-chart-column"></i> Finanzas</h3></div>
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-chart-column"></i> Finanzas</h3>
+                                <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
+                            </div>
                             <div class="chart-container"><canvas id="chartFinanzas" title="Comparativa directa entre Ingresos (Verde) y Egresos (Rojo)"></canvas></div>
                         </div>
                         <div class="panel-block">
-                            <div class="panel-header"><h3><i class="fa-solid fa-bolt"></i> Alertas</h3></div>
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-bolt"></i> Alertas</h3>
+                                <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
+                            </div>
                             <div class="alerts-container" id="dash-alerts"></div>
                         </div>
                     </div>
                     <div class="dashboard-row-2">
                         <div class="panel-block">
-                            <div class="panel-header"><h3><i class="fa-solid fa-list-check"></i> Actividad Reciente</h3><button class="btn btn-small" onclick="switchTab('pedidos')" title="Ver registro histórico completo">Ver todo</button></div>
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-list-check"></i> Actividad Reciente</h3>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="btn btn-small" onclick="switchTab('pedidos')" title="Ver registro histórico completo">Ver todo</button>
+                                    <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
+                                </div>
+                            </div>
                             <div class="table-wrapper">
                                 <table>
                                     <thead><tr><th>Ref</th><th>Cliente</th><th>Detalle Comercial</th><th>Status</th><th>Acción</th></tr></thead>
@@ -378,7 +402,13 @@
                             </div>
                         </div>
                         <div class="panel-block">
-                            <div class="panel-header"><h3><i class="fa-solid fa-boxes-stacked"></i> Inventario Crítico</h3><button class="btn btn-small" onclick="switchTab('stock')" title="Ir al panel de gestión de almacén">Gestionar</button></div>
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-boxes-stacked"></i> Inventario Crítico</h3>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button class="btn btn-small" onclick="switchTab('stock')" title="Ir al panel de gestión de almacén">Gestionar</button>
+                                    <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
+                                </div>
+                            </div>
                             <div id="dash-stock-list"></div>
                         </div>
                     </div>
@@ -1252,7 +1282,7 @@
                 appState.pedidos = [...defaultState.pedidos]; appState.clientes = [...defaultState.clientes];
                 appState.stock = [...defaultState.stock]; appState.finanzas = [...defaultState.finanzas];
             }
-            renderAll(); updateCharts(); 
+            renderAll(); updateCharts();
         }
 
         function saveToLocalStorage() {
@@ -1312,13 +1342,22 @@
             var atrasados = appState.pedidos.filter(p => p.estado === "En diseño" || p.estado === "Confirmado");
 
             if (atrasados.length > 0) {
-                container.innerHTML += `<div class="alert-item danger"><div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div><div class="alert-text"><h4>${atrasados.length} pedidos atrasados</h4><p>Revisá pre-prensa y confirmaciones.</p></div></div>`;
+                container.innerHTML += `<div class="alert-item danger" style="cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(244,63,94,0.1)'; this.style.borderColor='var(--color-danger)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border-glass)';" onclick="switchTab('kanban')">
+                    <div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
+                    <div class="alert-text"><h4>${atrasados.length} pedidos atrasados</h4><p>Revisá pre-prensa y confirmaciones. <strong>Clic para ir al Tablero.</strong></p></div>
+                </div>`;
             }
             if (stockBajo.length > 0) {
-                container.innerHTML += `<div class="alert-item"><div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="alert-text"><h4>${stockBajo.length} insumos en crítico</h4><p>Materia prima por debajo del límite.</p></div></div>`;
+                container.innerHTML += `<div class="alert-item" style="cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.1)'; this.style.borderColor='var(--color-warning)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border-glass)';" onclick="goToStockAndHighlight()">
+                    <div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="alert-text"><h4>${stockBajo.length} insumos en crítico</h4><p>Materia prima por debajo del límite. <strong>Clic para auditar.</strong></p></div>
+                </div>`;
             }
             if (atrasados.length === 0 && stockBajo.length === 0) {
-                container.innerHTML += `<div class="alert-item success" style="border-left-color: var(--color-success);"><div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div><div class="alert-text"><h4>Todo en orden</h4><p>Operación óptima sin retrasos.</p></div></div>`;
+                container.innerHTML += `<div class="alert-item success" style="border-left-color: var(--color-success);">
+                    <div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div>
+                    <div class="alert-text"><h4>Todo en orden</h4><p>Operación óptima sin retrasos.</p></div>
+                </div>`;
             }
         }
 
@@ -1632,6 +1671,7 @@
         // --- NAVEGACIÓN Y TABS ---
         let tabHistory = []; let currentTabId = 'dashboard';
         function toggleSidebar(open) { var sidebar = document.getElementById("app-sidebar"); var overlay = document.getElementById("sidebar-overlay"); if (open) { sidebar.classList.add("active"); overlay.classList.add("active"); } else { sidebar.classList.remove("active"); overlay.classList.remove("active"); } }
+        
         function switchTab(tabId, isGoBack = false) {
             if (currentTabId === tabId) return;
             if (!isGoBack) tabHistory.push(currentTabId);
@@ -1642,7 +1682,16 @@
             document.querySelectorAll('.menu-item').forEach(item => { if(item.getAttribute('onclick') && item.getAttribute('onclick').includes(tabId)) item.classList.add('active'); }); 
             toggleSidebar(false); if(tabId === 'kanban') renderKanbanBoard();
         }
+        
         function goBackTab() { if (tabHistory.length > 0) { let prevTab = tabHistory.pop(); switchTab(prevTab, true); } }
+        
+        // --- FUNCIÓN PARA COLAPSAR PANELES DEL DASHBOARD ---
+        function togglePanel(btn) {
+            const panel = btn.closest('.panel-block');
+            if (panel) {
+                panel.classList.toggle('collapsed');
+            }
+        }
         
         document.addEventListener('keydown', function(event) {
             const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
@@ -2410,7 +2459,7 @@
         }
 
         // EXPORTACIONES A WINDOW (Asegurando que la UI conecte con las funciones)
-        window.toggleSidebar = toggleSidebar; window.switchTab = switchTab; window.openModal = openModal; window.closeModal = closeModal;
+        window.toggleSidebar = toggleSidebar; window.switchTab = switchTab; window.openModal = openModal; window.closeModal = closeModal; window.togglePanel = togglePanel;
         window.guardarNuevoPedido = guardarNuevoPedido; window.guardarEdicionPedido = guardarEdicionPedido; window.eliminarPedido = eliminarPedido;
         window.guardarNuevoCliente = guardarNuevoCliente; window.guardarEdicionCliente = guardarEdicionCliente; window.eliminarCliente = eliminarCliente;
         window.guardarFinanzas = guardarFinanzas; window.guardarEdicionFinanzas = guardarEdicionFinanzas; window.eliminarFinanzas = eliminarFinanzas; window.cobrarDeuda = cobrarDeuda; window.abrirAgregarFinanzasRapido = abrirAgregarFinanzasRapido;

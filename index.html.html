@@ -1730,11 +1730,43 @@
         document.addEventListener('dragend', function(e) { document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over')); });
         document.addEventListener('dragleave', function(e) { if(e.target.classList && e.target.classList.contains('kanban-column')) e.target.classList.remove('drag-over'); });
 
+        // NUEVO: Marca un pedido como totalmente abonado (salda la deuda) y lo refleja como Ingreso en Caja
+        function marcarPedidoComoAbonado(pedido) {
+            if (!pedido) return false;
+            var saldoPendiente = pedido.saldo !== undefined ? pedido.saldo : (pedido.monto - (pedido.sena || 0));
+            if (!saldoPendiente || saldoPendiente <= 0) return false; // Ya estaba abonado, no duplicar en Caja
+
+            var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
+            let maxFinId = 0;
+            appState.finanzas.forEach(f => { if(f.id && !isNaN(f.id) && f.id > maxFinId) maxFinId = f.id; });
+            var nuevaFinanza = {
+                id: maxFinId + 1,
+                tipo: "Ingreso", detalle: `Saldo Final Pedido #${pedido.id} (${pedido.cliente}) - Entregado`,
+                monto: saldoPendiente, fecha: hoy, medioPago: pedido.medioPago || 'Efectivo'
+            };
+
+            pedido.sena = pedido.monto;
+            pedido.saldo = 0;
+            appState.finanzas.unshift(nuevaFinanza);
+
+            if (hasFirebase && authUser) {
+                if (pedido.docId) { 
+                    db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ sena: pedido.sena, saldo: pedido.saldo }).catch(console.error); 
+                }
+                db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza).catch(console.error);
+            } else { 
+                try { saveToLocalStorage(); } catch(e) {} 
+            }
+            return true;
+        }
+
         function procesarCambioEstado(id, nuevoEstado) {
             var pedido = appState.pedidos.find(p => p.id === id); 
             if (!pedido || pedido.estado === nuevoEstado) return;
             
             pedido.estado = nuevoEstado;
+            var seAbono = false;
+            if (nuevoEstado === "Entregado") { seAbono = marcarPedidoComoAbonado(pedido); }
             
             if (hasFirebase && authUser && pedido.docId) { 
                 db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ estado: nuevoEstado }).catch(console.error); 
@@ -1742,7 +1774,11 @@
                 try { saveToLocalStorage(); } catch(e) {} 
             }
             renderAll(); updateCharts();
-            showToast("Actualizado", `La orden #${id} avanzó a ${nuevoEstado}.`);
+            if (seAbono) {
+                showToast("Actualizado", `La orden #${id} avanzó a ${nuevoEstado} y el saldo se acreditó en Caja.`);
+            } else {
+                showToast("Actualizado", `La orden #${id} avanzó a ${nuevoEstado}.`);
+            }
         }
 
         // ==========================================
@@ -1967,6 +2003,31 @@
                     monto: monto, sena: sena, saldo: monto - sena, items: currentOrderItems 
                 };
 
+                // NUEVO: Si la edición marca el pedido como Entregado, se salda el pendiente y se acredita en Caja
+                if (estado === "Entregado") {
+                    var saldoPendienteEdicion = updatedData.saldo;
+                    if (saldoPendienteEdicion && saldoPendienteEdicion > 0) {
+                        updatedData.sena = updatedData.monto;
+                        updatedData.saldo = 0;
+
+                        var hoyEdicion = new Date().toLocaleDateString('es-AR', dateOptions);
+                        let maxFinIdEdicion = 0;
+                        appState.finanzas.forEach(f => { if(f.id && !isNaN(f.id) && f.id > maxFinIdEdicion) maxFinIdEdicion = f.id; });
+                        var nuevaFinanzaEdicion = {
+                            id: maxFinIdEdicion + 1,
+                            tipo: "Ingreso", detalle: `Saldo Final Pedido #${localId} (${cliente}) - Entregado`,
+                            monto: saldoPendienteEdicion, fecha: hoyEdicion, medioPago: appState.pedidos[idx].medioPago || 'Efectivo'
+                        };
+                        appState.finanzas.unshift(nuevaFinanzaEdicion);
+
+                        if (hasFirebase && authUser) {
+                            db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanzaEdicion).catch(console.error);
+                        } else {
+                            try { saveToLocalStorage(); } catch(e) {}
+                        }
+                    }
+                }
+
                 var fileInput = document.getElementById("edit-ped-arte-file");
                 if (fileInput && fileInput.files.length > 0) { 
                     showToast("Procesando...", "Preparando archivos de reemplazo...");
@@ -2066,6 +2127,13 @@
         // --- FICHA TÉCNICA PDF CON DETALLE DE PRODUCTOS ---
         function generarFichaTecnica(idPedido) {
             var p = appState.pedidos.find(x => x.id === idPedido); if (!p) return;
+
+            // NUEVO: Al abrir la ficha técnica de un pedido ya Entregado, se confirma que quedó abonado
+            if (p.estado === "Entregado") {
+                var seAbonoDesdeFicha = marcarPedidoComoAbonado(p);
+                if (seAbonoDesdeFicha) { renderAll(); updateCharts(); }
+            }
+
             var elFichaId = document.getElementById("ficha-id"); if(elFichaId) elFichaId.innerText = "OT#" + p.id; 
             var elFichaFecha = document.getElementById("ficha-fecha"); if(elFichaFecha) elFichaFecha.innerText = "Expedido: " + new Date().toLocaleDateString('es-AR');
             var elFichaCliente = document.getElementById("ficha-cliente"); if(elFichaCliente) elFichaCliente.innerText = sanitizeHTML(p.cliente); 

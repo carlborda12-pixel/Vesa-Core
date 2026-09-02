@@ -303,6 +303,7 @@
                     <li><a class="menu-item" onclick="switchTab('kanban')" title="Vista Kanban interactiva para gestión de producción"><i class="fa-solid fa-layer-group"></i> Tablero</a></li>
                     <li><a class="menu-item" onclick="switchTab('clientes')" title="Directorio de clientes y accesos directos de contacto"><i class="fa-solid fa-address-book"></i> Clientes</a></li>
                     <li><a class="menu-item" onclick="switchTab('stock')" title="Auditoría de insumos, materias primas y alertas de faltantes"><i class="fa-solid fa-boxes-stacked"></i> Stock</a></li>
+                    <li><a class="menu-item" onclick="switchTab('precios')" title="Lista de precios de productos y servicios"><i class="fa-solid fa-tags"></i> Lista de Precios</a></li>
                     <li><a class="menu-item" onclick="switchTab('finanzas')" title="Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
                 </ul>
             </div>
@@ -508,6 +509,22 @@
                             <table>
                                 <thead><tr><th>SKU</th><th>Artículo Base</th><th>Formato</th><th>Existencias</th><th>Mínimo Seguro</th><th>Estado</th><th>Auditar</th></tr></thead>
                                 <tbody id="stock-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISTA LISTA DE PRECIOS -->
+                <div id="section-precios" class="view-section">
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-tags"></i> Lista de Precios</h3>
+                            <button class="btn btn-primary btn-small" onclick="openModal('modalPrecio')" title="Agregar un nuevo producto o servicio a la lista"><i class="fa-solid fa-plus"></i> Agregar</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Producto/Servicio</th><th>Tipo</th><th style="text-align: right;">Precio</th><th style="text-align: right;">Acciones</th></tr></thead>
+                                <tbody id="precios-tbody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -907,6 +924,64 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalPrecio">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Nuevo Producto/Servicio</h3>
+                <button class="modal-close" onclick="closeModal('modalPrecio')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Producto/Servicio</label>
+                <input type="text" class="form-control" id="form-precio-nombre">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select class="form-control" id="form-precio-tipo">
+                        <option value="LISO/VESA">LISO/VESA</option>
+                        <option value="NEGOCIO/EQUIPO">NEGOCIO/EQUIPO</option>
+                        <option value="CON IMAGEN">CON IMAGEN</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Precio ($)</label>
+                    <input type="number" class="form-control" id="form-precio-monto">
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="guardarPrecio()" style="margin-top:8px; justify-content:center;">Agregar a la Lista</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEditPrecio">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Producto/Servicio</h3>
+                <button class="modal-close" onclick="closeModal('modalEditPrecio')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="edit-precio-id-doc">
+            <input type="hidden" id="edit-precio-id-local">
+            <div class="form-group">
+                <label>Producto/Servicio</label>
+                <input type="text" class="form-control" id="edit-precio-nombre">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select class="form-control" id="edit-precio-tipo">
+                        <option value="LISO/VESA">LISO/VESA</option>
+                        <option value="NEGOCIO/EQUIPO">NEGOCIO/EQUIPO</option>
+                        <option value="CON IMAGEN">CON IMAGEN</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Precio ($)</label>
+                    <input type="number" class="form-control" id="edit-precio-monto">
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="guardarEdicionPrecio()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalEditCliente">
         <div class="modal-box">
             <div class="modal-header">
@@ -1068,9 +1143,10 @@
                 { id: 2, item: "Buzo Canguro Gris", talle: "XL", cantidad: 30, minimo: 5 },
                 { id: 3, item: "Gorra Trucker", talle: "U", cantidad: 100, minimo: 20 }
             ], 
-            finanzas: [] 
+            finanzas: [],
+            precios: []
         };
-        var appState = { pedidos: [], clientes: [], stock: [], finanzas: [] };
+        var appState = { pedidos: [], clientes: [], stock: [], finanzas: [], precios: [] };
 
         function playVoiceReport(text) {
             if ('speechSynthesis' in window) {
@@ -1269,6 +1345,10 @@
                 var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
                 appState.finanzas = list.sort(function(a,b) { return b.id - a.id; }); renderAll(); updateCharts();
             });
+            db.collection('artifacts/' + appId + '/public/data/precios').onSnapshot(function(snapshot) {
+                var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
+                appState.precios = list.sort(function(a,b) { return a.id - b.id; }); renderAll();
+            });
         }
 
         function setupLocalStorageFallback() {
@@ -1278,9 +1358,11 @@
                 appState.clientes = JSON.parse(localStorage.getItem("vesa_clientes"));
                 appState.stock = JSON.parse(localStorage.getItem("vesa_stock"));
                 appState.finanzas = JSON.parse(localStorage.getItem("vesa_finanzas"));
+                appState.precios = localStorage.getItem("vesa_precios") ? JSON.parse(localStorage.getItem("vesa_precios")) : [...defaultState.precios];
             } else {
                 appState.pedidos = [...defaultState.pedidos]; appState.clientes = [...defaultState.clientes];
                 appState.stock = [...defaultState.stock]; appState.finanzas = [...defaultState.finanzas];
+                appState.precios = [...defaultState.precios];
             }
             renderAll(); updateCharts();
         }
@@ -1291,6 +1373,7 @@
                 localStorage.setItem("vesa_clientes", JSON.stringify(appState.clientes));
                 localStorage.setItem("vesa_stock", JSON.stringify(appState.stock));
                 localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
+                localStorage.setItem("vesa_precios", JSON.stringify(appState.precios));
             } catch(e) {
                 throw new Error("QUOTA_EXCEEDED");
             }
@@ -1298,7 +1381,7 @@
 
         function renderAll() {
             renderMetrics(); renderDashboardAlerts(); renderDashboardOrders(); renderDashboardStock();
-            renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable();
+            renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable(); renderPreciosTable();
             populateDropdowns();
         }
 
@@ -1423,6 +1506,19 @@
                 var isLow = s.cantidad <= s.minimo;
                 var badge = isLow ? `<span class="badge" style="background:rgba(244, 63, 94, 0.1); color:var(--color-danger); border-color: rgba(244, 63, 94, 0.3);">Quiebre</span>` : `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color: rgba(16, 185, 129, 0.3);">Estable</span>`;
                 tbody.innerHTML += `<tr><td>#${s.id}</td><td style="font-weight:700;">${sanitizeHTML(s.item)}</td><td>${sanitizeHTML(s.talle)}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td>${badge}</td><td><div style="display:flex; gap:6px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})" title="Modificar cantidades o límites"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})" title="Remover insumo de la base de datos"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+            });
+        }
+        function renderPreciosTable() {
+            var tbody = document.getElementById("precios-tbody"); if (!tbody) return; tbody.innerHTML = "";
+            var tipoStyles = {
+                "LISO/VESA": { bg: "rgba(0, 242, 255, 0.1)", color: "var(--color-accent)", border: "rgba(0, 242, 255, 0.3)" },
+                "NEGOCIO/EQUIPO": { bg: "rgba(168, 85, 247, 0.15)", color: "var(--color-purple)", border: "rgba(168, 85, 247, 0.3)" },
+                "CON IMAGEN": { bg: "rgba(245, 158, 11, 0.1)", color: "var(--color-warning)", border: "rgba(245, 158, 11, 0.3)" }
+            };
+            appState.precios.forEach(function(pr) {
+                var docIdSegura = pr.docId ? `'${pr.docId}'` : 'null';
+                var st = tipoStyles[pr.tipo] || { bg: "rgba(255,255,255,0.08)", color: "var(--color-text-secondary)", border: "rgba(255,255,255,0.15)" };
+                tbody.innerHTML += `<tr><td style="font-weight:700;">${sanitizeHTML(pr.nombre)}</td><td><span class="badge" style="background:${st.bg}; color:${st.color}; border-color:${st.border};">${sanitizeHTML(pr.tipo)}</span></td><td style="font-weight:800; text-align:right; font-family:'Space Mono'; color:var(--color-success);">$${pr.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarPrecio(${docIdSegura}, ${pr.id})" title="Editar producto o servicio"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarPrecio(${docIdSegura}, ${pr.id})" title="Eliminar de la lista de precios"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
         function renderFinanzasTable() {
@@ -2295,6 +2391,69 @@
             renderAll(); showToast("Baja Efectuada", "Contacto removido.");
         }
 
+        // --- CRUD LISTA DE PRECIOS ---
+        async function guardarPrecio() {
+            var nombre = document.getElementById("form-precio-nombre").value.trim();
+            var tipo = document.getElementById("form-precio-tipo").value;
+            var monto = parseInt(document.getElementById("form-precio-monto").value) || 0;
+            if (!nombre || monto <= 0) { showToast("Error", "Completá el producto/servicio y un precio válido.", true); return; }
+
+            var nuevoPrecio = { id: appState.precios.length > 0 ? Math.max(...appState.precios.map(p=>p.id)) + 1 : 1, nombre: nombre, tipo: tipo, monto: monto };
+
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.precios.push(nuevoPrecio);
+
+            if (hasFirebase && authUser) { 
+                db.collection('artifacts/' + appId + '/public/data/precios').add(nuevoPrecio).catch(console.error); 
+            } else { 
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
+
+            document.getElementById("form-precio-nombre").value = ""; document.getElementById("form-precio-monto").value = "";
+            closeModal('modalPrecio'); renderAll(); showToast("Lista Actualizada", "Producto/servicio agregado.");
+        }
+
+        function abrirEditarPrecio(docId, localId) {
+            var pr = appState.precios.find(x => x.id === localId); if (!pr) return;
+            document.getElementById("edit-precio-id-doc").value = docId || ''; document.getElementById("edit-precio-id-local").value = localId;
+            document.getElementById("edit-precio-nombre").value = pr.nombre; document.getElementById("edit-precio-tipo").value = pr.tipo; document.getElementById("edit-precio-monto").value = pr.monto;
+            openModal('modalEditPrecio');
+        }
+
+        async function guardarEdicionPrecio() {
+            var docId = document.getElementById("edit-precio-id-doc").value; var localId = parseInt(document.getElementById("edit-precio-id-local").value);
+            var nombre = document.getElementById("edit-precio-nombre").value.trim();
+            var tipo = document.getElementById("edit-precio-tipo").value;
+            var monto = parseInt(document.getElementById("edit-precio-monto").value) || 0;
+            if (!nombre || monto <= 0) { showToast("Error", "Completá el producto/servicio y un precio válido.", true); return; }
+            var updatedData = { nombre: nombre, tipo: tipo, monto: monto };
+
+            // ACTUALIZACIÓN OPTIMISTA
+            var idx = appState.precios.findIndex(x => x.id === localId); 
+            if (idx !== -1) { appState.precios[idx] = { ...appState.precios[idx], ...updatedData }; }
+
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/precios').doc(docId).update(updatedData).catch(console.error); 
+            } else { 
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
+            closeModal('modalEditPrecio'); renderAll(); showToast("Editado", "Producto/servicio corregido.");
+        }
+
+        async function eliminarPrecio(docId, localId) {
+            if (!confirm("⚠️ ¿Eliminar este producto/servicio de la lista de precios?")) return;
+
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.precios = appState.precios.filter(p => p.id !== localId); 
+
+            if (hasFirebase && authUser && docId) { 
+                db.collection('artifacts/' + appId + '/public/data/precios').doc(docId).delete().catch(console.error); 
+            } else { 
+                try{ saveToLocalStorage(); }catch(e){} 
+            }
+            renderAll(); showToast("Eliminado", "Producto/servicio removido de la lista.");
+        }
+
         // --- CRUD FINANZAS ---
         function abrirAgregarFinanzasRapido(tipo) { document.getElementById("form-fin-tipo").value = tipo; document.getElementById("form-fin-monto").value = ""; document.getElementById("form-fin-detalle").value = ""; openModal("modalFinanzas"); }
         async function guardarFinanzas() {
@@ -2532,6 +2691,7 @@
         window.guardarNuevoCliente = guardarNuevoCliente; window.guardarEdicionCliente = guardarEdicionCliente; window.eliminarCliente = eliminarCliente;
         window.guardarFinanzas = guardarFinanzas; window.guardarEdicionFinanzas = guardarEdicionFinanzas; window.eliminarFinanzas = eliminarFinanzas; window.cobrarDeuda = cobrarDeuda; window.abrirAgregarFinanzasRapido = abrirAgregarFinanzasRapido;
         window.guardarStock = guardarStock; window.guardarEdicionStock = guardarEdicionStock; window.eliminarStock = eliminarStock;
+        window.guardarPrecio = guardarPrecio; window.abrirEditarPrecio = abrirEditarPrecio; window.guardarEdicionPrecio = guardarEdicionPrecio; window.eliminarPrecio = eliminarPrecio;
         window.abrirEditarCliente = abrirEditarCliente; window.abrirEditarStock = abrirEditarStock; window.abrirEditarFinanzas = abrirEditarFinanzas;
         window.abrirEditarPedido = abrirEditarPedido; window.openModalClienteDesdePedido = openModalClienteDesdePedido; window.openModalStockDesdePedido = openModalStockDesdePedido;
         window.generarFichaTecnica = generarFichaTecnica; window.descargarFichaDirecta = descargarFichaDirecta; window.allowDrop = allowDrop; window.drop = drop;

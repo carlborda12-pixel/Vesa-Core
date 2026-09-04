@@ -627,7 +627,7 @@
                     </div>
                     <div class="form-group">
                         <label>Observaciones de Diseño (Opcional)</label>
-                        <input type="text" class="form-control" id="form-ped-detalle" placeholder="Ej: Logo frente blanco, espalda full color" title="Cualquier nota extra para el taller">
+                        <input type="text" class="form-control" id="form-ped-detalle" list="pedido-detalle-datalist" autocomplete="off" placeholder="Ej: Logo frente blanco, espalda full color" title="Cualquier nota extra para el taller">
                     </div>
 
                     <!-- CARRITO MÚLTIPLE DE PRENDAS Y TALLES -->
@@ -734,7 +734,7 @@
                 <div class="modal-col">
                     <div class="form-section-title" style="margin-top: 0;">Técnica y Cliente</div>
                     <div class="form-group"><label>Cliente</label><select class="form-control" id="edit-ped-cliente"></select></div>
-                    <div class="form-group"><label>Observaciones / Requerimiento</label><input type="text" class="form-control" id="edit-ped-detalle"></div>
+                    <div class="form-group"><label>Observaciones / Requerimiento</label><input type="text" class="form-control" id="edit-ped-detalle" list="pedido-detalle-datalist" autocomplete="off"></div>
                     
                     <!-- CARRITO MÚLTIPLE DE PRENDAS PARA EDICIÓN -->
                     <div class="form-section-title" style="margin-top: 8px;">📦 Prendas, Talles y Precios (Auto-Stock)</div>
@@ -859,7 +859,7 @@
                 <h3>Alta de Cliente</h3>
                 <button class="modal-close" onclick="closeModal('modalCliente')"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="form-cli-nombre"></div>
+            <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="form-cli-nombre" list="cliente-nombre-datalist" autocomplete="off"></div>
             <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="form-cli-tel" placeholder="Ej: +54 9..."></div>
             <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="form-cli-ig" placeholder="Ej: @usuario"></div>
             <button type="button" class="btn btn-primary" onclick="guardarNuevoCliente()" style="margin-top:8px; justify-content:center;">Registrar Cliente</button>
@@ -889,7 +889,7 @@
             </div>
             <div class="form-group">
                 <label>Concepto</label>
-                <input type="text" class="form-control" id="form-fin-detalle">
+                <input type="text" class="form-control" id="form-fin-detalle" list="finanzas-detalle-datalist" autocomplete="off">
             </div>
             <button type="button" class="btn btn-primary" onclick="guardarFinanzas()" style="margin-top:8px; justify-content:center;" title="Carga el movimiento monetario en el libro diario">Asentar</button>
         </div>
@@ -903,12 +903,12 @@
             </div>
             <div class="form-group">
                 <label>Artículo</label>
-                <input type="text" class="form-control" id="form-stk-nombre">
+                <input type="text" class="form-control" id="form-stk-nombre" list="stock-nombre-datalist" autocomplete="off">
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Talle/Formato</label>
-                    <input type="text" class="form-control" id="form-stk-talle">
+                    <input type="text" class="form-control" id="form-stk-talle" list="stock-talle-datalist" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Unidades</label>
@@ -983,6 +983,11 @@
     </div>
 
     <datalist id="precio-stock-datalist"></datalist>
+    <datalist id="pedido-detalle-datalist"></datalist>
+    <datalist id="cliente-nombre-datalist"></datalist>
+    <datalist id="finanzas-detalle-datalist"></datalist>
+    <datalist id="stock-nombre-datalist"></datalist>
+    <datalist id="stock-talle-datalist"></datalist>
 
     <div class="modal-overlay" id="modalEditCliente">
         <div class="modal-box">
@@ -992,7 +997,7 @@
             </div>
             <input type="hidden" id="edit-cli-id-doc">
             <input type="hidden" id="edit-cli-id-local">
-            <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="edit-cli-nombre"></div>
+            <div class="form-group"><label>Razón Social / Nombre</label><input type="text" class="form-control" id="edit-cli-nombre" list="cliente-nombre-datalist" autocomplete="off"></div>
             <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="edit-cli-tel"></div>
             <div class="form-group"><label>Instagram</label><input type="text" class="form-control" id="edit-cli-ig"></div>
             <button type="button" class="btn btn-primary" onclick="guardarEdicionCliente()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
@@ -1024,7 +1029,7 @@
             </div>
             <div class="form-group">
                 <label>Concepto</label>
-                <input type="text" class="form-control" id="edit-fin-detalle">
+                <input type="text" class="form-control" id="edit-fin-detalle" list="finanzas-detalle-datalist" autocomplete="off">
             </div>
             <button type="button" class="btn btn-primary" onclick="guardarEdicionFinanzas()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
         </div>
@@ -1040,12 +1045,12 @@
             <input type="hidden" id="edit-stk-id-local">
             <div class="form-group">
                 <label>Artículo</label>
-                <input type="text" class="form-control" id="edit-stk-nombre">
+                <input type="text" class="form-control" id="edit-stk-nombre" list="stock-nombre-datalist" autocomplete="off">
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Talle/Formato</label>
-                    <input type="text" class="form-control" id="edit-stk-talle">
+                    <input type="text" class="form-control" id="edit-stk-talle" list="stock-talle-datalist" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Unidades</label>
@@ -1415,6 +1420,23 @@
                 let nombresUnicos = [...new Set(appState.stock.map(s => s.item))];
                 nombresUnicos.forEach(nombre => { precioNombreDatalist.innerHTML += `<option value="${sanitizeHTML(nombre)}"></option>`; });
             }
+
+            // NUEVO: Autocompletado extendido a todo el sistema, cada uno con su fuente de datos ya actualizada
+            var llenarDatalist = function(elId, valores) {
+                var dl = document.getElementById(elId); if (!dl) return;
+                dl.innerHTML = "";
+                [...new Set(valores.filter(v => v))].forEach(v => { dl.innerHTML += `<option value="${sanitizeHTML(v)}"></option>`; });
+            };
+            // Pedidos > Observaciones de Diseño: sugiere notas ya usadas en pedidos anteriores
+            llenarDatalist("pedido-detalle-datalist", appState.pedidos.map(p => p.detalle));
+            // Clientes > Nombre: sugiere clientes ya registrados (evita duplicados por tipeo)
+            llenarDatalist("cliente-nombre-datalist", appState.clientes.map(c => c.nombre));
+            // Finanzas > Detalle: sugiere conceptos ya cargados (luz, tinta, sueldos, etc.)
+            llenarDatalist("finanzas-detalle-datalist", appState.finanzas.map(f => f.detalle));
+            // Stock > Nombre: sugiere lo ya cargado en Stock y en la Lista de Precios (consistencia cruzada)
+            llenarDatalist("stock-nombre-datalist", [...appState.stock.map(s => s.item), ...appState.precios.map(p => p.nombre)]);
+            // Stock > Talle: sugiere los talles ya utilizados
+            llenarDatalist("stock-talle-datalist", appState.stock.map(s => s.talle));
         }
 
         function renderMetrics() {

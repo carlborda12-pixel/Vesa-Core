@@ -2000,8 +2000,7 @@
                             if (item.isTemp) continue; 
                             let stockItem = appState.stock.find(s => s.id === item.stockId);
                             if (stockItem && stockItem.docId) {
-                                let nuevaCant = Math.max(0, stockItem.cantidad - item.cantidad);
-                                db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
+                                db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: stockItem.cantidad }).catch(console.error);
                             }
                         }
                     }
@@ -2188,8 +2187,7 @@
                             if (change === 0) continue;
                             let stockItem = appState.stock.find(s => String(s.id) === String(sId));
                             if (stockItem && stockItem.docId) {
-                                let nuevaCant = Math.max(0, stockItem.cantidad + change);
-                                db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
+                                db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: stockItem.cantidad }).catch(console.error);
                             }
                         }
                     }
@@ -2239,8 +2237,7 @@
                         if (item.isTemp) continue;
                         let stockItem = appState.stock.find(s => s.id === item.stockId);
                         if (stockItem && stockItem.docId) {
-                            let nuevaCant = stockItem.cantidad + item.cantidad; // Usamos el valor real optimista
-                            db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: nuevaCant }).catch(console.error);
+                            db.collection('artifacts/' + appId + '/public/data/stock').doc(stockItem.docId).update({ cantidad: stockItem.cantidad }).catch(console.error);
                         }
                     }
                 }

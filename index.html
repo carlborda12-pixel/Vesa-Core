@@ -1124,6 +1124,24 @@
         </div>
     </div>
 
+    <!-- BANNER: Instrucciones de instalación para iPhone/Safari (no soportan el instalador automático) -->
+    <div id="ios-install-banner" style="display:none; position:fixed; left:12px; right:12px; bottom:12px; z-index:9999; background:rgba(15,23,42,0.97); backdrop-filter: blur(12px); border:1px solid rgba(0,242,255,0.3); border-radius:16px; padding:16px; box-shadow:0 10px 40px rgba(0,0,0,0.5); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+            <div style="flex-shrink:0; width:38px; height:38px; border-radius:10px; background:rgba(0,242,255,0.1); border:1px solid rgba(0,242,255,0.25); display:flex; align-items:center; justify-content:center;">
+                <i class="fa-solid fa-mobile-screen-button" style="color:var(--color-accent); font-size:16px;"></i>
+            </div>
+            <div style="flex:1; min-width:0;">
+                <h4 style="font-size:13px; font-weight:800; color:white; margin-bottom:4px;">Instalá VESA en tu iPhone</h4>
+                <p id="ios-install-banner-text" style="font-size:12px; color:var(--color-text-secondary); line-height:1.5;">
+                    Tocá <i class="fa-solid fa-arrow-up-from-bracket" style="color:var(--color-accent);"></i> <strong>Compartir</strong> abajo (o arriba) en Safari, y luego <strong>"Agregar a pantalla de inicio"</strong>.
+                </p>
+            </div>
+            <button type="button" onclick="cerrarBannerInstalacionIOS()" style="flex-shrink:0; background:none; border:none; color:var(--color-text-secondary); cursor:pointer; padding:4px; font-size:14px;" title="Cerrar, no volver a mostrar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- LÓGICA CORE DEL SISTEMA -->
     <script>
         const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -1334,6 +1352,37 @@
             if (btn) btn.style.display = 'none';
             deferredInstallPrompt = null;
         });
+
+        // --- PWA: Banner de instrucciones para iPhone (Safari no soporta el instalador automático) ---
+        function cerrarBannerInstalacionIOS() {
+            var banner = document.getElementById('ios-install-banner');
+            if (banner) banner.style.display = 'none';
+            try { localStorage.setItem('vesa_ios_banner_cerrado', '1'); } catch(e) {}
+        }
+        window.cerrarBannerInstalacionIOS = cerrarBannerInstalacionIOS;
+
+        function chequearBannerInstalacionIOS() {
+            var ua = navigator.userAgent || '';
+            var esIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (!esIOS) return;
+
+            var yaInstalada = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+            if (yaInstalada) return;
+
+            var yaCerrado = false;
+            try { yaCerrado = localStorage.getItem('vesa_ios_banner_cerrado') === '1'; } catch(e) {}
+            if (yaCerrado) return;
+
+            var esOtroNavegador = /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua); // Chrome/Firefox/Edge/Opera sobre iOS
+            var textoEl = document.getElementById('ios-install-banner-text');
+            if (textoEl && esOtroNavegador) {
+                textoEl.innerHTML = 'Para instalarla como app, abrí este mismo link en <strong>Safari</strong> (no funciona desde este navegador), tocá <i class="fa-solid fa-arrow-up-from-bracket" style="color:var(--color-accent);"></i> <strong>Compartir</strong> y luego <strong>"Agregar a pantalla de inicio"</strong>.';
+            }
+
+            var banner = document.getElementById('ios-install-banner');
+            if (banner) banner.style.display = 'block';
+        }
+        window.addEventListener('load', chequearBannerInstalacionIOS);
 
         async function initApexCore() {
             var statusBadge = document.getElementById("status-badge");

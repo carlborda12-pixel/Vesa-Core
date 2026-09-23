@@ -105,6 +105,7 @@
         .metric-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.3); }
         .metric-card.clickable { cursor: pointer; transition: all 0.3s; }
         .metric-card.clickable:hover { box-shadow: 0 15px 40px rgba(244, 63, 94, 0.15), inset 0 0 20px rgba(244, 63, 94, 0.05); transform: translateY(-6px); }
+        .metric-card.filtro-activo { border-color: var(--color-accent) !important; box-shadow: 0 0 0 2px rgba(56,189,248,0.5), 0 10px 30px rgba(56,189,248,0.15); }
         
         .metric-title { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
         .metric-icon-box { width: 36px; height: 36px; border-radius: 10px; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--color-accent); }
@@ -533,31 +534,31 @@
                 <!-- VISTA FINANZAS -->
                 <div id="section-finanzas" class="view-section">
                     <div class="finanzas-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px;">
-                        <div class="metric-card" style="border-top: 3px solid var(--color-success);" title="Totalidad de dinero que entró a caja">
+                        <div class="metric-card clickable" id="card-filtro-ingreso" style="border-top: 3px solid var(--color-success);" title="Totalidad de dinero que entró a caja. Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Ingreso')">
                             <div class="metric-title" style="color: var(--color-success);">Caja Positiva <div class="metric-icon-box" style="color: var(--color-success); border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);"><i class="fa-solid fa-arrow-up"></i></div></div>
                             <div class="metric-value" id="fin-total-ingresos">$0</div>
                         </div>
-                        <div class="metric-card" style="border-top: 3px solid var(--color-danger);" title="Totalidad de dinero gastado o invertido en el taller">
+                        <div class="metric-card clickable" id="card-filtro-egreso" style="border-top: 3px solid var(--color-danger);" title="Totalidad de dinero gastado o invertido en el taller. Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Egreso')">
                             <div class="metric-title" style="color: var(--color-danger);">Caja Negativa <div class="metric-icon-box" style="color: var(--color-danger); border-color: rgba(244,63,94,0.2); background: rgba(244,63,94,0.05);"><i class="fa-solid fa-arrow-down"></i></div></div>
                             <div class="metric-value" id="fin-total-egresos">$0</div>
                         </div>
-                        <div class="metric-card" style="border-top: 3px solid var(--color-warning);" title="Saldos pendientes de cobro a favor de VESA">
+                        <div class="metric-card clickable" id="card-filtro-deuda" style="border-top: 3px solid var(--color-warning);" title="Saldos pendientes de cobro a favor de VESA. Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Deuda')">
                             <div class="metric-title" style="color: var(--color-warning);">Capital Pendiente <div class="metric-icon-box" style="color: var(--color-warning); border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.05);"><i class="fa-solid fa-clock"></i></div></div>
                             <div class="metric-value" id="fin-total-deudas">$0</div>
                         </div>
-                        <div class="metric-card" style="border-top: 3px solid var(--color-purple);" title="Dinero de Santiago invertido por fuera del ecosistema del taller o ahorros personales">
+                        <div class="metric-card clickable" id="card-filtro-privado" style="border-top: 3px solid var(--color-purple);" title="Dinero de Santiago invertido por fuera del ecosistema del taller o ahorros personales. Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Privado')">
                             <div class="metric-title" style="color: var(--color-purple);">Capital Privado <div class="metric-icon-box" style="color: var(--color-purple); border-color: rgba(168, 85, 247, 0.2); background: rgba(168, 85, 247, 0.05);"><i class="fa-solid fa-user-tie"></i></div></div>
                             <div class="metric-value" id="fin-fondo-privado">$0</div>
                         </div>
-                        <div class="metric-card" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(56,189,248,0.05), rgba(15,23,42,0.6));" title="Ingresos reales menos Egresos (Rentabilidad neta del Taller)">
+                        <div class="metric-card clickable" id="card-filtro-flujo" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(56,189,248,0.05), rgba(15,23,42,0.6));" title="Ingresos reales menos Egresos (Rentabilidad neta del Taller). Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Flujo')">
                             <div class="metric-title" style="color: var(--color-accent);">Flujo Libre (Profit) <div class="metric-icon-box"><i class="fa-solid fa-scale-balanced"></i></div></div>
                             <div class="metric-value" id="fin-profit-total">$0</div>
                         </div>
                     </div>
 
-                    <div class="panel-block" style="margin-top: 10px;">
+                    <div class="panel-block" style="margin-top: 10px;" id="panel-movimientos-caja">
                         <div class="panel-header">
-                            <h3><i class="fa-solid fa-list-ul"></i> Movimientos de Caja</h3>
+                            <h3><i class="fa-solid fa-list-ul"></i> Movimientos de Caja <span id="finanzas-filtro-chip" style="display:none; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(56,189,248,0.12); color:var(--color-accent); border:1px solid rgba(56,189,248,0.3); margin-left:8px; cursor:pointer; vertical-align:middle;" onclick="filtrarMovimientosCaja(null)"><i class="fa-solid fa-filter"></i> <span id="finanzas-filtro-chip-texto"></span> <i class="fa-solid fa-xmark" style="margin-left:4px;"></i></span></h3>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                 <button class="btn btn-small" style="background: rgba(16,185,129,0.1); color: var(--color-success); border-color: rgba(16,185,129,0.3);" onclick="abrirAgregarFinanzasRapido('Ingreso')" title="Cargar cobros o adelantos">+ Ingreso</button>
                                 <button class="btn btn-small" style="background: rgba(244,63,94,0.1); color: var(--color-danger); border-color: rgba(244,63,94,0.3);" onclick="abrirAgregarFinanzasRapido('Egreso')" title="Cargar compras de insumos o pagos">- Egreso</button>
@@ -1137,6 +1138,7 @@
         var returnToPedidoModalFromStock = false;
 
         var currentOrderItems = [];
+        var finanzasFiltro = null; // NUEVO: null = sin filtro. Valores posibles: 'Ingreso', 'Egreso', 'Deuda', 'Privado', 'Flujo'
         var tempStockItems = [];
 
         let pedCurrentPage = 1;
@@ -1558,6 +1560,14 @@
             if (!tbodyMain) return; tbodyMain.innerHTML = "";
             var sumI = 0, sumE = 0, sumD = 0, sumInv = 0;
 
+            // NUEVO: determina si un movimiento corresponde al filtro activo (tocando una de las tarjetas de arriba)
+            function pasaFiltroCaja(f) {
+                if (!finanzasFiltro) return true;
+                if (finanzasFiltro === 'Privado') return f.tipo === 'Inversion' || f.tipo === 'Fondo Privado';
+                if (finanzasFiltro === 'Flujo') return f.tipo === 'Ingreso' || f.tipo === 'Egreso';
+                return f.tipo === finanzasFiltro;
+            }
+
             appState.finanzas.forEach(function(f) {
                 var docIdSegura = f.docId ? `'${f.docId}'` : 'null';
                 var colorMonto = 'var(--color-text-primary)'; var badgeHtml = ''; var iconHtml = '';
@@ -1567,13 +1577,35 @@
                 else if (f.tipo === 'Ingreso') { colorMonto = 'var(--color-success)'; badgeHtml = `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color:rgba(16, 185, 129, 0.3);">Venta</span>`; iconHtml = `<i class="fa-solid fa-arrow-up" style="color:var(--color-success); font-size:16px; width:20px; text-align:center;"></i>`; sumI += f.monto; }
                 else { colorMonto = 'var(--color-text-secondary)'; badgeHtml = `<span class="badge" style="background:rgba(255, 255, 255, 0.1); color:white;">Otro</span>`; iconHtml = `<i class="fa-solid fa-circle-question" style="color:white; font-size:16px; width:20px; text-align:center;"></i>`; }
 
+                if (!pasaFiltroCaja(f)) return; // El movimiento cuenta para los totales de arriba, pero no se lista si no pasa el filtro activo
+
                 tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<span style="font-weight:700; color:white;">${sanitizeHTML(f.detalle)}</span></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${f.tipo === 'Deuda' ? `<button class="btn btn-small" style="background:var(--color-success); color:black; border:none;" onclick="cobrarDeuda(${docIdSegura}, ${f.id})" title="Marcar deuda como cobrada a favor"><i class="fa-solid fa-check"></i></button>` : ''}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarFinanzas(${docIdSegura}, ${f.id})" title="Editar monto o detalle del registro"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarFinanzas(${docIdSegura}, ${f.id})" title="Eliminar registro contable"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
-            if (tbodyMain.innerHTML === "") tbodyMain.innerHTML = `<tr><td colspan="6" class="empty-placeholder"><i class="fa-solid fa-money-bill-transfer"></i>Libro contable vacío.</td></tr>`;
+            if (tbodyMain.innerHTML === "") {
+                var msgVacio = finanzasFiltro ? "No hay movimientos en esta categoría." : "Libro contable vacío.";
+                tbodyMain.innerHTML = `<tr><td colspan="6" class="empty-placeholder"><i class="fa-solid fa-money-bill-transfer"></i>${msgVacio}</td></tr>`;
+            }
             document.getElementById("fin-total-ingresos").innerText = "$" + sumI.toLocaleString('es-AR'); document.getElementById("fin-total-egresos").innerText = "$" + sumE.toLocaleString('es-AR'); document.getElementById("fin-total-deudas").innerText = "$" + sumD.toLocaleString('es-AR');
             if (document.getElementById("fin-fondo-privado")) document.getElementById("fin-fondo-privado").innerText = "$" + sumInv.toLocaleString('es-AR');
             
             var profitTotal = sumI - sumE; var profitEl = document.getElementById("fin-profit-total"); profitEl.innerText = "$" + profitTotal.toLocaleString('es-AR'); profitEl.style.color = profitTotal >= 0 ? "var(--color-accent)" : "var(--color-danger)"; 
+
+            // NUEVO: refleja visualmente qué tarjeta es el filtro activo y actualiza el chip del encabezado
+            var mapaTarjetas = { 'Ingreso': 'card-filtro-ingreso', 'Egreso': 'card-filtro-egreso', 'Deuda': 'card-filtro-deuda', 'Privado': 'card-filtro-privado', 'Flujo': 'card-filtro-flujo' };
+            Object.values(mapaTarjetas).forEach(function(cardId) { var el = document.getElementById(cardId); if (el) el.classList.remove('filtro-activo'); });
+            var chip = document.getElementById("finanzas-filtro-chip");
+            if (finanzasFiltro && mapaTarjetas[finanzasFiltro]) {
+                var elActiva = document.getElementById(mapaTarjetas[finanzasFiltro]); if (elActiva) elActiva.classList.add('filtro-activo');
+                var etiquetas = { 'Ingreso': 'Caja Positiva', 'Egreso': 'Caja Negativa', 'Deuda': 'Capital Pendiente', 'Privado': 'Capital Privado', 'Flujo': 'Flujo Libre' };
+                if (chip) { document.getElementById("finanzas-filtro-chip-texto").innerText = etiquetas[finanzasFiltro]; chip.style.display = 'inline-block'; }
+            } else if (chip) { chip.style.display = 'none'; }
+        }
+
+        function filtrarMovimientosCaja(tipo) {
+            finanzasFiltro = (finanzasFiltro === tipo) ? null : tipo; // Tocar la misma tarjeta de nuevo quita el filtro
+            renderFinanzasTable();
+            var panel = document.getElementById("panel-movimientos-caja");
+            if (panel && finanzasFiltro) { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
         }
 
         function goToStockAndHighlight() {

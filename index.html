@@ -378,6 +378,9 @@
                         <button type="button" id="btn-instalar-pwa" onclick="instalarAppVesa()" style="display:none; align-items:center; gap:8px; padding:6px 14px; border-radius:50px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; background:rgba(0,242,255,0.1); border:1px solid rgba(0,242,255,0.35); color:var(--color-accent); cursor:pointer;" title="Instalar VESA como app en este dispositivo">
                             <i class="fa-solid fa-download"></i> Instalar App
                         </button>
+                        <button type="button" id="btn-activar-notif" onclick="activarNotificacionesStock()" style="display:flex; align-items:center; gap:8px; padding:6px 14px; border-radius:50px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); color:var(--color-warning); cursor:pointer;" title="Recibir una notificación en este dispositivo cuando el stock baje del mínimo">
+                            <i class="fa-solid fa-bell"></i> Activar Alertas
+                        </button>
                         <div style="font-size: 12px; color: var(--color-text-secondary); font-weight: 700; background: rgba(255,255,255,0.02); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-family: 'Space Mono', monospace;">
                             <span id="current-date-display">Cargando...</span>
                         </div>
@@ -538,7 +541,7 @@
                         <div class="panel-header"><h3><i class="fa-solid fa-address-book"></i> Lista de Clientes</h3></div>
                         <div class="table-wrapper">
                             <table>
-                                <thead><tr><th>ID</th><th>Razón Social / Nombre</th><th>WhatsApp</th><th>Instagram</th><th>Acciones</th></tr></thead>
+                                <thead><tr><th>ID</th><th>Razón Social / Nombre</th><th>WhatsApp</th><th>Instagram</th><th style="text-align:right;">Total Gastado</th><th>Acciones</th></tr></thead>
                                 <tbody id="clientes-tbody"></tbody>
                             </table>
                         </div>
@@ -1134,6 +1137,40 @@
         </div>
     </div>
     
+    <!-- NUEVO: Historial de pedidos y gasto total por cliente -->
+    <div class="modal-overlay" id="modalHistorialCliente">
+        <div class="modal-box wide">
+            <div class="modal-header">
+                <h3 id="historial-cliente-nombre">Historial del Cliente</h3>
+                <button class="modal-close" onclick="closeModal('modalHistorialCliente')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:16px; margin-bottom:6px;">
+                <div>
+                    <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Pedidos Totales</div>
+                    <div style="font-size:20px; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);" id="historial-cliente-cantidad">0</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Total Gastado</div>
+                    <div style="font-size:20px; font-weight:800; font-family:'Space Mono'; color:var(--color-success);" id="historial-cliente-total">$0</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Saldo Pendiente</div>
+                    <div style="font-size:20px; font-weight:800; font-family:'Space Mono'; color:var(--color-warning);" id="historial-cliente-pendiente">$0</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Último Pedido</div>
+                    <div style="font-size:14px; font-weight:700; color:var(--color-text-primary);" id="historial-cliente-ultimo">-</div>
+                </div>
+            </div>
+            <div class="table-wrapper" style="max-height:45vh; overflow-y:auto; margin-top:10px;">
+                <table style="width:100%;">
+                    <thead><tr><th>Fecha</th><th>Detalle</th><th>Estado</th><th style="text-align:right;">Monto</th><th style="text-align:right;">Saldo</th></tr></thead>
+                    <tbody id="historial-cliente-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalEditFinanzas">
         <div class="modal-box">
             <div class="modal-header">
@@ -1219,6 +1256,13 @@
             <div class="form-group">
                 <label>Estado</label>
                 <input type="text" class="form-control" id="form-fb-status" value="Gestionado por Backend" readonly style="color: var(--color-success);">
+            </div>
+            <div class="form-group">
+                <label>Número de WhatsApp para Alertas de Stock</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" class="form-control" id="config-whatsapp-alertas" placeholder="Ej: 5493764123456 (con código de país, sin +)">
+                    <button type="button" class="btn btn-small" style="flex-shrink:0;" onclick="guardarNumeroWhatsAppAlertas()" title="Guardar este número para el botón 'Avisar por WhatsApp'"><i class="fa-solid fa-check"></i></button>
+                </div>
             </div>
             <div style="display:flex;gap:10px; margin-top: 8px;">
                 <button type="button" class="btn" style="flex:1; justify-content:center; background:rgba(245,158,11,0.1); color:var(--color-warning); border-color:rgba(245,158,11,0.3);" onclick="cerrarSesion()" title="Cerrar tu sesión en este dispositivo"><i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión</button>
@@ -1659,6 +1703,7 @@
                 if (!coleccionesYaVinculadas) { coleccionesYaVinculadas = true; bindFirebaseCollections(); }
                 setTimeout(showWelcomeSummary, 300);
                 setTimeout(chequearOfrecerHuella, 1200);
+                actualizarBotonNotificaciones();
             } catch (e) {
                 console.error(e);
                 mostrarPantallaLogin("Error al verificar tu acceso. Probá de nuevo.");
@@ -1842,6 +1887,7 @@
                 appState.precios = [...defaultState.precios];
             }
             renderAll(); updateCharts();
+            actualizarBotonNotificaciones();
         }
 
         function saveToLocalStorage() {
@@ -1860,6 +1906,7 @@
             renderMetrics(); renderDashboardAlerts(); renderDashboardOrders(); renderDashboardStock();
             renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable(); renderPreciosTable(); renderRentabilidadProduccion();
             populateDropdowns();
+            verificarAlertasStockPush();
         }
 
         // NUEVO: Rentabilidad real de producción — Ventas de pedidos vs. Costo de insumos consumidos
@@ -1952,7 +1999,11 @@
             if (stockBajo.length > 0) {
                 container.innerHTML += `<div class="alert-item" style="cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.1)'; this.style.borderColor='var(--color-warning)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border-glass)';" onclick="goToStockAndHighlight()">
                     <div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                    <div class="alert-text"><h4>${stockBajo.length} insumos en crítico</h4><p>Materia prima por debajo del límite. <strong>Clic para auditar.</strong></p></div>
+                    <div class="alert-text" style="flex:1;">
+                        <h4>${stockBajo.length} insumos en crítico</h4>
+                        <p>Materia prima por debajo del límite. <strong>Clic para auditar.</strong></p>
+                        <button type="button" onclick="event.stopPropagation(); enviarAlertaStockWhatsApp();" class="btn btn-small" style="background:rgba(37,211,102,0.15); color:#25D366; border-color:rgba(37,211,102,0.35); margin-top:8px;" title="Arma el mensaje y lo abre en WhatsApp para que lo envíes"><i class="fa-brands fa-whatsapp"></i> Avisar por WhatsApp</button>
+                    </div>
                 </div>`;
             }
             if (atrasados.length === 0 && stockBajo.length === 0) {
@@ -2011,11 +2062,47 @@
             });
         }
         
+        // NUEVO: Historial de pedidos y gasto total de un cliente
+        function abrirHistorialCliente(clienteId) {
+            var c = appState.clientes.find(function(x) { return x.id === clienteId; }); if (!c) return;
+            var pedidosCliente = appState.pedidos.filter(function(p) { return p.cliente === c.nombre; }).sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
+
+            var totalGastado = pedidosCliente.reduce(function(acc, p) { return acc + (p.monto || 0); }, 0);
+            var totalPendiente = pedidosCliente.reduce(function(acc, p) { return acc + (p.saldo || 0); }, 0);
+
+            document.getElementById("historial-cliente-nombre").innerText = "Historial de " + c.nombre;
+            document.getElementById("historial-cliente-cantidad").innerText = pedidosCliente.length;
+            document.getElementById("historial-cliente-total").innerText = "$" + totalGastado.toLocaleString('es-AR');
+            document.getElementById("historial-cliente-pendiente").innerText = "$" + totalPendiente.toLocaleString('es-AR');
+            document.getElementById("historial-cliente-ultimo").innerText = pedidosCliente.length > 0 ? pedidosCliente[0].fecha : "-";
+
+            var estadoColores = { "Entregado": "var(--color-success)", "Presupuesto": "var(--color-text-secondary)", "Cancelado": "var(--color-danger)" };
+            var tbody = document.getElementById("historial-cliente-tbody"); tbody.innerHTML = "";
+            if (pedidosCliente.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-placeholder"><i class="fa-solid fa-inbox"></i>Este cliente todavía no tiene pedidos.</td></tr>`;
+            } else {
+                pedidosCliente.forEach(function(p) {
+                    var colorEstado = estadoColores[p.estado] || "var(--color-accent)";
+                    tbody.innerHTML += `<tr>
+                        <td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${sanitizeHTML(p.fecha)}</td>
+                        <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${sanitizeHTML(p.detalle)}">${sanitizeHTML(p.detalle)}</td>
+                        <td><span class="badge" style="color:${colorEstado}; border-color:${colorEstado};">${sanitizeHTML(p.estado)}</span></td>
+                        <td style="text-align:right; font-weight:700; font-family:'Space Mono';">$${(p.monto || 0).toLocaleString('es-AR')}</td>
+                        <td style="text-align:right; font-family:'Space Mono'; color:${(p.saldo || 0) > 0 ? 'var(--color-warning)' : 'var(--color-text-secondary)'};">$${(p.saldo || 0).toLocaleString('es-AR')}</td>
+                    </tr>`;
+                });
+            }
+            openModal('modalHistorialCliente');
+        }
+        window.abrirHistorialCliente = abrirHistorialCliente;
+
         function renderClientesTable() {
             var tbody = document.getElementById("clientes-tbody"); tbody.innerHTML = "";
             appState.clientes.forEach(function(c) {
                 var docIdSegura = c.docId ? `'${c.docId}'` : 'null';
-                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${sanitizeHTML(c.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.whatsapp)}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${sanitizeHTML(c.instagram)}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                var pedidosCliente = appState.pedidos.filter(function(p) { return p.cliente === c.nombre; });
+                var totalGastado = pedidosCliente.reduce(function(acc, p) { return acc + (p.monto || 0); }, 0);
+                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${sanitizeHTML(c.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.whatsapp)}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${sanitizeHTML(c.instagram)}</td><td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);">$${totalGastado.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(56,189,248,0.1); color:var(--color-accent); border-color:rgba(56,189,248,0.3);" onclick="abrirHistorialCliente(${c.id})" title="Ver historial de pedidos y gastos de este cliente"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
         function renderStockTable() {
@@ -2105,6 +2192,90 @@
                     }
                 });
             }, 200);
+        }
+
+        // --- NUEVO: ALERTAS DE STOCK BAJO (WhatsApp con un toque + notificación push local) ---
+        function enviarAlertaStockWhatsApp() {
+            var stockBajo = appState.stock.filter(function(s) { return s.cantidad <= s.minimo; });
+            if (stockBajo.length === 0) { showToast("Todo en Orden", "No hay insumos por debajo del mínimo ahora mismo."); return; }
+
+            var numero = localStorage.getItem('vesa_whatsapp_alertas');
+            if (!numero) {
+                var ingresado = prompt("¿A qué número de WhatsApp querés mandar los avisos de stock? (con código de país, sin espacios ni +, ej: 5493764123456)");
+                if (!ingresado) return;
+                numero = ingresado.replace(/[^0-9]/g, '');
+                if (!numero) { showToast("Número Inválido", "No se guardó ningún número.", true); return; }
+                localStorage.setItem('vesa_whatsapp_alertas', numero);
+            }
+
+            var mensaje = "⚠️ *Alerta de Stock - VESA*\n\nInsumos por debajo del mínimo:\n";
+            stockBajo.forEach(function(s) { mensaje += "• " + s.item + " (" + s.talle + "): quedan " + s.cantidad + " (mínimo " + s.minimo + ")\n"; });
+            mensaje += "\nRevisalo en la app.";
+
+            window.open("https://wa.me/" + numero + "?text=" + encodeURIComponent(mensaje), '_blank');
+        }
+        window.enviarAlertaStockWhatsApp = enviarAlertaStockWhatsApp;
+
+        function guardarNumeroWhatsAppAlertas() {
+            var el = document.getElementById("config-whatsapp-alertas"); if (!el) return;
+            var numero = el.value.replace(/[^0-9]/g, '');
+            if (!numero) { showToast("Número Inválido", "Escribí un número con código de país, sin espacios.", true); return; }
+            localStorage.setItem('vesa_whatsapp_alertas', numero);
+            showToast("Guardado", "Los próximos avisos de stock se van a mandar a ese número.");
+        }
+        window.guardarNumeroWhatsAppAlertas = guardarNumeroWhatsAppAlertas;
+
+        async function activarNotificacionesStock() {
+            if (!('Notification' in window)) { showToast("No Disponible", "Este navegador no soporta notificaciones.", true); return; }
+            try {
+                var permiso = await Notification.requestPermission();
+                if (permiso === 'granted') {
+                    localStorage.setItem('vesa_notif_activadas', '1');
+                    showToast("Notificaciones Activadas", "Te vamos a avisar en este dispositivo cuando el stock esté bajo.");
+                    actualizarBotonNotificaciones();
+                    verificarAlertasStockPush();
+                } else {
+                    showToast("Permiso Denegado", "No vas a recibir notificaciones de stock en este dispositivo.", true);
+                }
+            } catch (e) { console.error(e); }
+        }
+        window.activarNotificacionesStock = activarNotificacionesStock;
+
+        function actualizarBotonNotificaciones() {
+            var btn = document.getElementById("btn-activar-notif"); if (!btn) return;
+            if (!('Notification' in window)) { btn.style.display = 'none'; return; }
+            if (Notification.permission === 'granted') {
+                btn.innerHTML = '<i class="fa-solid fa-bell"></i> Alertas Activas';
+                btn.style.opacity = '0.7'; btn.disabled = true;
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-bell"></i> Activar Alertas';
+                btn.style.opacity = '1'; btn.disabled = false;
+            }
+        }
+
+        function verificarAlertasStockPush() {
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            if (!('serviceWorker' in navigator)) return;
+
+            var stockBajo = appState.stock.filter(function(s) { return s.cantidad <= s.minimo; });
+            var yaNotificados = [];
+            try { yaNotificados = JSON.parse(localStorage.getItem('vesa_stock_notificados') || '[]'); } catch (e) { yaNotificados = []; }
+            var idsBajoActual = stockBajo.map(function(s) { return s.id; });
+
+            // Los que se recuperaron salen de la lista, así pueden volver a avisar si bajan de nuevo más adelante
+            yaNotificados = yaNotificados.filter(function(id) { return idsBajoActual.indexOf(id) !== -1; });
+
+            var nuevosParaAvisar = stockBajo.filter(function(s) { return yaNotificados.indexOf(s.id) === -1; });
+
+            if (nuevosParaAvisar.length > 0) {
+                var titulo = nuevosParaAvisar.length === 1 ? "⚠️ Stock bajo: " + nuevosParaAvisar[0].item : "⚠️ " + nuevosParaAvisar.length + " insumos con stock bajo";
+                var cuerpo = nuevosParaAvisar.map(function(s) { return s.item + " (" + s.talle + "): quedan " + s.cantidad; }).join(", ");
+                navigator.serviceWorker.ready.then(function(reg) {
+                    reg.showNotification(titulo, { body: cuerpo, icon: 'icon-192.png', badge: 'favicon-48.png', tag: 'vesa-stock-alerta' });
+                }).catch(function() {});
+                nuevosParaAvisar.forEach(function(s) { yaNotificados.push(s.id); });
+            }
+            localStorage.setItem('vesa_stock_notificados', JSON.stringify(yaNotificados));
         }
 
         // --- SISTEMA DE CARRITO PARA PEDIDOS ---
@@ -2373,7 +2544,7 @@
             if(id === 'modalPedido' || id === 'modalEditPedido') { tempStockItems = []; }
             if(id === 'modalPedido') { currentOrderItems = []; renderOrderItems(); }
             if(id === 'modalStock' && !returnToPedidoModalFromStock) { const container = document.getElementById("form-stk-oneoff-container"); const checkbox = document.getElementById("form-stk-oneoff"); if (container) container.style.display = "none"; if (checkbox) checkbox.checked = false; }
-            if(id === 'modalConfigFirebase') { var elUsuario = document.getElementById("form-fb-usuario-actual"); if (elUsuario) elUsuario.value = localStorage.getItem('vesa_usuario_nombre') || (authUser ? authUser.email : 'Sin datos'); }
+            if(id === 'modalConfigFirebase') { var elUsuario = document.getElementById("form-fb-usuario-actual"); if (elUsuario) elUsuario.value = localStorage.getItem('vesa_usuario_nombre') || (authUser ? authUser.email : 'Sin datos'); var elWA = document.getElementById("config-whatsapp-alertas"); if (elWA) elWA.value = localStorage.getItem('vesa_whatsapp_alertas') || ''; }
             if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
             if(id !== 'modalStock') returnToPedidoModalFromStock = false;
             document.getElementById(id).classList.add('active'); 

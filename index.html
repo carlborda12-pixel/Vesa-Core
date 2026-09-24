@@ -16,6 +16,21 @@
     <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <!-- Splash screens de iOS (pantalla de carga al abrir la app instalada) -->
+    <link rel="apple-touch-startup-image" href="splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1179x2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1536x2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-1668x2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="splash-2048x2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
     
     <!-- Fuentes e Iconos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,6 +39,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <!-- SDK de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -242,6 +258,21 @@
         #session-expired-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(2, 6, 23, 0.95); align-items: center; justify-content: center; }
         .expired-box { background: rgba(15, 23, 42, 1); border: 1px solid rgba(244, 63, 94, 0.4); border-radius: 20px; padding: 40px; width: 400px; text-align: center; }
         .expired-icon { font-size: 40px; color: var(--color-danger); margin-bottom: 16px; }
+        #login-screen { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background: #020617; align-items: center; justify-content: center; padding: 20px; }
+        .login-box { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 36px 32px; width: 380px; max-width: 100%; }
+        .login-box .login-logo { font-size: 26px; font-weight: 900; letter-spacing: 3px; text-align: center; margin-bottom: 4px; text-transform: uppercase; }
+        .login-box .login-logo span { color: var(--color-accent); text-shadow: 0 0 10px var(--color-accent-glow); }
+        .login-box .login-sub { text-align: center; color: var(--color-text-secondary); font-size: 12px; margin-bottom: 24px; }
+        .login-error { display: none; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); color: var(--color-danger); font-size: 12px; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; line-height: 1.4; }
+        .login-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--color-text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+        .btn-google { width: 100%; justify-content: center; background: white; color: #1f1f1f; border: none; font-weight: 700; }
+        .btn-google:hover { background: #f1f1f1; }
+        .login-forgot { display: block; text-align: center; font-size: 11px; color: var(--color-text-secondary); margin-top: 14px; cursor: pointer; text-decoration: underline; }
+        #biometric-lock-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; background: #020617; align-items: center; justify-content: center; padding: 20px; }
+        .biometric-box { text-align: center; width: 320px; max-width: 100%; }
+        .biometric-icon { width: 90px; height: 90px; border-radius: 50%; background: rgba(0,242,255,0.08); border: 1px solid rgba(0,242,255,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 34px; color: var(--color-accent); cursor: pointer; transition: all 0.2s; }
+        .biometric-icon:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(0,242,255,0.2); }
 
         /* NOTIFICACIÓN TOAST */
         .notification-toast { display: none; position: fixed; bottom: 30px; right: 30px; max-width: 350px; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--color-accent); border-radius: 16px; padding: 16px 20px; color: white; gap: 14px; align-items: center; z-index: 3000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInToast 0.3s ease-out; }
@@ -317,6 +348,7 @@
                     <li><a class="menu-item" onclick="switchTab('stock')" title="Auditoría de insumos, materias primas y alertas de faltantes"><i class="fa-solid fa-boxes-stacked"></i> Stock</a></li>
                     <li><a class="menu-item" onclick="switchTab('precios')" title="Lista de precios de productos y servicios"><i class="fa-solid fa-tags"></i> Lista de Precios</a></li>
                     <li><a class="menu-item" onclick="switchTab('finanzas')" title="Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
+                    <li><a class="menu-item" onclick="switchTab('backup')" title="Copia de seguridad y exportación de todos los datos del taller"><i class="fa-solid fa-cloud-arrow-down"></i> Backup</a></li>
                 </ul>
             </div>
             
@@ -522,7 +554,7 @@
                         </div>
                         <div class="table-wrapper">
                             <table>
-                                <thead><tr><th>SKU</th><th>Artículo Base</th><th>Formato</th><th>Existencias</th><th>Mínimo Seguro</th><th>Estado</th><th>Auditar</th></tr></thead>
+                                <thead><tr><th>SKU</th><th>Artículo Base</th><th>Formato</th><th>Existencias</th><th>Mínimo Seguro</th><th>Costo Unit.</th><th>Estado</th><th>Auditar</th></tr></thead>
                                 <tbody id="stock-tbody"></tbody>
                             </table>
                         </div>
@@ -570,6 +602,32 @@
                         </div>
                     </div>
 
+                    <!-- NUEVO: Rentabilidad real de producción (Ventas de pedidos vs. Costo de insumos consumidos) -->
+                    <div class="panel-block" style="margin-top: 10px;">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-industry"></i> Rentabilidad de Producción <span title="Compara lo facturado en pedidos contra el costo real de los insumos que consumieron (definido en Stock)" style="cursor:help; color:var(--color-text-secondary);"><i class="fa-solid fa-circle-question"></i></span></h3>
+                        </div>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:16px;">
+                            <div>
+                                <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Ventas (Pedidos)</div>
+                                <div style="font-size:22px; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);" id="rent-ventas-total">$0</div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Costo de Insumos</div>
+                                <div style="font-size:22px; font-weight:800; font-family:'Space Mono'; color:var(--color-warning);" id="rent-costo-total">$0</div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Ganancia Bruta</div>
+                                <div style="font-size:22px; font-weight:800; font-family:'Space Mono'; color:var(--color-success);" id="rent-ganancia-total">$0</div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Margen Promedio</div>
+                                <div style="font-size:22px; font-weight:800; font-family:'Space Mono'; color:var(--color-accent);" id="rent-margen-total">0%</div>
+                            </div>
+                        </div>
+                        <p style="font-size:11px; color:var(--color-text-secondary); margin-top:10px;">Se calcula sobre pedidos con prendas cargadas del Stock. Cargá el "Costo Unitario" de cada insumo para que este número sea preciso.</p>
+                    </div>
+
                     <div class="panel-block" style="margin-top: 10px;" id="panel-movimientos-caja">
                         <div class="panel-header">
                             <h3><i class="fa-solid fa-list-ul"></i> Movimientos de Caja <span id="finanzas-filtro-chip" style="display:none; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(56,189,248,0.12); color:var(--color-accent); border:1px solid rgba(56,189,248,0.3); margin-left:8px; cursor:pointer; vertical-align:middle;" onclick="filtrarMovimientosCaja(null)"><i class="fa-solid fa-filter"></i> <span id="finanzas-filtro-chip-texto"></span> <i class="fa-solid fa-xmark" style="margin-left:4px;"></i></span></h3>
@@ -585,6 +643,43 @@
                                 <thead><tr><th>Fecha</th><th>Concepto</th><th>Movimiento</th><th>Canal</th><th style="text-align: right;">Monto</th><th style="text-align: right;">Acciones</th></tr></thead>
                                 <tbody id="finanzas-main-tbody"></tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISTA BACKUP -->
+                <div id="section-backup" class="view-section">
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-cloud-arrow-down"></i> Copia de Seguridad</h3>
+                        </div>
+                        <p style="font-size:12px; color:var(--color-text-secondary); line-height:1.5; margin-bottom:16px;">Descargá una copia de todos los datos del taller (Pedidos, Clientes, Stock, Caja y Lista de Precios) para guardarla en tu celular/PC o restaurarla si algo llegara a fallar en la nube.</p>
+                        <div style="display:flex; flex-wrap:wrap; gap:12px;">
+                            <button class="btn btn-primary" onclick="exportarBackupCompleto()" style="justify-content:center;" title="Descarga un archivo con absolutamente todos los datos actuales del sistema">
+                                <i class="fa-solid fa-download"></i> Descargar Backup Completo
+                            </button>
+                            <button class="btn" style="background:rgba(245,158,11,0.1); color:var(--color-warning); border-color:rgba(245,158,11,0.3); justify-content:center;" onclick="prepararRestaurarBackup()" title="Reemplaza todos los datos actuales por los de un backup descargado antes">
+                                <i class="fa-solid fa-upload"></i> Restaurar desde Backup
+                            </button>
+                            <input type="file" id="input-restaurar-backup" accept=".json,application/json" style="display:none;" onchange="restaurarBackupDesdeArchivo(event)">
+                        </div>
+                        <div style="margin-top:18px; padding-top:18px; border-top:1px solid var(--border-glass);">
+                            <h4 style="font-size:13px; font-weight:800; color:white; margin-bottom:6px;"><i class="fa-solid fa-file-import" style="color:var(--color-accent);"></i> Importar Datos de un Excel Viejo</h4>
+                            <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:12px;">¿Santiago anotó pedidos o cobros en una planilla propia mientras no tenía la app a mano? Subila acá — el sistema va a leer cada fila y adivinar si es un <strong>Pedido</strong>, un <strong>Ingreso</strong>, un <strong>Egreso</strong> o una <strong>Deuda</strong>. Antes de cargar nada, te muestra una vista previa para que revises y corrijas lo que haga falta.</p>
+                            <button class="btn" style="background:rgba(56,189,248,0.1); color:var(--color-accent); border-color:rgba(56,189,248,0.3); justify-content:center;" onclick="prepararImportarExcel()" title="Subí un .xlsx, .xls o .csv con tus anotaciones viejas">
+                                <i class="fa-solid fa-file-excel"></i> Elegir Excel/CSV para Importar
+                            </button>
+                            <input type="file" id="input-importar-excel" accept=".xlsx,.xls,.csv" style="display:none;" onchange="procesarExcelImportado(event)">
+                        </div>
+                        <div style="margin-top:18px; padding-top:18px; border-top:1px solid var(--border-glass);">
+                            <h4 style="font-size:13px; font-weight:800; color:white; margin-bottom:6px;">Exportar para Excel / Contador</h4>
+                            <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:12px;">Un archivo .csv con el libro de Caja, para abrir en Excel o Google Sheets.</p>
+                            <button class="btn" style="background:rgba(16,185,129,0.1); color:var(--color-success); border-color:rgba(16,185,129,0.3); justify-content:center;" onclick="exportarFinanzasCSV()" title="Descarga los movimientos de Caja en formato de planilla">
+                                <i class="fa-solid fa-file-csv"></i> Exportar Movimientos de Caja (.csv)
+                            </button>
+                        </div>
+                        <div style="margin-top:18px; padding:12px 14px; background:rgba(244,63,94,0.06); border:1px solid rgba(244,63,94,0.2); border-radius:10px;">
+                            <p style="font-size:11px; color:var(--color-text-secondary); line-height:1.5;"><i class="fa-solid fa-triangle-exclamation" style="color:var(--color-danger); margin-right:4px;"></i> Restaurar un backup <strong style="color:white;">reemplaza todo</strong> lo que hay cargado ahora mismo. Usalo solo si perdiste datos o necesitás volver a un estado anterior — no se puede deshacer.</p>
                         </div>
                     </div>
                 </div>
@@ -668,6 +763,13 @@
                     <!-- Lista de Prendas Agregadas -->
                     <div id="ped-items-list" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; min-height: 50px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 6px;">
                         <div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>
+                    </div>
+
+                    <!-- NUEVO: Rentabilidad estimada (solo uso interno, nunca se imprime) -->
+                    <div id="ped-rentabilidad-info" style="display:none; font-size:11px; color:var(--color-text-secondary); background:rgba(168, 85, 247, 0.05); border:1px solid rgba(168, 85, 247, 0.15); border-radius:8px; padding:8px 12px; margin-bottom: 10px; display:flex; justify-content:space-between; gap:8px;">
+                        <span><i class="fa-solid fa-lock" title="Solo vos ves este dato, no se imprime en la ficha"></i> Costo insumos: <strong id="ped-rentabilidad-costo" style="color:var(--color-text-primary);">$0</strong></span>
+                        <span>Ganancia: <strong id="ped-rentabilidad-ganancia" style="color:var(--color-success);">$0</strong></span>
+                        <span>Margen: <strong id="ped-rentabilidad-margen" style="color:var(--color-accent);">0%</strong></span>
                     </div>
                     
                     <!-- NUEVO: CHECKBOX DE AUTO-STOCK PARA NUEVO PEDIDO -->
@@ -774,6 +876,13 @@
                     <!-- Lista de Prendas Agregadas en Edición -->
                     <div id="edit-ped-items-list" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; min-height: 50px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 6px;">
                         <div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>
+                    </div>
+
+                    <!-- NUEVO: Rentabilidad estimada (solo uso interno, nunca se imprime) -->
+                    <div id="edit-ped-rentabilidad-info" style="display:none; font-size:11px; color:var(--color-text-secondary); background:rgba(168, 85, 247, 0.05); border:1px solid rgba(168, 85, 247, 0.15); border-radius:8px; padding:8px 12px; margin-bottom: 10px; display:flex; justify-content:space-between; gap:8px;">
+                        <span><i class="fa-solid fa-lock" title="Solo vos ves este dato, no se imprime en la ficha"></i> Costo insumos: <strong id="edit-ped-rentabilidad-costo" style="color:var(--color-text-primary);">$0</strong></span>
+                        <span>Ganancia: <strong id="edit-ped-rentabilidad-ganancia" style="color:var(--color-success);">$0</strong></span>
+                        <span>Margen: <strong id="edit-ped-rentabilidad-margen" style="color:var(--color-accent);">0%</strong></span>
                     </div>
                     
                     <!-- NUEVO: CHECKBOX DE AUTO-STOCK PARA EDITAR PEDIDO -->
@@ -930,9 +1039,15 @@
                     <input type="number" class="form-control" id="form-stk-cant">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Alerta Mínima</label>
-                <input type="number" class="form-control" id="form-stk-min" title="Si la cantidad baja de este número, el panel mostrará una alerta roja">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Alerta Mínima</label>
+                    <input type="number" class="form-control" id="form-stk-min" title="Si la cantidad baja de este número, el panel mostrará una alerta roja">
+                </div>
+                <div class="form-group">
+                    <label>Costo Unitario ($)</label>
+                    <input type="number" class="form-control" id="form-stk-costo" title="Cuánto te cuesta a vos cada unidad de este insumo (para calcular ganancia real por pedido)">
+                </div>
             </div>
 
             <button type="button" class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar Insumo</button>
@@ -1072,9 +1187,15 @@
                     <input type="number" class="form-control" id="edit-stk-cant">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Alerta Mínima</label>
-                <input type="number" class="form-control" id="edit-stk-min">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Alerta Mínima</label>
+                    <input type="number" class="form-control" id="edit-stk-min">
+                </div>
+                <div class="form-group">
+                    <label>Costo Unitario ($)</label>
+                    <input type="number" class="form-control" id="edit-stk-costo" title="Cuánto te cuesta a vos cada unidad de este insumo (para calcular ganancia real por pedido)">
+                </div>
             </div>
             <button type="button" class="btn btn-primary" onclick="guardarEdicionStock()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
         </div>
@@ -1088,6 +1209,10 @@
             </div>
             <p style="font-size:12px; color:var(--color-text-secondary); line-height: 1.4;">Infraestructura gestionada por Vercel. Uso manual exclusivo para depuración técnica.</p>
             <div class="form-group">
+                <label>Sesión Activa</label>
+                <input type="text" class="form-control" id="form-fb-usuario-actual" readonly>
+            </div>
+            <div class="form-group">
                 <label>Clúster ID (Sala)</label>
                 <input type="text" class="form-control" id="form-fb-appid-custom" readonly>
             </div>
@@ -1096,8 +1221,76 @@
                 <input type="text" class="form-control" id="form-fb-status" value="Gestionado por Backend" readonly style="color: var(--color-success);">
             </div>
             <div style="display:flex;gap:10px; margin-top: 8px;">
+                <button type="button" class="btn" style="flex:1; justify-content:center; background:rgba(245,158,11,0.1); color:var(--color-warning); border-color:rgba(245,158,11,0.3);" onclick="cerrarSesion()" title="Cerrar tu sesión en este dispositivo"><i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión</button>
                 <button type="button" class="btn btn-danger" onclick="limpiarConfigFirebaseCustom()" style="flex:1; justify-content:center;" title="Fuerza un reinicio de la conexión segura"><i class="fa-solid fa-rotate-left"></i> Resetear Red</button>
             </div>
+        </div>
+    </div>
+
+    <!-- NUEVO: Modal de revisión de importación desde Excel/CSV viejo -->
+    <div class="modal-overlay" id="modalImportarExcel">
+        <div class="modal-box wide">
+            <div class="modal-header">
+                <h3>Revisar Importación — <span id="import-preview-nombre-archivo" style="color:var(--color-text-secondary); font-weight:500; font-size:13px;"></span></h3>
+                <button class="modal-close" onclick="closeModal('modalImportarExcel')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size:12px; color:var(--color-text-secondary); line-height:1.5;">El sistema hizo su mejor intento de adivinar qué es cada fila. <strong style="color:white;">Revisá la columna "Clasificación"</strong> y corregí lo que haga falta antes de confirmar — nada se carga hasta que lo confirmes. Las filas marcadas "Pedido" se cargan como entregadas y pagas (uso histórico), sin descontar Stock.</p>
+            <div class="table-wrapper" style="max-height:48vh; overflow-y:auto;">
+                <table style="width:100%;">
+                    <thead><tr><th style="width:30px;"></th><th>Fecha</th><th>Detalle / Cliente</th><th style="text-align:right;">Monto</th><th>Clasificación</th></tr></thead>
+                    <tbody id="import-preview-tbody"></tbody>
+                </table>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:10px;">
+                <span id="import-preview-resumen" style="font-size:12px; color:var(--color-text-secondary);"></span>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn" onclick="closeModal('modalImportarExcel')">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirmar-importacion" onclick="confirmarImportacionExcel()"><i class="fa-solid fa-check"></i> Confirmar Importación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVO: PANTALLA DE LOGIN -->
+    <div id="login-screen">
+        <div class="login-box">
+            <div class="login-logo">VESA<span>.</span></div>
+            <div class="login-sub">Iniciá sesión para entrar al taller</div>
+
+            <div class="login-error" id="login-error"></div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" class="form-control" id="login-email" autocomplete="username" placeholder="tu@email.com">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" class="form-control" id="login-password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') iniciarSesionEmail();">
+            </div>
+            <button type="button" class="btn btn-primary" id="btn-login-email" onclick="iniciarSesionEmail()" style="width:100%; justify-content:center; margin-top:6px;">
+                <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
+            </button>
+            <span class="login-forgot" onclick="enviarResetPassword()">¿Olvidaste tu contraseña?</span>
+
+            <div class="login-divider">o</div>
+
+            <button type="button" class="btn btn-google" onclick="iniciarSesionGoogle()">
+                <i class="fa-brands fa-google"></i> Continuar con Google
+            </button>
+
+            <p style="font-size:10px; color:var(--color-text-secondary); text-align:center; margin-top:20px; line-height:1.5;">Acceso solo para personas autorizadas del taller VESA. Si necesitás una cuenta, pedísela al administrador.</p>
+        </div>
+    </div>
+
+    <!-- NUEVO: PANTALLA DE DESBLOQUEO POR HUELLA (candado local del dispositivo) -->
+    <div id="biometric-lock-screen">
+        <div class="biometric-box">
+            <div class="biometric-icon" onclick="intentarDesbloqueoHuella()" title="Tocá para desbloquear">
+                <i class="fa-solid fa-fingerprint"></i>
+            </div>
+            <h3 style="font-size:16px; font-weight:800; color:white; margin-bottom:4px;">Hola, <span id="biometric-lock-nombre">de nuevo</span></h3>
+            <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:20px;">Desbloqueá VESA con tu huella o Face ID para continuar.</p>
+            <span class="login-forgot" onclick="omitirHuellaUsarPassword()">Usar contraseña en su lugar</span>
         </div>
     </div>
 
@@ -1405,23 +1598,200 @@
                     if (typeof firebase !== 'undefined' && !firebase.apps.length) firebase.initializeApp(firebaseConfig);
                     if (typeof firebase !== 'undefined') {
                         auth = firebase.auth(); db = firebase.firestore();
+                        // NUEVO: ya no hay sesión anónima. Requiere login real (email/contraseña o Google) + estar en la lista de autorizados.
                         auth.onAuthStateChanged(function(user) {
-                            if (user) {
-                                authUser = user;
-                                statusBadge.className = "db-status online"; statusText.innerText = "Nube: Segura";
-                                bindFirebaseCollections();
+                            if (user && !user.isAnonymous) {
+                                var credId = localStorage.getItem('vesa_huella_credencial_id');
+                                if (credId) { mostrarPantallaBloqueoHuella(user); }
+                                else { verificarUsuarioAutorizado(user); }
                             } else {
-                                setupLocalStorageFallback();
+                                mostrarPantallaLogin();
                             }
                         });
-                        await auth.signInAnonymously();
                     } else {
-                        setupLocalStorageFallback();
+                        ocultarPantallasDeLogin(); setupLocalStorageFallback(); setTimeout(showWelcomeSummary, 500);
                     }
-                } catch (err) { setupLocalStorageFallback(); }
-            } else { setupLocalStorageFallback(); }
-            setTimeout(showWelcomeSummary, 500);
+                } catch (err) { ocultarPantallasDeLogin(); setupLocalStorageFallback(); setTimeout(showWelcomeSummary, 500); }
+            } else { 
+                ocultarPantallasDeLogin(); setupLocalStorageFallback(); setTimeout(showWelcomeSummary, 500);
+            }
         }
+
+        // --- NUEVO: LOGIN, LISTA DE AUTORIZADOS Y DESBLOQUEO POR HUELLA ---
+        var coleccionesYaVinculadas = false;
+
+        function ocultarPantallasDeLogin() {
+            var login = document.getElementById("login-screen"); if (login) login.style.display = 'none';
+            var lock = document.getElementById("biometric-lock-screen"); if (lock) lock.style.display = 'none';
+        }
+
+        function mostrarPantallaLogin(mensajeError) {
+            var lock = document.getElementById("biometric-lock-screen"); if (lock) lock.style.display = 'none';
+            var login = document.getElementById("login-screen"); if (login) login.style.display = 'flex';
+            if (mensajeError) mostrarErrorLogin(mensajeError);
+        }
+
+        function mostrarErrorLogin(msg) {
+            var el = document.getElementById("login-error");
+            if (el) { el.innerText = msg; el.style.display = 'block'; }
+        }
+
+        async function verificarUsuarioAutorizado(user) {
+            var statusBadge = document.getElementById("status-badge");
+            var statusText = document.getElementById("status-text");
+            try {
+                var emailKey = (user.email || '').toLowerCase();
+                var docRef = db.collection('artifacts/' + appId + '/public/data/authorized_users').doc(emailKey);
+                var docSnap = await docRef.get();
+                if (!docSnap.exists || docSnap.data().autorizado === false) {
+                    await auth.signOut();
+                    mostrarPantallaLogin('La cuenta "' + emailKey + '" todavía no tiene acceso autorizado a VESA. Pedile a un administrador que te habilite.');
+                    return;
+                }
+                authUser = user;
+                var datosUsuario = docSnap.data();
+                localStorage.setItem('vesa_usuario_nombre', datosUsuario.nombre || user.email);
+                localStorage.setItem('vesa_usuario_email', emailKey);
+
+                if (statusBadge) statusBadge.className = "db-status online";
+                if (statusText) statusText.innerText = "Nube: Segura";
+                ocultarPantallasDeLogin();
+                if (!coleccionesYaVinculadas) { coleccionesYaVinculadas = true; bindFirebaseCollections(); }
+                setTimeout(showWelcomeSummary, 300);
+                setTimeout(chequearOfrecerHuella, 1200);
+            } catch (e) {
+                console.error(e);
+                mostrarPantallaLogin("Error al verificar tu acceso. Probá de nuevo.");
+            }
+        }
+
+        async function iniciarSesionEmail() {
+            var email = document.getElementById("login-email").value.trim();
+            var pass = document.getElementById("login-password").value;
+            var errorEl = document.getElementById("login-error"); if (errorEl) errorEl.style.display = 'none';
+            if (!email || !pass) { mostrarErrorLogin("Completá tu email y contraseña."); return; }
+
+            var btn = document.getElementById("btn-login-email");
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ingresando...'; }
+            try {
+                await auth.signInWithEmailAndPassword(email, pass);
+            } catch (e) {
+                var msg = "No se pudo iniciar sesión.";
+                if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') msg = "Email o contraseña incorrectos.";
+                else if (e.code === 'auth/too-many-requests') msg = "Demasiados intentos. Probá de nuevo en unos minutos.";
+                mostrarErrorLogin(msg);
+            }
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión'; }
+        }
+
+        async function iniciarSesionGoogle() {
+            try {
+                var provider = new firebase.auth.GoogleAuthProvider();
+                await auth.signInWithPopup(provider);
+            } catch (e) {
+                if (e.code !== 'auth/popup-closed-by-user') mostrarErrorLogin("No se pudo iniciar sesión con Google.");
+            }
+        }
+
+        async function enviarResetPassword() {
+            var email = document.getElementById("login-email").value.trim();
+            if (!email) { mostrarErrorLogin("Escribí tu email arriba primero, y volvé a tocar este link."); return; }
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showToast("Email Enviado", "Revisá tu correo para restablecer la contraseña.");
+            } catch (e) {
+                mostrarErrorLogin("No se pudo enviar el email de recuperación.");
+            }
+        }
+
+        async function cerrarSesion() {
+            try {
+                localStorage.removeItem('vesa_huella_credencial_id');
+                localStorage.removeItem('vesa_huella_email');
+                await auth.signOut();
+                window.location.reload();
+            } catch (e) { window.location.reload(); }
+        }
+        window.cerrarSesion = cerrarSesion;
+
+        // --- Desbloqueo por huella/Face ID (candado local de este dispositivo, no reemplaza el login real) ---
+        function soporteHuellaDisponible() { return !!(window.PublicKeyCredential && navigator.credentials); }
+
+        async function chequearOfrecerHuella() {
+            if (!soporteHuellaDisponible()) return;
+            if (localStorage.getItem('vesa_huella_credencial_id')) return;
+            if (localStorage.getItem('vesa_huella_preguntado')) return;
+            try {
+                var disponible = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                if (!disponible) return;
+            } catch (e) { return; }
+
+            localStorage.setItem('vesa_huella_preguntado', '1');
+            setTimeout(function() {
+                if (confirm("¿Querés activar el desbloqueo con huella/Face ID en este dispositivo, para no escribir la contraseña cada vez que abrís VESA?")) {
+                    activarDesbloqueoHuella();
+                }
+            }, 600);
+        }
+
+        async function activarDesbloqueoHuella() {
+            try {
+                var user = auth.currentUser; if (!user) return;
+                var challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
+                var userIdBytes = new TextEncoder().encode(user.uid);
+                var credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: challenge,
+                        rp: { name: "VESA Core OS" },
+                        user: { id: userIdBytes, name: user.email, displayName: user.email },
+                        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+                        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                        timeout: 60000
+                    }
+                });
+                if (credential) {
+                    var credId = btoa(String.fromCharCode.apply(null, new Uint8Array(credential.rawId)));
+                    localStorage.setItem('vesa_huella_credencial_id', credId);
+                    localStorage.setItem('vesa_huella_email', user.email);
+                    showToast("Huella Activada", "La próxima vez vas a poder entrar con tu huella en este dispositivo.");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        window.activarDesbloqueoHuella = activarDesbloqueoHuella;
+
+        function mostrarPantallaBloqueoHuella(user) {
+            var login = document.getElementById("login-screen"); if (login) login.style.display = 'none';
+            var nombreEl = document.getElementById("biometric-lock-nombre");
+            if (nombreEl) nombreEl.innerText = localStorage.getItem('vesa_usuario_nombre') || user.email;
+            var pantalla = document.getElementById("biometric-lock-screen"); if (pantalla) pantalla.style.display = 'flex';
+            setTimeout(function() { intentarDesbloqueoHuella(user); }, 400);
+        }
+
+        async function intentarDesbloqueoHuella(userParam) {
+            var user = userParam || auth.currentUser; if (!user) return;
+            try {
+                var challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
+                var credIdStr = localStorage.getItem('vesa_huella_credencial_id'); if (!credIdStr) return;
+                var credIdBytes = Uint8Array.from(atob(credIdStr), function(c) { return c.charCodeAt(0); });
+                var assertion = await navigator.credentials.get({
+                    publicKey: { challenge: challenge, allowCredentials: [{ id: credIdBytes, type: 'public-key' }], userVerification: 'required', timeout: 60000 }
+                });
+                if (assertion) {
+                    var pantalla = document.getElementById("biometric-lock-screen"); if (pantalla) pantalla.style.display = 'none';
+                    verificarUsuarioAutorizado(user);
+                }
+            } catch (e) { console.log("Huella cancelada o falló", e); }
+        }
+        window.intentarDesbloqueoHuella = intentarDesbloqueoHuella;
+
+        function omitirHuellaUsarPassword() {
+            localStorage.removeItem('vesa_huella_credencial_id');
+            var pantalla = document.getElementById("biometric-lock-screen"); if (pantalla) pantalla.style.display = 'none';
+            if (auth) { auth.signOut().then(function() { window.location.reload(); }); } else { window.location.reload(); }
+        }
+        window.omitirHuellaUsarPassword = omitirHuellaUsarPassword;
 
         window.addEventListener('offline', () => {
             document.getElementById("status-badge").className = "db-status local";
@@ -1488,8 +1858,25 @@
 
         function renderAll() {
             renderMetrics(); renderDashboardAlerts(); renderDashboardOrders(); renderDashboardStock();
-            renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable(); renderPreciosTable();
+            renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable(); renderPreciosTable(); renderRentabilidadProduccion();
             populateDropdowns();
+        }
+
+        // NUEVO: Rentabilidad real de producción — Ventas de pedidos vs. Costo de insumos consumidos
+        function renderRentabilidadProduccion() {
+            var elVentas = document.getElementById("rent-ventas-total"); if (!elVentas) return;
+            var ventas = 0, costo = 0;
+            appState.pedidos.forEach(function(p) {
+                if (p.estado === "Presupuesto") return; // Un presupuesto todavía no es una venta concretada
+                ventas += p.monto || 0;
+                costo += p.costoTotal || 0;
+            });
+            var ganancia = ventas - costo;
+            var margen = ventas > 0 ? (ganancia / ventas * 100) : 0;
+            elVentas.innerText = "$" + ventas.toLocaleString('es-AR');
+            document.getElementById("rent-costo-total").innerText = "$" + costo.toLocaleString('es-AR');
+            var elGan = document.getElementById("rent-ganancia-total"); elGan.innerText = "$" + ganancia.toLocaleString('es-AR'); elGan.style.color = ganancia >= 0 ? "var(--color-success)" : "var(--color-danger)";
+            document.getElementById("rent-margen-total").innerText = margen.toFixed(0) + "%";
         }
 
         function populateDropdowns() {
@@ -1637,7 +2024,7 @@
                 var docIdSegura = s.docId ? `'${s.docId}'` : 'null';
                 var isLow = s.cantidad <= s.minimo;
                 var badge = isLow ? `<span class="badge" style="background:rgba(244, 63, 94, 0.1); color:var(--color-danger); border-color: rgba(244, 63, 94, 0.3);">Quiebre</span>` : `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color: rgba(16, 185, 129, 0.3);">Estable</span>`;
-                tbody.innerHTML += `<tr><td>#${s.id}</td><td style="font-weight:700;">${sanitizeHTML(s.item)}</td><td>${sanitizeHTML(s.talle)}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td>${badge}</td><td><div style="display:flex; gap:6px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})" title="Modificar cantidades o límites"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})" title="Remover insumo de la base de datos"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbody.innerHTML += `<tr><td>#${s.id}</td><td style="font-weight:700;">${sanitizeHTML(s.item)}</td><td>${sanitizeHTML(s.talle)}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td style="color:var(--color-text-secondary); font-family:'Space Mono';">$${(s.costo || 0).toLocaleString('es-AR')}</td><td>${badge}</td><td><div style="display:flex; gap:6px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})" title="Modificar cantidades o límites"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})" title="Remover insumo de la base de datos"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
         function renderPreciosTable() {
@@ -1738,7 +2125,7 @@
             
             currentOrderItems.push({
                 stockId: stockId, nombre: stockItem.item, talle: stockItem.talle,
-                cantidad: qty, precioUnitario: price, subtotal: qty * price, isTemp: stockItem.isTemp || false
+                cantidad: qty, precioUnitario: price, subtotal: qty * price, isTemp: stockItem.isTemp || false, costoUnit: stockItem.costo || 0
             });
             
             document.getElementById(`${prefix}ped-add-item-qty`).value = "";
@@ -1754,13 +2141,14 @@
         function renderOrderItems() {
             const list1 = document.getElementById("ped-items-list");
             const list2 = document.getElementById("edit-ped-items-list");
-            let totalAuto = 0; let htmlContent = '';
+            let totalAuto = 0; let costoAuto = 0; let htmlContent = '';
             
             if (currentOrderItems.length === 0) {
                 htmlContent = '<div style="color: var(--color-text-secondary); font-size: 11px; text-align: center; padding: 10px;">No hay prendas agregadas.</div>';
             } else {
                 currentOrderItems.forEach((item, index) => {
                     totalAuto += item.subtotal;
+                    costoAuto += item.cantidad * (item.costoUnit || 0);
                     let badgeTemp = item.isTemp ? `<span class="badge" style="background-color:rgba(245, 158, 11, 0.15); color:var(--color-warning); font-size:9px; padding:2px 6px; margin-left: 6px;">Uso Único</span>` : '';
                     htmlContent += `
                         <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-size: 12px;">
@@ -1784,6 +2172,20 @@
             const montoInput2 = document.getElementById("edit-ped-monto");
             if (montoInput1) montoInput1.value = totalAuto > 0 ? totalAuto : "";
             if (montoInput2) montoInput2.value = totalAuto > 0 ? totalAuto : "";
+
+            // NUEVO: Rentabilidad estimada en base al costo de insumos consumidos
+            var ganancia = totalAuto - costoAuto;
+            var margen = totalAuto > 0 ? (ganancia / totalAuto * 100) : 0;
+            [["ped-rentabilidad-info", "ped-rentabilidad-costo", "ped-rentabilidad-ganancia", "ped-rentabilidad-margen"],
+             ["edit-ped-rentabilidad-info", "edit-ped-rentabilidad-costo", "edit-ped-rentabilidad-ganancia", "edit-ped-rentabilidad-margen"]].forEach(function(ids) {
+                var box = document.getElementById(ids[0]);
+                if (!box) return;
+                if (currentOrderItems.length === 0) { box.style.display = 'none'; return; }
+                box.style.display = 'flex';
+                document.getElementById(ids[1]).innerText = "$" + costoAuto.toLocaleString('es-AR');
+                var elGan = document.getElementById(ids[2]); elGan.innerText = "$" + ganancia.toLocaleString('es-AR'); elGan.style.color = ganancia >= 0 ? "var(--color-success)" : "var(--color-danger)";
+                document.getElementById(ids[3]).innerText = margen.toFixed(0) + "%";
+            });
         }
 
         function openModalClienteDesdePedido() {
@@ -1971,6 +2373,7 @@
             if(id === 'modalPedido' || id === 'modalEditPedido') { tempStockItems = []; }
             if(id === 'modalPedido') { currentOrderItems = []; renderOrderItems(); }
             if(id === 'modalStock' && !returnToPedidoModalFromStock) { const container = document.getElementById("form-stk-oneoff-container"); const checkbox = document.getElementById("form-stk-oneoff"); if (container) container.style.display = "none"; if (checkbox) checkbox.checked = false; }
+            if(id === 'modalConfigFirebase') { var elUsuario = document.getElementById("form-fb-usuario-actual"); if (elUsuario) elUsuario.value = localStorage.getItem('vesa_usuario_nombre') || (authUser ? authUser.email : 'Sin datos'); }
             if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
             if(id !== 'modalStock') returnToPedidoModalFromStock = false;
             document.getElementById(id).classList.add('active'); 
@@ -2089,12 +2492,14 @@
                 appState.pedidos.forEach(p => { if(p.id && !isNaN(p.id) && p.id > maxId) maxId = p.id; });
                 var nuevoId = maxId + 1;
                 
+                var costoInsumos = currentOrderItems.reduce((acc, item) => acc + (item.cantidad * (item.costoUnit || 0)), 0);
+
                 var nuevoPed = { 
                     id: nuevoId, cliente: cliente, detalle: detalleString, estado: estado, 
                     monto: montoTotal, sena: sena, saldo: montoTotal - sena, items: currentOrderItems, 
                     fecha: hoy, timestamp: Date.now(),
                     tipoEntrega: entrega, horaEntrega: hora, medioPago: mediopago,
-                    arte: arteUrls
+                    arte: arteUrls, costoTotal: costoInsumos
                 };
 
                 var nuevaFinanza = null;
@@ -2257,7 +2662,11 @@
 
                 var updatedData = { 
                     cliente: cliente, detalle: detalleString, estado: estado, 
-                    monto: monto, sena: sena, saldo: monto - sena, items: currentOrderItems 
+                    monto: monto, sena: sena, saldo: monto - sena, items: currentOrderItems,
+                    costoTotal: currentOrderItems.reduce((acc, item) => {
+                        var costoUnit = item.costoUnit !== undefined ? item.costoUnit : ((appState.stock.find(s => s.id === item.stockId) || {}).costo || 0);
+                        return acc + (item.cantidad * costoUnit);
+                    }, 0)
                 };
 
                 // NUEVO: Si la edición marca el pedido como Entregado, se salda el pendiente y se acredita en Caja
@@ -2688,13 +3097,365 @@
             renderAll(); updateCharts(); showToast("Acreditado", "La cuenta se cobró con éxito.");
         }
 
+        // --- BACKUP: Exportar / Restaurar / CSV ---
+        function exportarBackupCompleto() {
+            var backup = {
+                app: "VESA Core OS", version: 1, exportedAt: new Date().toISOString(),
+                data: {
+                    pedidos: appState.pedidos, clientes: appState.clientes, stock: appState.stock,
+                    finanzas: appState.finanzas, precios: appState.precios
+                }
+            };
+            var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            var fecha = new Date().toISOString().slice(0, 10);
+            a.href = url; a.download = `vesa-backup-${fecha}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Backup Descargado", "Guardá el archivo en un lugar seguro (Drive, PC, etc).");
+        }
+
+        function prepararRestaurarBackup() {
+            var input = document.getElementById("input-restaurar-backup");
+            if (input) input.click();
+        }
+
+        async function restaurarBackupDesdeArchivo(event) {
+            var file = event.target.files[0]; if (!file) return;
+            try {
+                var texto = await file.text();
+                var json = JSON.parse(texto);
+                var datos = json.data || json; // Tolera backups sin el envoltorio "data"
+
+                if (!datos || (!datos.pedidos && !datos.stock && !datos.finanzas && !datos.clientes)) {
+                    showToast("Archivo Inválido", "Ese archivo no es un backup de VESA reconocible.", true);
+                    event.target.value = ''; return;
+                }
+
+                var confirmado = confirm("⚠️ ATENCIÓN: esto va a REEMPLAZAR todos los datos actuales (Pedidos, Clientes, Stock, Caja y Precios) por los del backup. No se puede deshacer.\n\n¿Confirmás que querés continuar?");
+                if (!confirmado) { event.target.value = ''; return; }
+
+                appState.pedidos = datos.pedidos || [];
+                appState.clientes = datos.clientes || [];
+                appState.stock = datos.stock || [];
+                appState.finanzas = datos.finanzas || [];
+                appState.precios = datos.precios || [];
+
+                if (hasFirebase && authUser) {
+                    showToast("Restaurando...", "Subiendo los datos del backup, no cierres la app.");
+                    var colecciones = ['pedidos', 'clientes', 'stock', 'finanzas', 'precios'];
+                    for (var c = 0; c < colecciones.length; c++) {
+                        var col = colecciones[c];
+                        var refColeccion = db.collection('artifacts/' + appId + '/public/data/' + col);
+                        var snapshot = await refColeccion.get();
+                        var docsActuales = snapshot.docs;
+                        for (var i = 0; i < docsActuales.length; i += 400) {
+                            var loteBorrar = docsActuales.slice(i, i + 400);
+                            var batchDel = db.batch();
+                            loteBorrar.forEach(doc => batchDel.delete(doc.ref));
+                            await batchDel.commit();
+                        }
+
+                        var items = appState[col];
+                        for (var j = 0; j < items.length; j += 400) {
+                            var loteNuevo = items.slice(j, j + 400);
+                            var batchAdd = db.batch();
+                            loteNuevo.forEach(item => {
+                                var itemSinDocId = Object.assign({}, item); delete itemSinDocId.docId;
+                                var refNuevo = refColeccion.doc();
+                                batchAdd.set(refNuevo, itemSinDocId);
+                            });
+                            await batchAdd.commit();
+                        }
+                    }
+                } else {
+                    try { saveToLocalStorage(); } catch(e) {}
+                }
+
+                renderAll(); updateCharts();
+                showToast("Backup Restaurado", "Todos los datos fueron reemplazados correctamente.");
+            } catch(e) {
+                console.error(e);
+                showToast("Error al Restaurar", "El archivo no se pudo leer o tiene un formato inválido.", true);
+            }
+            event.target.value = '';
+        }
+
+        function exportarFinanzasCSV() {
+            // NUEVO: separador ";" en vez de "," — así Excel en configuración regional argentina
+            // (donde "," es el separador decimal) reconoce las columnas correctamente y no amontona todo junto.
+            function celdaCSV(valor) {
+                var str = String(valor === undefined || valor === null ? '' : valor);
+                if (/[;"\n]/.test(str)) { return '"' + str.replace(/"/g, '""') + '"'; }
+                return str;
+            }
+            function filaCSV(arr) { return arr.map(celdaCSV).join(';'); }
+
+            var etiquetasTipo = { 'Ingreso': 'Venta / Cobro', 'Egreso': 'Gasto', 'Deuda': 'Pendiente de Cobro', 'Fondo Privado': 'Capital Privado', 'Inversion': 'Capital Privado' };
+            var sumI = 0, sumE = 0, sumD = 0, sumP = 0;
+            appState.finanzas.forEach(function(f) {
+                if (f.tipo === 'Ingreso') sumI += f.monto;
+                else if (f.tipo === 'Egreso') sumE += f.monto;
+                else if (f.tipo === 'Deuda') sumD += f.monto;
+                else sumP += f.monto;
+            });
+
+            var lineas = [];
+            lineas.push(filaCSV(['VESA Core OS — Movimientos de Caja']));
+            lineas.push(filaCSV(['Generado el', new Date().toLocaleString('es-AR')]));
+            lineas.push(filaCSV(['']));
+            lineas.push(filaCSV(['RESUMEN']));
+            lineas.push(filaCSV(['Caja Positiva (Ingresos)', sumI]));
+            lineas.push(filaCSV(['Caja Negativa (Egresos)', sumE]));
+            lineas.push(filaCSV(['Capital Pendiente (Deudas)', sumD]));
+            lineas.push(filaCSV(['Capital Privado', sumP]));
+            lineas.push(filaCSV(['Flujo Libre (Ingresos - Egresos)', sumI - sumE]));
+            lineas.push(filaCSV(['']));
+            lineas.push(filaCSV(['DETALLE DE MOVIMIENTOS (orden cronológico)']));
+            lineas.push(filaCSV(['Fecha', 'Concepto', 'Tipo', 'Medio de Pago', 'Monto']));
+            appState.finanzas.slice().reverse().forEach(function(f) {
+                lineas.push(filaCSV([f.fecha, f.detalle || '', etiquetasTipo[f.tipo] || f.tipo, f.medioPago || '', f.monto]));
+            });
+
+            var csv = lineas.join('\r\n');
+            var blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            var fecha = new Date().toISOString().slice(0, 10);
+            a.href = url; a.download = `vesa-movimientos-caja-${fecha}.csv`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("CSV Descargado", "Con resumen arriba y el detalle ordenado por fecha, listo para abrir en Excel.");
+        }
+
+        // --- IMPORTADOR DE EXCEL/CSV VIEJO (planillas manuales de Santiago) ---
+        var filasImportadasPendientes = [];
+
+        function prepararImportarExcel() {
+            var input = document.getElementById("input-importar-excel");
+            if (input) input.click();
+        }
+
+        function procesarExcelImportado(event) {
+            var file = event.target.files[0]; if (!file) return;
+            if (typeof XLSX === 'undefined') { showToast("Error", "El lector de Excel no cargó (revisá tu conexión a internet).", true); event.target.value = ''; return; }
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var data = new Uint8Array(e.target.result);
+                    var workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    var primeraHoja = workbook.Sheets[workbook.SheetNames[0]];
+                    var filas = XLSX.utils.sheet_to_json(primeraHoja, { defval: "" });
+
+                    if (!filas || filas.length === 0) { showToast("Archivo Vacío", "No se encontraron filas con datos en la primera hoja.", true); event.target.value = ''; return; }
+
+                    filasImportadasPendientes = filas.map(clasificarFilaImportada).filter(function(f) { return f !== null; });
+
+                    if (filasImportadasPendientes.length === 0) { showToast("Sin Datos", "El archivo no tiene filas con contenido reconocible.", true); event.target.value = ''; return; }
+
+                    document.getElementById("import-preview-nombre-archivo").innerText = file.name;
+                    renderVistaPreviaImportacion();
+                    openModal('modalImportarExcel');
+                } catch (err) {
+                    console.error(err);
+                    showToast("Error al Leer", "No se pudo procesar el archivo. Verificá que sea un Excel o CSV válido.", true);
+                }
+                event.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function limpiarNumeroImportado(valor) {
+            if (typeof valor === 'number') return valor;
+            if (!valor) return NaN;
+            var str = String(valor).trim().replace(/[$\s]/g, '');
+            if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(str)) { str = str.replace(/\./g, '').replace(',', '.'); }
+            else if (/^\d+,\d+$/.test(str)) { str = str.replace(',', '.'); }
+            else { str = str.replace(/,/g, ''); }
+            var n = parseFloat(str);
+            return isNaN(n) ? NaN : n;
+        }
+
+        function pareceFechaImportada(valor) {
+            if (valor instanceof Date) return true;
+            var str = String(valor).trim();
+            return /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(str) || /^\d{4}-\d{2}-\d{2}/.test(str);
+        }
+
+        function formatearFechaImportada(valor) {
+            var d = null;
+            if (valor instanceof Date) { d = valor; }
+            else {
+                var str = String(valor).trim();
+                var m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+                if (m) { var yyyy = m[3].length === 2 ? '20' + m[3] : m[3]; d = new Date(parseInt(yyyy), parseInt(m[2]) - 1, parseInt(m[1])); }
+                else { var parsed = new Date(str); if (!isNaN(parsed.getTime())) d = parsed; }
+            }
+            if (!d || isNaN(d.getTime())) return String(valor);
+            return d.toLocaleDateString('es-AR', dateOptions);
+        }
+
+        function clasificarFilaImportada(fila) {
+            var claves = Object.keys(fila);
+            if (claves.length === 0) return null;
+            var valoresTexto = claves.map(function(k) { return String(fila[k]); }).join(' ');
+            if (!valoresTexto.trim()) return null;
+            var textoCompleto = valoresTexto.toLowerCase();
+
+            // --- MONTO: primero busca una columna con nombre obvio, si no, el número más grande de la fila ---
+            var monto = NaN;
+            claves.forEach(function(k) {
+                if (isNaN(monto) && /monto|precio|total|importe|valor|\$/i.test(k)) {
+                    var n = limpiarNumeroImportado(fila[k]);
+                    if (!isNaN(n) && n > 0) monto = n;
+                }
+            });
+            if (isNaN(monto)) {
+                var candidatos = [];
+                claves.forEach(function(k) {
+                    if (pareceFechaImportada(fila[k])) return;
+                    var n = limpiarNumeroImportado(fila[k]);
+                    if (!isNaN(n) && n > 0) candidatos.push(n);
+                });
+                if (candidatos.length > 0) monto = Math.max.apply(null, candidatos);
+            }
+            if (isNaN(monto)) monto = 0;
+
+            // --- FECHA ---
+            var fecha = '';
+            claves.forEach(function(k) { if (!fecha && /fecha|date/i.test(k) && fila[k]) fecha = formatearFechaImportada(fila[k]); });
+            if (!fecha) { claves.forEach(function(k) { if (!fecha && pareceFechaImportada(fila[k])) fecha = formatearFechaImportada(fila[k]); }); }
+            if (!fecha) fecha = new Date().toLocaleDateString('es-AR', dateOptions);
+
+            // --- DETALLE / CLIENTE ---
+            var partesDetalle = [];
+            var tieneClaveCliente = false;
+            claves.forEach(function(k) {
+                var val = fila[k];
+                if (val === '' || val === null || val === undefined) return;
+                if (pareceFechaImportada(val)) return;
+                if (/^[\d.,$\s]+$/.test(String(val))) return; // valores puramente numéricos ya evaluados como monto
+                if (/cliente/i.test(k)) tieneClaveCliente = true;
+                partesDetalle.push(String(val).trim());
+            });
+            var detalle = partesDetalle.join(' — ') || 'Sin descripción';
+
+            // --- CLASIFICACIÓN por palabras clave; si no coincide ninguna, queda "Revisar" para no adivinar mal con la plata ---
+            var tipo = 'Revisar';
+            if (/cobr|venta|ingres|seña|adelant|pago recib|abon/i.test(textoCompleto)) tipo = 'Ingreso';
+            else if (/compra|gasto|egreso|pago a|insumo|tela|tinta|\bluz\b|alquiler|sueldo|flete/i.test(textoCompleto)) tipo = 'Egreso';
+            else if (/deb[eo]|pendiente|fiado|a cobrar|deuda/i.test(textoCompleto)) tipo = 'Deuda';
+            else if (tieneClaveCliente) tipo = 'Pedido';
+
+            return { fecha: fecha, detalle: detalle, monto: monto, tipo: tipo, incluir: true };
+        }
+
+        function renderVistaPreviaImportacion() {
+            var tbody = document.getElementById("import-preview-tbody"); tbody.innerHTML = "";
+            filasImportadasPendientes.forEach(function(f, idx) {
+                tbody.innerHTML += `<tr>
+                    <td><input type="checkbox" ${f.incluir ? 'checked' : ''} onchange="filasImportadasPendientes[${idx}].incluir = this.checked; actualizarResumenImportacion();" style="width:16px; height:16px; accent-color: var(--color-accent);"></td>
+                    <td><input type="text" class="form-control" style="padding:6px 8px; font-size:11px;" value="${sanitizeHTML(f.fecha)}" onchange="filasImportadasPendientes[${idx}].fecha = this.value"></td>
+                    <td><input type="text" class="form-control" style="padding:6px 8px; font-size:11px; min-width:180px;" value="${sanitizeHTML(f.detalle)}" onchange="filasImportadasPendientes[${idx}].detalle = this.value"></td>
+                    <td><input type="number" class="form-control" style="padding:6px 8px; font-size:11px; width:100px; text-align:right;" value="${f.monto}" onchange="filasImportadasPendientes[${idx}].monto = parseFloat(this.value) || 0"></td>
+                    <td>
+                        <select class="form-control" style="padding:6px 8px; font-size:11px;" onchange="filasImportadasPendientes[${idx}].tipo = this.value; actualizarResumenImportacion();">
+                            <option value="Revisar" ${f.tipo === 'Revisar' ? 'selected' : ''}>⚠️ Sin Clasificar</option>
+                            <option value="Pedido" ${f.tipo === 'Pedido' ? 'selected' : ''}>📦 Pedido (Entregado)</option>
+                            <option value="Ingreso" ${f.tipo === 'Ingreso' ? 'selected' : ''}>🟢 Ingreso</option>
+                            <option value="Egreso" ${f.tipo === 'Egreso' ? 'selected' : ''}>🔴 Egreso</option>
+                            <option value="Deuda" ${f.tipo === 'Deuda' ? 'selected' : ''}>🟠 Deuda</option>
+                        </select>
+                    </td>
+                </tr>`;
+            });
+            actualizarResumenImportacion();
+        }
+
+        function actualizarResumenImportacion() {
+            var total = filasImportadasPendientes.length;
+            var incluidas = filasImportadasPendientes.filter(function(f) { return f.incluir; }).length;
+            var sinClasificar = filasImportadasPendientes.filter(function(f) { return f.incluir && f.tipo === 'Revisar'; }).length;
+            var texto = `${incluidas} de ${total} filas seleccionadas.`;
+            if (sinClasificar > 0) texto += ` ⚠️ ${sinClasificar} sin clasificar (no se van a importar hasta que elijas un tipo).`;
+            var el = document.getElementById("import-preview-resumen"); if (el) el.innerText = texto;
+        }
+
+        async function confirmarImportacionExcel() {
+            var filasAImportar = filasImportadasPendientes.filter(function(f) { return f.incluir && f.tipo !== 'Revisar'; });
+            var saltadas = filasImportadasPendientes.filter(function(f) { return f.incluir && f.tipo === 'Revisar'; }).length;
+
+            if (filasAImportar.length === 0) { showToast("Nada para Importar", "No hay filas clasificadas y seleccionadas.", true); return; }
+
+            var btn = document.getElementById("btn-confirmar-importacion");
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importando...'; }
+
+            var nuevosFinanzas = []; var nuevosPedidos = [];
+            var maxFinId = 0; appState.finanzas.forEach(function(f) { if (f.id && !isNaN(f.id) && f.id > maxFinId) maxFinId = f.id; });
+            var maxPedId = 999; appState.pedidos.forEach(function(p) { if (p.id && !isNaN(p.id) && p.id > maxPedId) maxPedId = p.id; });
+
+            filasAImportar.forEach(function(f) {
+                if (f.tipo === 'Pedido') {
+                    maxPedId++;
+                    nuevosPedidos.push({
+                        id: maxPedId, cliente: f.detalle || 'Cliente Importado', detalle: f.detalle,
+                        estado: 'Entregado', monto: f.monto, sena: f.monto, saldo: 0, items: [],
+                        fecha: f.fecha, timestamp: Date.now(),
+                        tipoEntrega: 'Importado', horaEntrega: 'Dato histórico', medioPago: 'Efectivo',
+                        arte: [], costoTotal: 0, importadoDeExcel: true
+                    });
+                } else {
+                    maxFinId++;
+                    nuevosFinanzas.push({ id: maxFinId, tipo: f.tipo, detalle: f.detalle, monto: f.monto, fecha: f.fecha, medioPago: 'Efectivo', importadoDeExcel: true });
+                }
+            });
+
+            // 1. ACTUALIZACIÓN OPTIMISTA (nunca toca Stock: son datos históricos)
+            nuevosPedidos.forEach(function(p) { appState.pedidos.unshift(p); });
+            nuevosFinanzas.forEach(function(f) { appState.finanzas.unshift(f); });
+
+            // 2. SINCRONIZACIÓN
+            if (hasFirebase && authUser) {
+                try {
+                    var refPed = db.collection('artifacts/' + appId + '/public/data/pedidos');
+                    for (var i = 0; i < nuevosPedidos.length; i += 400) {
+                        var lotePed = nuevosPedidos.slice(i, i + 400);
+                        var batchPed = db.batch();
+                        lotePed.forEach(function(p) { batchPed.set(refPed.doc(), p); });
+                        await batchPed.commit();
+                    }
+                    var refFin = db.collection('artifacts/' + appId + '/public/data/finanzas');
+                    for (var j = 0; j < nuevosFinanzas.length; j += 400) {
+                        var loteFin = nuevosFinanzas.slice(j, j + 400);
+                        var batchFin = db.batch();
+                        loteFin.forEach(function(f) { batchFin.set(refFin.doc(), f); });
+                        await batchFin.commit();
+                    }
+                } catch (e) { console.error(e); }
+            } else {
+                try { saveToLocalStorage(); } catch (e) {}
+            }
+
+            renderAll(); updateCharts();
+            closeModal('modalImportarExcel');
+            filasImportadasPendientes = [];
+
+            var msg = `${nuevosPedidos.length} pedido(s) y ${nuevosFinanzas.length} movimiento(s) de Caja importados.`;
+            if (saltadas > 0) msg += ` ${saltadas} fila(s) sin clasificar se omitieron.`;
+            showToast("Importación Completa", msg);
+
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar Importación'; }
+        }
+
         // --- CRUD STOCK ---
         async function guardarStock() {
             var nombre = document.getElementById("form-stk-nombre").value; 
             var talle = document.getElementById("form-stk-talle").value || "U"; 
             var cant = parseInt(document.getElementById("form-stk-cant").value) || 0; 
             var min = parseInt(document.getElementById("form-stk-min").value) || 0;
-            
+            var costo = parseFloat(document.getElementById("form-stk-costo").value) || 0;
             if (!nombre) { showToast("Error", "Falta nombre del artículo.", true); return; }
 
             const isOneOffEl = document.getElementById("form-stk-oneoff");
@@ -2720,7 +3481,7 @@
                 returnToPedidoModalFromStock = false; document.getElementById("form-stk-nombre").value = ""; showToast("Insumo Especial", `Prenda única cargada al carrito.`); return; 
             }
 
-            var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min };
+            var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min, costo: costo };
             
             // ACTUALIZACIÓN OPTIMISTA
             appState.stock.push(nuevoInsumo); 
@@ -2745,20 +3506,21 @@
                 returnToPedidoModalFromStock = false;
             } else { closeModal('modalStock'); }
 
-            document.getElementById("form-stk-nombre").value = ""; document.getElementById("form-stk-talle").value = ""; document.getElementById("form-stk-cant").value = "";
+            document.getElementById("form-stk-nombre").value = ""; document.getElementById("form-stk-talle").value = ""; document.getElementById("form-stk-cant").value = ""; document.getElementById("form-stk-costo").value = "";
             renderAll(); showToast("Cargado", `Lote ingresado al almacén.`);
         }
 
         function abrirEditarStock(docId, localId) {
             var s = appState.stock.find(x => x.id === localId); if (!s) return;
             document.getElementById("edit-stk-id-doc").value = docId || ''; document.getElementById("edit-stk-id-local").value = localId;
-            document.getElementById("edit-stk-nombre").value = s.item; document.getElementById("edit-stk-talle").value = s.talle; document.getElementById("edit-stk-cant").value = s.cantidad; document.getElementById("edit-stk-min").value = s.minimo; openModal('modalEditStock');
+            document.getElementById("edit-stk-nombre").value = s.item; document.getElementById("edit-stk-talle").value = s.talle; document.getElementById("edit-stk-cant").value = s.cantidad; document.getElementById("edit-stk-min").value = s.minimo; document.getElementById("edit-stk-costo").value = s.costo || 0; openModal('modalEditStock');
         }
 
         async function guardarEdicionStock() {
             var docId = document.getElementById("edit-stk-id-doc").value; var localId = parseInt(document.getElementById("edit-stk-id-local").value);
             var nombre = document.getElementById("edit-stk-nombre").value; var talle = document.getElementById("edit-stk-talle").value; var cant = parseInt(document.getElementById("edit-stk-cant").value) || 0; var min = parseInt(document.getElementById("edit-stk-min").value) || 0;
-            var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min };
+            var costo = parseFloat(document.getElementById("edit-stk-costo").value) || 0;
+            var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min, costo: costo };
             
             // ACTUALIZACIÓN OPTIMISTA
             var idx = appState.stock.findIndex(x => x.id === localId); 

@@ -816,6 +816,7 @@
                             <select class="form-control" id="form-ped-metodopago">
                                 <option value="Mercado Pago" selected>Mercado Pago</option>
                                 <option value="Transferencia">Transferencia</option>
+                                <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
                                 <option value="Efectivo">Efectivo</option>
                             </select>
                         </div>
@@ -1002,7 +1003,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Operación</label>
-                    <select class="form-control" id="form-fin-tipo">
+                    <select class="form-control" id="form-fin-tipo" onchange="actualizarPreviewNetoFinanzas('form')">
                         <option value="Ingreso">Ingreso (+)</option>
                         <option value="Egreso">Egreso (-)</option>
                         <option value="Deuda">Cuenta por Cobrar (*)</option>
@@ -1010,10 +1011,20 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Monto ($)</label>
-                    <input type="number" class="form-control" id="form-fin-monto">
+                    <label>Monto Cobrado ($)</label>
+                    <input type="number" class="form-control" id="form-fin-monto" oninput="actualizarPreviewNetoFinanzas('form')">
                 </div>
             </div>
+            <div class="form-group">
+                <label>Medio de Pago</label>
+                <select class="form-control" id="form-fin-metodopago" onchange="actualizarPreviewNetoFinanzas('form')">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Mercado Pago">Mercado Pago</option>
+                    <option value="Transferencia">Transferencia (se descuenta 1,5%)</option>
+                    <option value="Tarjeta de Crédito">Tarjeta de Crédito (se descuenta 35%)</option>
+                </select>
+            </div>
+            <div id="form-fin-preview-neto" style="display:none; font-size:12px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:8px 12px; color:var(--color-warning);"></div>
             <div class="form-group">
                 <label>Concepto</label>
                 <input type="text" class="form-control" id="form-fin-detalle" list="finanzas-detalle-datalist" autocomplete="off">
@@ -1182,7 +1193,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Operación</label>
-                    <select class="form-control" id="edit-fin-tipo">
+                    <select class="form-control" id="edit-fin-tipo" onchange="actualizarPreviewNetoFinanzas('edit')">
                         <option value="Ingreso">Ingreso (+)</option>
                         <option value="Egreso">Egreso (-)</option>
                         <option value="Deuda">Cuenta por Cobrar (*)</option>
@@ -1190,10 +1201,20 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Monto ($)</label>
-                    <input type="number" class="form-control" id="edit-fin-monto">
+                    <label>Monto Cobrado ($)</label>
+                    <input type="number" class="form-control" id="edit-fin-monto" oninput="actualizarPreviewNetoFinanzas('edit')">
                 </div>
             </div>
+            <div class="form-group">
+                <label>Medio de Pago</label>
+                <select class="form-control" id="edit-fin-metodopago" onchange="actualizarPreviewNetoFinanzas('edit')">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Mercado Pago">Mercado Pago</option>
+                    <option value="Transferencia">Transferencia (se descuenta 1,5%)</option>
+                    <option value="Tarjeta de Crédito">Tarjeta de Crédito (se descuenta 35%)</option>
+                </select>
+            </div>
+            <div id="edit-fin-preview-neto" style="display:none; font-size:12px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:8px 12px; color:var(--color-warning);"></div>
             <div class="form-group">
                 <label>Concepto</label>
                 <input type="text" class="form-control" id="edit-fin-detalle" list="finanzas-detalle-datalist" autocomplete="off">
@@ -1407,6 +1428,14 @@
         var returnToPedidoModalFromStock = false;
 
         var currentOrderItems = [];
+
+        // NUEVO: Comisiones de medios de pago — se descuentan automáticamente al registrar un Ingreso
+        var COMISIONES_MEDIO_PAGO = { 'Transferencia': 0.015, 'Tarjeta de Crédito': 0.35 };
+        function calcularNetoPorMedioPago(montoBruto, medioPago) {
+            var tasa = COMISIONES_MEDIO_PAGO[medioPago] || 0;
+            var comision = Math.round(montoBruto * tasa);
+            return { neto: montoBruto - comision, comision: comision, tasa: tasa };
+        }
         var finanzasFiltro = null; // NUEVO: null = sin filtro. Valores posibles: 'Ingreso', 'Egreso', 'Deuda', 'Privado', 'Flujo'
         var tempStockItems = [];
 
@@ -2151,7 +2180,8 @@
 
                 if (!pasaFiltroCaja(f)) return; // El movimiento cuenta para los totales de arriba, pero no se lista si no pasa el filtro activo
 
-                tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<span style="font-weight:700; color:white;">${sanitizeHTML(f.detalle)}</span></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${f.tipo === 'Deuda' ? `<button class="btn btn-small" style="background:var(--color-success); color:black; border:none;" onclick="cobrarDeuda(${docIdSegura}, ${f.id})" title="Marcar deuda como cobrada a favor"><i class="fa-solid fa-check"></i></button>` : ''}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarFinanzas(${docIdSegura}, ${f.id})" title="Editar monto o detalle del registro"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarFinanzas(${docIdSegura}, ${f.id})" title="Eliminar registro contable"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                var notaComision = (f.comision && f.comision > 0) ? `<div style="font-size:10px; color:var(--color-warning); margin-top:2px;" title="Se cobraron $${(f.montoBruto || 0).toLocaleString('es-AR')} brutos, se descontó comisión de ${f.medioPago}"><i class="fa-solid fa-circle-info"></i> Neto (-$${f.comision.toLocaleString('es-AR')} comisión)</div>` : '';
+                tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<div><span style="font-weight:700; color:white;">${sanitizeHTML(f.detalle)}</span>${notaComision}</div></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${f.tipo === 'Deuda' ? `<button class="btn btn-small" style="background:var(--color-success); color:black; border:none;" onclick="cobrarDeuda(${docIdSegura}, ${f.id})" title="Marcar deuda como cobrada a favor"><i class="fa-solid fa-check"></i></button>` : ''}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarFinanzas(${docIdSegura}, ${f.id})" title="Editar monto o detalle del registro"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarFinanzas(${docIdSegura}, ${f.id})" title="Eliminar registro contable"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
             if (tbodyMain.innerHTML === "") {
                 var msgVacio = finanzasFiltro ? "No hay movimientos en esta categoría." : "Libro contable vacío.";
@@ -2571,10 +2601,13 @@
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
             let maxFinId = 0;
             appState.finanzas.forEach(f => { if(f.id && !isNaN(f.id) && f.id > maxFinId) maxFinId = f.id; });
+            // NUEVO: si el saldo final se cobró por Transferencia o Tarjeta, se descuenta la comisión antes de asentarlo en Caja
+            var medioPagoFinal = pedido.medioPago || 'Efectivo';
+            var calculoSaldo = calcularNetoPorMedioPago(saldoPendiente, medioPagoFinal);
             var nuevaFinanza = {
                 id: maxFinId + 1,
                 tipo: "Ingreso", detalle: `Saldo Final Pedido #${pedido.id} (${pedido.cliente}) - Entregado`,
-                monto: saldoPendiente, fecha: hoy, medioPago: pedido.medioPago || 'Efectivo'
+                monto: calculoSaldo.neto, montoBruto: saldoPendiente, comision: calculoSaldo.comision, fecha: hoy, medioPago: medioPagoFinal
             };
 
             pedido.sena = pedido.monto;
@@ -2677,10 +2710,12 @@
                 if (estado !== "Presupuesto" && sena > 0) {
                     let maxFinId = 0;
                     appState.finanzas.forEach(f => { if(f.id && !isNaN(f.id) && f.id > maxFinId) maxFinId = f.id; });
+                    // NUEVO: si la seña se cobró por Transferencia o Tarjeta, se descuenta la comisión antes de asentarla en Caja (el pedido sigue registrando la seña a valor de cara)
+                    var calculoSena = calcularNetoPorMedioPago(sena, mediopago);
                     nuevaFinanza = {
                         id: maxFinId + 1, 
                         tipo: "Ingreso", detalle: `Seña Pedido #${nuevoId} (${cliente})`, 
-                        monto: sena, fecha: hoy, medioPago: mediopago
+                        monto: calculoSena.neto, montoBruto: sena, comision: calculoSena.comision, fecha: hoy, medioPago: mediopago
                     };
                 }
 
@@ -2850,10 +2885,13 @@
                         var hoyEdicion = new Date().toLocaleDateString('es-AR', dateOptions);
                         let maxFinIdEdicion = 0;
                         appState.finanzas.forEach(f => { if(f.id && !isNaN(f.id) && f.id > maxFinIdEdicion) maxFinIdEdicion = f.id; });
+                        // NUEVO: si el saldo se cobró por Transferencia o Tarjeta, se descuenta la comisión antes de asentarlo en Caja
+                        var medioPagoEdicion = appState.pedidos[idx].medioPago || 'Efectivo';
+                        var calculoSaldoEdicion = calcularNetoPorMedioPago(saldoPendienteEdicion, medioPagoEdicion);
                         var nuevaFinanzaEdicion = {
                             id: maxFinIdEdicion + 1,
                             tipo: "Ingreso", detalle: `Saldo Final Pedido #${localId} (${cliente}) - Entregado`,
-                            monto: saldoPendienteEdicion, fecha: hoyEdicion, medioPago: appState.pedidos[idx].medioPago || 'Efectivo'
+                            monto: calculoSaldoEdicion.neto, montoBruto: saldoPendienteEdicion, comision: calculoSaldoEdicion.comision, fecha: hoyEdicion, medioPago: medioPagoEdicion
                         };
                         appState.finanzas.unshift(nuevaFinanzaEdicion);
 
@@ -3194,12 +3232,36 @@
         }
 
         // --- CRUD FINANZAS ---
-        function abrirAgregarFinanzasRapido(tipo) { document.getElementById("form-fin-tipo").value = tipo; document.getElementById("form-fin-monto").value = ""; document.getElementById("form-fin-detalle").value = ""; openModal("modalFinanzas"); }
+        // NUEVO: Muestra en vivo cuánto se descuenta de comisión según el medio de pago elegido
+        function actualizarPreviewNetoFinanzas(prefijo) {
+            var elTipo = document.getElementById(prefijo + "-fin-tipo"); var elMonto = document.getElementById(prefijo + "-fin-monto"); var elMedio = document.getElementById(prefijo + "-fin-metodopago"); var previewEl = document.getElementById(prefijo + "-fin-preview-neto");
+            if (!elTipo || !elMonto || !elMedio || !previewEl) return;
+            var tipo = elTipo.value; var monto = parseFloat(elMonto.value) || 0; var medioPago = elMedio.value;
+
+            if (tipo === 'Ingreso' && COMISIONES_MEDIO_PAGO[medioPago] && monto > 0) {
+                var calculo = calcularNetoPorMedioPago(monto, medioPago);
+                previewEl.style.display = 'block';
+                previewEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Se descuenta ${(calculo.tasa * 100).toLocaleString('es-AR')}% de comisión ($${calculo.comision.toLocaleString('es-AR')}). Neto a registrar en Caja: <strong>$${calculo.neto.toLocaleString('es-AR')}</strong>`;
+            } else {
+                previewEl.style.display = 'none';
+            }
+        }
+        window.actualizarPreviewNetoFinanzas = actualizarPreviewNetoFinanzas;
+
+        function abrirAgregarFinanzasRapido(tipo) { document.getElementById("form-fin-tipo").value = tipo; document.getElementById("form-fin-monto").value = ""; document.getElementById("form-fin-detalle").value = ""; document.getElementById("form-fin-metodopago").value = "Efectivo"; document.getElementById("form-fin-preview-neto").style.display = 'none'; openModal("modalFinanzas"); }
         async function guardarFinanzas() {
-            var tipo = document.getElementById("form-fin-tipo").value; var monto = parseInt(document.getElementById("form-fin-monto").value) || 0; var detalle = document.getElementById("form-fin-detalle").value; var mediopago = document.getElementById("form-fin-metodopago") ? document.getElementById("form-fin-metodopago").value : "Mercado Pago";
-            if (!detalle || monto <= 0) { showToast("Error", "Asiento contable inválido.", true); return; }
+            var tipo = document.getElementById("form-fin-tipo").value; var montoBruto = parseInt(document.getElementById("form-fin-monto").value) || 0; var detalle = document.getElementById("form-fin-detalle").value; var mediopago = document.getElementById("form-fin-metodopago") ? document.getElementById("form-fin-metodopago").value : "Efectivo";
+            if (!detalle || montoBruto <= 0) { showToast("Error", "Asiento contable inválido.", true); return; }
+
+            // NUEVO: si es un Ingreso por Transferencia o Tarjeta de Crédito, se descuenta la comisión antes de asentarlo en Caja
+            var monto = montoBruto; var comisionAplicada = 0;
+            if (tipo === 'Ingreso' && COMISIONES_MEDIO_PAGO[mediopago]) {
+                var calculo = calcularNetoPorMedioPago(montoBruto, mediopago);
+                monto = calculo.neto; comisionAplicada = calculo.comision;
+            }
+
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
-            var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, fecha: hoy, medioPago: mediopago };
+            var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, montoBruto: montoBruto, comision: comisionAplicada, fecha: hoy, medioPago: mediopago };
             
             // ACTUALIZACIÓN OPTIMISTA
             appState.finanzas.unshift(nuevaFin); 
@@ -3209,19 +3271,31 @@
             } else { 
                 try{ saveToLocalStorage(); }catch(e){} 
             }
-            closeModal('modalFinanzas'); renderAll(); updateCharts(); showToast("Libro Actualizado", `Transacción procesada.`);
+            closeModal('modalFinanzas'); renderAll(); updateCharts(); 
+            if (comisionAplicada > 0) { showToast("Libro Actualizado", `Se acreditaron $${monto.toLocaleString('es-AR')} netos (se descontó $${comisionAplicada.toLocaleString('es-AR')} de comisión).`); }
+            else { showToast("Libro Actualizado", `Transacción procesada.`); }
         }
 
         function abrirEditarFinanzas(docId, localId) {
             var f = appState.finanzas.find(x => x.id === localId); if (!f) return;
             document.getElementById("edit-fin-id-doc").value = docId || ''; document.getElementById("edit-fin-id-local").value = localId;
-            document.getElementById("edit-fin-tipo").value = f.tipo; document.getElementById("edit-fin-monto").value = f.monto; document.getElementById("edit-fin-detalle").value = f.detalle; openModal('modalEditFinanzas');
+            document.getElementById("edit-fin-tipo").value = f.tipo; document.getElementById("edit-fin-monto").value = (f.montoBruto !== undefined ? f.montoBruto : f.monto); document.getElementById("edit-fin-detalle").value = f.detalle; document.getElementById("edit-fin-metodopago").value = f.medioPago || 'Efectivo';
+            actualizarPreviewNetoFinanzas('edit');
+            openModal('modalEditFinanzas');
         }
 
         async function guardarEdicionFinanzas() {
             var docId = document.getElementById("edit-fin-id-doc").value; var localId = parseInt(document.getElementById("edit-fin-id-local").value);
-            var tipo = document.getElementById("edit-fin-tipo").value; var monto = parseInt(document.getElementById("edit-fin-monto").value) || 0; var detalle = document.getElementById("edit-fin-detalle").value;
-            var updatedData = { tipo: tipo, monto: monto, detalle: detalle };
+            var tipo = document.getElementById("edit-fin-tipo").value; var montoBruto = parseInt(document.getElementById("edit-fin-monto").value) || 0; var detalle = document.getElementById("edit-fin-detalle").value;
+            var mediopago = document.getElementById("edit-fin-metodopago") ? document.getElementById("edit-fin-metodopago").value : "Efectivo";
+
+            var monto = montoBruto; var comisionAplicada = 0;
+            if (tipo === 'Ingreso' && COMISIONES_MEDIO_PAGO[mediopago]) {
+                var calculo = calcularNetoPorMedioPago(montoBruto, mediopago);
+                monto = calculo.neto; comisionAplicada = calculo.comision;
+            }
+
+            var updatedData = { tipo: tipo, monto: monto, montoBruto: montoBruto, comision: comisionAplicada, detalle: detalle, medioPago: mediopago };
             
             // ACTUALIZACIÓN OPTIMISTA
             var idx = appState.finanzas.findIndex(x => x.id === localId); 
@@ -3251,13 +3325,20 @@
 
         async function cobrarDeuda(docId, localId) {
             var findItem = appState.finanzas.find(x => x.id === localId); if (!findItem) return;
-            var updatedData = { tipo: "Ingreso", detalle: "Cobro Acreditado: " + findItem.detalle };
+            // NUEVO: si la deuda se cobra por Transferencia o Tarjeta, se descuenta la comisión antes de acreditarla en Caja
+            var montoBrutoDeuda = findItem.montoBruto !== undefined ? findItem.montoBruto : findItem.monto;
+            var medioPagoDeuda = findItem.medioPago || 'Efectivo';
+            var calculoDeuda = calcularNetoPorMedioPago(montoBrutoDeuda, medioPagoDeuda);
+            var updatedData = { tipo: "Ingreso", detalle: "Cobro Acreditado: " + findItem.detalle, monto: calculoDeuda.neto, montoBruto: montoBrutoDeuda, comision: calculoDeuda.comision };
             
             // ACTUALIZACIÓN OPTIMISTA
             var idx = appState.finanzas.findIndex(x => x.id === localId); 
             if (idx !== -1) { 
                 appState.finanzas[idx].tipo = "Ingreso"; 
                 appState.finanzas[idx].detalle = "Cobro Acreditado: " + appState.finanzas[idx].detalle; 
+                appState.finanzas[idx].monto = calculoDeuda.neto;
+                appState.finanzas[idx].montoBruto = montoBrutoDeuda;
+                appState.finanzas[idx].comision = calculoDeuda.comision;
             }
 
             if (hasFirebase && authUser && docId) { 
@@ -3265,7 +3346,9 @@
             } else { 
                 try{ saveToLocalStorage(); }catch(e){} 
             }
-            renderAll(); updateCharts(); showToast("Acreditado", "La cuenta se cobró con éxito.");
+            renderAll(); updateCharts(); 
+            if (calculoDeuda.comision > 0) { showToast("Acreditado", `Se acreditaron $${calculoDeuda.neto.toLocaleString('es-AR')} netos (se descontó $${calculoDeuda.comision.toLocaleString('es-AR')} de comisión).`); }
+            else { showToast("Acreditado", "La cuenta se cobró con éxito."); }
         }
 
         // --- BACKUP: Exportar / Restaurar / CSV ---
@@ -3384,9 +3467,9 @@
             lineas.push(filaCSV(['Flujo Libre (Ingresos - Egresos)', sumI - sumE]));
             lineas.push(filaCSV(['']));
             lineas.push(filaCSV(['DETALLE DE MOVIMIENTOS (orden cronológico)']));
-            lineas.push(filaCSV(['Fecha', 'Concepto', 'Tipo', 'Medio de Pago', 'Monto']));
+            lineas.push(filaCSV(['Fecha', 'Concepto', 'Tipo', 'Medio de Pago', 'Monto Bruto', 'Comisión Descontada', 'Monto Neto']));
             appState.finanzas.slice().reverse().forEach(function(f) {
-                lineas.push(filaCSV([f.fecha, f.detalle || '', etiquetasTipo[f.tipo] || f.tipo, f.medioPago || '', f.monto]));
+                lineas.push(filaCSV([f.fecha, f.detalle || '', etiquetasTipo[f.tipo] || f.tipo, f.medioPago || '', (f.montoBruto !== undefined ? f.montoBruto : f.monto), (f.comision || 0), f.monto]));
             });
 
             var csv = lineas.join('\r\n');

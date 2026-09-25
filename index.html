@@ -106,6 +106,8 @@
         .menu-item:hover { background: rgba(255,255,255,0.03); color: var(--color-text-primary); }
         .menu-item.active { background: linear-gradient(90deg, rgba(56, 189, 248, 0.1), transparent); border-left: 3px solid var(--color-accent); color: var(--color-text-primary); }
         .menu-item.active i { color: var(--color-accent); }
+        .menu-group-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--color-text-secondary); opacity: 0.55; padding: 16px 18px 6px; }
+        .menu-list li:first-child .menu-group-label { padding-top: 4px; }
         
         .user-profile { display: flex; align-items: center; gap: 14px; border-top: 1px solid var(--border-glass); padding-top: 24px; position: relative;}
         .avatar { width: 42px; height: 42px; background: linear-gradient(135deg, var(--color-accent), var(--color-purple)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #000; font-size: 16px; }
@@ -342,13 +344,19 @@
                 <span class="brand-sub">Core Operations</span>
                 <ul class="menu-list">
                     <li><a class="menu-item active" onclick="switchTab('dashboard')" title="Panel principal con métricas de salud del taller"><i class="fa-solid fa-chart-pie"></i> Inicio</a></li>
+
+                    <li class="menu-group-label">Producción</li>
                     <li><a class="menu-item" onclick="switchTab('pedidos')" title="Historial completo y búsqueda de órdenes de trabajo"><i class="fa-solid fa-folder-open"></i> Pedidos</a></li>
                     <li><a class="menu-item" onclick="switchTab('kanban')" title="Vista Kanban interactiva para gestión de producción"><i class="fa-solid fa-layer-group"></i> Tablero</a></li>
                     <li><a class="menu-item" onclick="switchTab('clientes')" title="Directorio de clientes y accesos directos de contacto"><i class="fa-solid fa-address-book"></i> Clientes</a></li>
                     <li><a class="menu-item" onclick="switchTab('stock')" title="Auditoría de insumos, materias primas y alertas de faltantes"><i class="fa-solid fa-boxes-stacked"></i> Stock</a></li>
+
+                    <li class="menu-group-label">Finanzas</li>
+                    <li><a class="menu-item" onclick="switchTab('finanzas')" title="Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
                     <li><a class="menu-item" onclick="switchTab('gastos-insumos')" title="Cuánto se invirtió en materiales para el taller"><i class="fa-solid fa-receipt"></i> Gastos de Insumos</a></li>
                     <li><a class="menu-item" onclick="switchTab('precios')" title="Lista de precios de productos y servicios"><i class="fa-solid fa-tags"></i> Lista de Precios</a></li>
-                    <li><a class="menu-item" onclick="switchTab('finanzas')" title="Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
+
+                    <li class="menu-group-label">Sistema</li>
                     <li><a class="menu-item" onclick="switchTab('backup')" title="Copia de seguridad y exportación de todos los datos del taller"><i class="fa-solid fa-cloud-arrow-down"></i> Backup</a></li>
                 </ul>
             </div>

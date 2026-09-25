@@ -2584,7 +2584,10 @@
 
             if (nuevosParaAvisar.length > 0) {
                 var titulo = nuevosParaAvisar.length === 1 ? "⚠️ Stock bajo: " + nuevosParaAvisar[0].item : "⚠️ " + nuevosParaAvisar.length + " insumos con stock bajo";
-                var cuerpo = nuevosParaAvisar.map(function(s) { return s.item + " (" + s.talle + "): quedan " + s.cantidad; }).join(", ");
+                // NUEVO: un insumo por línea (en vez de todo junto separado por comas), y se corta en 5 para que no quede gigante
+                var LIMITE_LINEAS = 5;
+                var cuerpo = nuevosParaAvisar.slice(0, LIMITE_LINEAS).map(function(s) { return "• " + s.item + " (" + s.talle + "): quedan " + s.cantidad; }).join("\n");
+                if (nuevosParaAvisar.length > LIMITE_LINEAS) { cuerpo += "\n… y " + (nuevosParaAvisar.length - LIMITE_LINEAS) + " más"; }
                 navigator.serviceWorker.ready.then(function(reg) {
                     reg.showNotification(titulo, { body: cuerpo, icon: 'icon-192.png', badge: 'badge-96.png', tag: 'vesa-stock-alerta' });
                 }).catch(function() {});

@@ -346,6 +346,7 @@
                     <li><a class="menu-item" onclick="switchTab('kanban')" title="Vista Kanban interactiva para gestión de producción"><i class="fa-solid fa-layer-group"></i> Tablero</a></li>
                     <li><a class="menu-item" onclick="switchTab('clientes')" title="Directorio de clientes y accesos directos de contacto"><i class="fa-solid fa-address-book"></i> Clientes</a></li>
                     <li><a class="menu-item" onclick="switchTab('stock')" title="Auditoría de insumos, materias primas y alertas de faltantes"><i class="fa-solid fa-boxes-stacked"></i> Stock</a></li>
+                    <li><a class="menu-item" onclick="switchTab('gastos-insumos')" title="Cuánto se invirtió en materiales para el taller"><i class="fa-solid fa-receipt"></i> Gastos de Insumos</a></li>
                     <li><a class="menu-item" onclick="switchTab('precios')" title="Lista de precios de productos y servicios"><i class="fa-solid fa-tags"></i> Lista de Precios</a></li>
                     <li><a class="menu-item" onclick="switchTab('finanzas')" title="Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
                     <li><a class="menu-item" onclick="switchTab('backup')" title="Copia de seguridad y exportación de todos los datos del taller"><i class="fa-solid fa-cloud-arrow-down"></i> Backup</a></li>
@@ -559,6 +560,36 @@
                             <table>
                                 <thead><tr><th>SKU</th><th>Artículo Base</th><th>Formato</th><th>Existencias</th><th>Mínimo Seguro</th><th>Costo Unit.</th><th>Estado</th><th>Auditar</th></tr></thead>
                                 <tbody id="stock-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NUEVO: VISTA GASTOS DE INSUMOS — pestaña propia e independiente de Caja, registra qué se compró -->
+                <div id="section-gastos-insumos" class="view-section">
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-receipt"></i> Gastos de Insumos</h3>
+                            <button class="btn btn-primary btn-small" onclick="openModal('modalGastoInsumo')" title="Registrar una compra de materiales para el taller"><i class="fa-solid fa-plus"></i> Registrar Gasto</button>
+                        </div>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:16px; margin-bottom:16px;">
+                            <div>
+                                <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Total Invertido (Histórico)</div>
+                                <div style="font-size:22px; font-weight:800; font-family:'Space Mono'; color:var(--color-danger);" id="gastos-insumos-total-historico">$0</div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Este Mes</div>
+                                <div style="font-size:22px; font-weight:800; font-family:'Space Mono'; color:var(--color-warning);" id="gastos-insumos-total-mes">$0</div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Compras Registradas</div>
+                                <div style="font-size:22px; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);" id="gastos-insumos-cantidad">0</div>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Fecha</th><th>Qué se compró</th><th>Proveedor</th><th>Medio de Pago</th><th style="text-align:right;">Monto</th><th style="text-align:right;">Acciones</th></tr></thead>
+                                <tbody id="gastos-insumos-tbody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -1068,6 +1099,75 @@
         </div>
     </div>
 
+    <!-- NUEVO: Gastos de Insumos — alta y edición -->
+    <div class="modal-overlay" id="modalGastoInsumo">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Registrar Gasto de Insumo</h3>
+                <button class="modal-close" onclick="closeModal('modalGastoInsumo')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Qué se compró</label>
+                <input type="text" class="form-control" id="form-gasto-insumo" list="stock-nombre-datalist" placeholder="Ej: Tela para pantalla, Tinta plastisol blanca..." autocomplete="off">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Proveedor (opcional)</label>
+                    <input type="text" class="form-control" id="form-gasto-proveedor" placeholder="Ej: Distribuidora XYZ">
+                </div>
+                <div class="form-group">
+                    <label>Monto ($)</label>
+                    <input type="number" class="form-control" id="form-gasto-monto">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Medio de Pago</label>
+                <select class="form-control" id="form-gasto-metodopago">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Mercado Pago">Mercado Pago</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="guardarGastoInsumo()" style="margin-top:8px; justify-content:center;">Registrar Gasto</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEditGastoInsumo">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Gasto de Insumo</h3>
+                <button class="modal-close" onclick="closeModal('modalEditGastoInsumo')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="edit-gasto-id-doc">
+            <input type="hidden" id="edit-gasto-id-local">
+            <div class="form-group">
+                <label>Qué se compró</label>
+                <input type="text" class="form-control" id="edit-gasto-insumo" list="stock-nombre-datalist" autocomplete="off">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Proveedor (opcional)</label>
+                    <input type="text" class="form-control" id="edit-gasto-proveedor">
+                </div>
+                <div class="form-group">
+                    <label>Monto ($)</label>
+                    <input type="number" class="form-control" id="edit-gasto-monto">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Medio de Pago</label>
+                <select class="form-control" id="edit-gasto-metodopago">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Mercado Pago">Mercado Pago</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="guardarEdicionGastoInsumo()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalPrecio">
         <div class="modal-box">
             <div class="modal-header">
@@ -1285,6 +1385,13 @@
                     <button type="button" class="btn btn-small" style="flex-shrink:0;" onclick="guardarNumeroWhatsAppAlertas()" title="Guardar este número para el botón 'Avisar por WhatsApp'"><i class="fa-solid fa-check"></i></button>
                 </div>
             </div>
+            <div class="form-group">
+                <label>Desbloqueo por Huella / Face ID (este dispositivo)</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" class="form-control" id="config-huella-estado" readonly>
+                    <button type="button" class="btn btn-small" id="btn-config-huella" style="flex-shrink:0;" onclick="toggleHuellaDesdeConfig()"></button>
+                </div>
+            </div>
             <div style="display:flex;gap:10px; margin-top: 8px;">
                 <button type="button" class="btn" style="flex:1; justify-content:center; background:rgba(245,158,11,0.1); color:var(--color-warning); border-color:rgba(245,158,11,0.3);" onclick="cerrarSesion()" title="Cerrar tu sesión en este dispositivo"><i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión</button>
                 <button type="button" class="btn btn-danger" onclick="limpiarConfigFirebaseCustom()" style="flex:1; justify-content:center;" title="Fuerza un reinicio de la conexión segura"><i class="fa-solid fa-rotate-left"></i> Resetear Red</button>
@@ -1451,9 +1558,10 @@
                 { id: 3, item: "Gorra Trucker", talle: "U", cantidad: 100, minimo: 20 }
             ], 
             finanzas: [],
-            precios: []
+            precios: [],
+            gastosInsumos: []
         };
-        var appState = { pedidos: [], clientes: [], stock: [], finanzas: [], precios: [] };
+        var appState = { pedidos: [], clientes: [], stock: [], finanzas: [], precios: [], gastosInsumos: [] };
 
         function playVoiceReport(text) {
             if ('speechSynthesis' in window) {
@@ -1835,6 +1943,42 @@
         }
         window.activarDesbloqueoHuella = activarDesbloqueoHuella;
 
+        // NUEVO: activar/desactivar la huella a mano desde Configuración, sin depender del aviso automático (que solo aparece una vez)
+        async function toggleHuellaDesdeConfig() {
+            var tieneCredencial = !!localStorage.getItem('vesa_huella_credencial_id');
+            if (tieneCredencial) {
+                localStorage.removeItem('vesa_huella_credencial_id');
+                showToast("Huella Desactivada", "Este dispositivo ya no va a pedir huella para entrar.");
+            } else {
+                localStorage.setItem('vesa_huella_preguntado', '1');
+                await activarDesbloqueoHuella();
+            }
+            actualizarEstadoHuellaConfig();
+        }
+        window.toggleHuellaDesdeConfig = toggleHuellaDesdeConfig;
+
+        function actualizarEstadoHuellaConfig() {
+            var elEstado = document.getElementById("config-huella-estado");
+            var elBtn = document.getElementById("btn-config-huella");
+            if (!elEstado || !elBtn) return;
+            var tieneCredencial = !!localStorage.getItem('vesa_huella_credencial_id');
+            if (tieneCredencial) {
+                elEstado.value = "Activada en este dispositivo";
+                elBtn.style.display = 'inline-flex';
+                elBtn.innerHTML = '<i class="fa-solid fa-fingerprint"></i> Desactivar';
+                elBtn.style.background = 'rgba(244,63,94,0.1)'; elBtn.style.color = 'var(--color-danger)'; elBtn.style.borderColor = 'rgba(244,63,94,0.3)';
+            } else if (!soporteHuellaDisponible()) {
+                elEstado.value = "No disponible en este dispositivo";
+                elBtn.style.display = 'none';
+            } else {
+                elEstado.value = "Desactivada";
+                elBtn.style.display = 'inline-flex';
+                elBtn.innerHTML = '<i class="fa-solid fa-fingerprint"></i> Activar';
+                elBtn.style.background = ''; elBtn.style.color = ''; elBtn.style.borderColor = '';
+            }
+        }
+        window.actualizarEstadoHuellaConfig = actualizarEstadoHuellaConfig;
+
         function mostrarPantallaBloqueoHuella(user) {
             var login = document.getElementById("login-screen"); if (login) login.style.display = 'none';
             var nombreEl = document.getElementById("biometric-lock-nombre");
@@ -1900,6 +2044,10 @@
                 var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
                 appState.precios = list.sort(function(a,b) { return a.id - b.id; }); renderAll();
             });
+            db.collection('artifacts/' + appId + '/public/data/gastos_insumos').onSnapshot(function(snapshot) {
+                var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
+                appState.gastosInsumos = list.sort(function(a,b) { return b.id - a.id; }); renderAll();
+            });
         }
 
         function setupLocalStorageFallback() {
@@ -1910,10 +2058,11 @@
                 appState.stock = JSON.parse(localStorage.getItem("vesa_stock"));
                 appState.finanzas = JSON.parse(localStorage.getItem("vesa_finanzas"));
                 appState.precios = localStorage.getItem("vesa_precios") ? JSON.parse(localStorage.getItem("vesa_precios")) : [...defaultState.precios];
+                appState.gastosInsumos = localStorage.getItem("vesa_gastos_insumos") ? JSON.parse(localStorage.getItem("vesa_gastos_insumos")) : [...defaultState.gastosInsumos];
             } else {
                 appState.pedidos = [...defaultState.pedidos]; appState.clientes = [...defaultState.clientes];
                 appState.stock = [...defaultState.stock]; appState.finanzas = [...defaultState.finanzas];
-                appState.precios = [...defaultState.precios];
+                appState.precios = [...defaultState.precios]; appState.gastosInsumos = [...defaultState.gastosInsumos];
             }
             renderAll(); updateCharts();
             actualizarBotonNotificaciones();
@@ -1926,6 +2075,7 @@
                 localStorage.setItem("vesa_stock", JSON.stringify(appState.stock));
                 localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
                 localStorage.setItem("vesa_precios", JSON.stringify(appState.precios));
+                localStorage.setItem("vesa_gastos_insumos", JSON.stringify(appState.gastosInsumos));
             } catch(e) {
                 throw new Error("QUOTA_EXCEEDED");
             }
@@ -1933,10 +2083,113 @@
 
         function renderAll() {
             renderMetrics(); renderDashboardAlerts(); renderDashboardOrders(); renderDashboardStock();
-            renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable(); renderPreciosTable(); renderRentabilidadProduccion();
+            renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable(); renderPreciosTable(); renderRentabilidadProduccion(); renderGastosInsumos();
             populateDropdowns();
             verificarAlertasStockPush();
         }
+
+        // NUEVO: Gastos de Insumos — módulo independiente, no depende de Caja
+        function renderGastosInsumos() {
+            var tbody = document.getElementById("gastos-insumos-tbody"); if (!tbody) return; tbody.innerHTML = "";
+            var gastos = appState.gastosInsumos || [];
+
+            var totalHistorico = 0; var totalMes = 0;
+            var mesActual = new Date().getMonth(); var anioActual = new Date().getFullYear();
+            var mesesEs = { 'enero':0,'febrero':1,'marzo':2,'abril':3,'mayo':4,'junio':5,'julio':6,'agosto':7,'septiembre':8,'octubre':9,'noviembre':10,'diciembre':11 };
+
+            gastos.forEach(function(g) {
+                totalHistorico += g.monto || 0;
+                // Intenta reconocer "24 de septiembre de 2026" (formato usado en toda la app) para el acumulado del mes
+                var partes = String(g.fecha || '').toLowerCase().match(/(\d{1,2}) de ([a-záéíóúñ]+) de (\d{4})/);
+                if (partes) {
+                    var mesNum = mesesEs[partes[2]]; var anioNum = parseInt(partes[3]);
+                    if (mesNum === mesActual && anioNum === anioActual) totalMes += g.monto || 0;
+                }
+            });
+
+            var elHist = document.getElementById("gastos-insumos-total-historico"); if (elHist) elHist.innerText = "$" + totalHistorico.toLocaleString('es-AR');
+            var elMes = document.getElementById("gastos-insumos-total-mes"); if (elMes) elMes.innerText = "$" + totalMes.toLocaleString('es-AR');
+            var elCant = document.getElementById("gastos-insumos-cantidad"); if (elCant) elCant.innerText = gastos.length;
+
+            if (gastos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-placeholder"><i class="fa-solid fa-receipt"></i>Todavía no registraste compras de insumos.</td></tr>`;
+                return;
+            }
+            gastos.forEach(function(g) {
+                var docIdSegura = g.docId ? `'${g.docId}'` : 'null';
+                tbody.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${sanitizeHTML(g.fecha)}</td><td style="font-weight:700;">${sanitizeHTML(g.insumo)}</td><td style="color:var(--color-text-secondary);">${sanitizeHTML(g.proveedor || '-')}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${sanitizeHTML(g.medioPago || 'Efectivo')}</td><td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-danger);">$${(g.monto || 0).toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarGastoInsumo(${docIdSegura}, ${g.id})" title="Editar este gasto"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarGastoInsumo(${docIdSegura}, ${g.id})" title="Eliminar este gasto"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+            });
+        }
+
+        async function guardarGastoInsumo() {
+            var insumo = document.getElementById("form-gasto-insumo").value.trim();
+            var proveedor = document.getElementById("form-gasto-proveedor").value.trim();
+            var monto = parseInt(document.getElementById("form-gasto-monto").value) || 0;
+            var medioPago = document.getElementById("form-gasto-metodopago").value;
+            if (!insumo || monto <= 0) { showToast("Error", "Completá qué se compró y un monto válido.", true); return; }
+
+            var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
+            var nuevoGasto = { id: (appState.gastosInsumos && appState.gastosInsumos.length > 0) ? Math.max(...appState.gastosInsumos.map(g=>g.id)) + 1 : 1, insumo: insumo, proveedor: proveedor, monto: monto, medioPago: medioPago, fecha: hoy, timestamp: Date.now() };
+
+            // ACTUALIZACIÓN OPTIMISTA
+            if (!appState.gastosInsumos) appState.gastosInsumos = [];
+            appState.gastosInsumos.unshift(nuevoGasto);
+
+            if (hasFirebase && authUser) {
+                db.collection('artifacts/' + appId + '/public/data/gastos_insumos').add(nuevoGasto).catch(console.error);
+            } else {
+                try { saveToLocalStorage(); } catch(e) {}
+            }
+
+            document.getElementById("form-gasto-insumo").value = ""; document.getElementById("form-gasto-proveedor").value = ""; document.getElementById("form-gasto-monto").value = "";
+            closeModal('modalGastoInsumo'); renderAll(); showToast("Gasto Registrado", `Se sumó $${monto.toLocaleString('es-AR')} al total invertido en insumos.`);
+        }
+        window.guardarGastoInsumo = guardarGastoInsumo;
+
+        function abrirEditarGastoInsumo(docId, localId) {
+            var g = (appState.gastosInsumos || []).find(function(x) { return x.id === localId; }); if (!g) return;
+            document.getElementById("edit-gasto-id-doc").value = docId || ''; document.getElementById("edit-gasto-id-local").value = localId;
+            document.getElementById("edit-gasto-insumo").value = g.insumo; document.getElementById("edit-gasto-proveedor").value = g.proveedor || ''; document.getElementById("edit-gasto-monto").value = g.monto; document.getElementById("edit-gasto-metodopago").value = g.medioPago || 'Efectivo';
+            openModal('modalEditGastoInsumo');
+        }
+        window.abrirEditarGastoInsumo = abrirEditarGastoInsumo;
+
+        async function guardarEdicionGastoInsumo() {
+            var docId = document.getElementById("edit-gasto-id-doc").value; var localId = parseInt(document.getElementById("edit-gasto-id-local").value);
+            var insumo = document.getElementById("edit-gasto-insumo").value.trim();
+            var proveedor = document.getElementById("edit-gasto-proveedor").value.trim();
+            var monto = parseInt(document.getElementById("edit-gasto-monto").value) || 0;
+            var medioPago = document.getElementById("edit-gasto-metodopago").value;
+            if (!insumo || monto <= 0) { showToast("Error", "Completá qué se compró y un monto válido.", true); return; }
+            var updatedData = { insumo: insumo, proveedor: proveedor, monto: monto, medioPago: medioPago };
+
+            // ACTUALIZACIÓN OPTIMISTA
+            var idx = (appState.gastosInsumos || []).findIndex(function(x) { return x.id === localId; });
+            if (idx !== -1) { appState.gastosInsumos[idx] = Object.assign({}, appState.gastosInsumos[idx], updatedData); }
+
+            if (hasFirebase && authUser && docId) {
+                db.collection('artifacts/' + appId + '/public/data/gastos_insumos').doc(docId).update(updatedData).catch(console.error);
+            } else {
+                try { saveToLocalStorage(); } catch(e) {}
+            }
+            closeModal('modalEditGastoInsumo'); renderAll(); showToast("Editado", "Gasto de insumo corregido.");
+        }
+        window.guardarEdicionGastoInsumo = guardarEdicionGastoInsumo;
+
+        async function eliminarGastoInsumo(docId, localId) {
+            if (!confirm("⚠️ ¿Eliminar este gasto de insumo?")) return;
+
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.gastosInsumos = (appState.gastosInsumos || []).filter(function(g) { return g.id !== localId; });
+
+            if (hasFirebase && authUser && docId) {
+                db.collection('artifacts/' + appId + '/public/data/gastos_insumos').doc(docId).delete().catch(console.error);
+            } else {
+                try { saveToLocalStorage(); } catch(e) {}
+            }
+            renderAll(); showToast("Eliminado", "Gasto de insumo removido.");
+        }
+        window.eliminarGastoInsumo = eliminarGastoInsumo;
 
         // NUEVO: Rentabilidad real de producción — Ventas de pedidos vs. Costo de insumos consumidos
         function renderRentabilidadProduccion() {
@@ -2574,7 +2827,8 @@
             if(id === 'modalPedido' || id === 'modalEditPedido') { tempStockItems = []; }
             if(id === 'modalPedido') { currentOrderItems = []; renderOrderItems(); }
             if(id === 'modalStock' && !returnToPedidoModalFromStock) { const container = document.getElementById("form-stk-oneoff-container"); const checkbox = document.getElementById("form-stk-oneoff"); if (container) container.style.display = "none"; if (checkbox) checkbox.checked = false; }
-            if(id === 'modalConfigFirebase') { var elUsuario = document.getElementById("form-fb-usuario-actual"); if (elUsuario) elUsuario.value = localStorage.getItem('vesa_usuario_nombre') || (authUser ? authUser.email : 'Sin datos'); var elWA = document.getElementById("config-whatsapp-alertas"); if (elWA) elWA.value = localStorage.getItem('vesa_whatsapp_alertas') || ''; }
+            if(id === 'modalConfigFirebase') { var elUsuario = document.getElementById("form-fb-usuario-actual"); if (elUsuario) elUsuario.value = localStorage.getItem('vesa_usuario_nombre') || (authUser ? authUser.email : 'Sin datos'); var elWA = document.getElementById("config-whatsapp-alertas"); if (elWA) elWA.value = localStorage.getItem('vesa_whatsapp_alertas') || ''; actualizarEstadoHuellaConfig(); }
+            if(id === 'modalGastoInsumo') { document.getElementById("form-gasto-insumo").value = ""; document.getElementById("form-gasto-proveedor").value = ""; document.getElementById("form-gasto-monto").value = ""; document.getElementById("form-gasto-metodopago").value = "Efectivo"; }
             if(id !== 'modalCliente') returnToPedidoModalFromCliente = false;
             if(id !== 'modalStock') returnToPedidoModalFromStock = false;
             document.getElementById(id).classList.add('active'); 
@@ -3357,7 +3611,7 @@
                 app: "VESA Core OS", version: 1, exportedAt: new Date().toISOString(),
                 data: {
                     pedidos: appState.pedidos, clientes: appState.clientes, stock: appState.stock,
-                    finanzas: appState.finanzas, precios: appState.precios
+                    finanzas: appState.finanzas, precios: appState.precios, gastosInsumos: appState.gastosInsumos
                 }
             };
             var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -3387,7 +3641,7 @@
                     event.target.value = ''; return;
                 }
 
-                var confirmado = confirm("⚠️ ATENCIÓN: esto va a REEMPLAZAR todos los datos actuales (Pedidos, Clientes, Stock, Caja y Precios) por los del backup. No se puede deshacer.\n\n¿Confirmás que querés continuar?");
+                var confirmado = confirm("⚠️ ATENCIÓN: esto va a REEMPLAZAR todos los datos actuales (Pedidos, Clientes, Stock, Caja, Precios y Gastos de Insumos) por los del backup. No se puede deshacer.\n\n¿Confirmás que querés continuar?");
                 if (!confirmado) { event.target.value = ''; return; }
 
                 appState.pedidos = datos.pedidos || [];
@@ -3395,12 +3649,13 @@
                 appState.stock = datos.stock || [];
                 appState.finanzas = datos.finanzas || [];
                 appState.precios = datos.precios || [];
+                appState.gastosInsumos = datos.gastosInsumos || [];
 
                 if (hasFirebase && authUser) {
                     showToast("Restaurando...", "Subiendo los datos del backup, no cierres la app.");
-                    var colecciones = ['pedidos', 'clientes', 'stock', 'finanzas', 'precios'];
+                    var colecciones = [['pedidos','pedidos'], ['clientes','clientes'], ['stock','stock'], ['finanzas','finanzas'], ['precios','precios'], ['gastos_insumos','gastosInsumos']];
                     for (var c = 0; c < colecciones.length; c++) {
-                        var col = colecciones[c];
+                        var col = colecciones[c][0]; var clavePropia = colecciones[c][1];
                         var refColeccion = db.collection('artifacts/' + appId + '/public/data/' + col);
                         var snapshot = await refColeccion.get();
                         var docsActuales = snapshot.docs;
@@ -3411,7 +3666,7 @@
                             await batchDel.commit();
                         }
 
-                        var items = appState[col];
+                        var items = appState[clavePropia];
                         for (var j = 0; j < items.length; j += 400) {
                             var loteNuevo = items.slice(j, j + 400);
                             var batchAdd = db.batch();

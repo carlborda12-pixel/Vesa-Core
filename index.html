@@ -246,7 +246,8 @@
         .stock-qty { font-weight: 800; font-size: 14px; font-family: 'Space Mono', monospace; }
 
         /* BOTONES */
-        .bottom-actions { display: flex; gap: 16px; padding: 24px 40px; background: #0b1120; border-top: 1px solid var(--border-glass); justify-content: flex-start; z-index: 40; flex-shrink: 0; }
+        .bottom-actions { display: flex; gap: 10px; padding: 12px 40px; background: #0b1120; border-top: 1px solid var(--border-glass); justify-content: flex-start; z-index: 40; flex-shrink: 0; }
+        .bottom-actions .btn { padding: 9px 16px; font-size: 11px; border-radius: 10px; }
         .btn { background: rgba(255,255,255,0.03); color: var(--color-text-primary); border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 12px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background-color 0.15s, border-color 0.15s; text-transform: uppercase; letter-spacing: 1px; }
         .btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -346,10 +347,11 @@
             .menu-item { padding: 8px 10px; }
             .menu-label { display: none; }
             .topbar-user-info { display: none; }
-            .main-content { padding: 74px 16px 80px; gap: 16px; }
+            .main-content { padding: 74px 16px 64px; gap: 16px; }
             .header-app { flex-direction: column; align-items: flex-start; gap: 10px; }
             .metrics-grid { grid-template-columns: 1fr; gap: 12px; }
-            .bottom-actions { position: fixed; bottom: 0; left: 0; padding: 12px 16px; width: 100%; overflow-x: auto; background: #0b1120; z-index: 90; border-top: 1px solid var(--border-glass); }
+            .bottom-actions { position: fixed; bottom: 0; left: 0; padding: 8px 12px; gap: 8px; width: 100%; overflow-x: auto; background: #0b1120; z-index: 90; border-top: 1px solid var(--border-glass); }
+            .bottom-actions .btn { padding: 7px 12px; font-size: 10px; }
             .notification-toast { right: 16px; left: 16px; bottom: 80px; width: auto; max-width: none; }
             .modal-box { padding: 20px; border-radius: 16px; }
             .modal-body-grid { grid-template-columns: 1fr; gap: 16px; }

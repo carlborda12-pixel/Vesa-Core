@@ -37,7 +37,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -86,38 +85,39 @@
         }
 
         /* Contenedor principal */
-        #app-wrapper { display: flex; width: 100%; height: 100%; flex-direction: row; z-index: 10; position: relative; opacity: 1; transition: opacity 0.3s ease;}
+        #app-wrapper { display: flex; width: 100%; height: 100%; flex-direction: column; z-index: 10; position: relative; opacity: 1; transition: opacity 0.3s ease;}
 
-        /* --- HEADER MÓVIL --- */
-        .mobile-navbar { display: none; width: 100%; height: 60px; background: rgba(2,6,23,0.9); border-bottom: 1px solid var(--border-glass); position: fixed; top: 0; left: 0; z-index: 50; padding: 0 20px; align-items: center; justify-content: space-between; }
-        .mobile-logo { font-size: 20px; font-weight: 800; letter-spacing: 2px; }
-        .mobile-logo span { color: var(--color-accent); }
-        .menu-toggle-btn { background: none; border: none; color: var(--color-text-primary); font-size: 24px; cursor: pointer; }
+        /* --- BARRA SUPERIOR FLOTANTE --- */
+        .topbar-float {
+            position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; display: flex; align-items: center; gap: 4px;
+            background: rgba(11,17,32,0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--border-glass); border-radius: 20px;
+            padding: 8px 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none;
+        }
+        .topbar-float::-webkit-scrollbar { display: none; }
+        .topbar-logo { font-size: 16px; font-weight: 900; letter-spacing: 2px; padding: 0 10px 0 4px; flex-shrink: 0; text-transform: uppercase; white-space: nowrap; }
+        .topbar-logo span { color: var(--color-accent); text-shadow: 0 0 10px var(--color-accent-glow); }
 
-        /* --- SIDEBAR --- */
-        .sidebar { width: 280px; background: #0b1120; border-right: 1px solid var(--border-glass); display: flex; flex-direction: column; justify-content: space-between; padding: 30px 20px; z-index: 1000; transition: transform 0.2s ease-out; }
-        .logo-section h2 { font-size: 28px; font-weight: 900; letter-spacing: 3px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
-        .logo-section h2 span { color: var(--color-accent); text-shadow: 0 0 10px var(--color-accent-glow); }
-        .brand-sub { font-size: 10px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 2px; margin-bottom: 40px; display: block; font-weight: 700;}
-        .sidebar-close-btn { display: none; background: none; border: none; color: var(--color-text-secondary); font-size: 24px; position: absolute; top: 20px; right: 20px; cursor: pointer; }
-
-        .menu-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-        .menu-item { display: flex; align-items: center; gap: 14px; padding: 12px 18px; color: var(--color-text-secondary); text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px; transition: all 0.15s ease-out; cursor: pointer;}
-        .menu-item:hover { background: rgba(255,255,255,0.03); color: var(--color-text-primary); }
-        .menu-item.active { background: linear-gradient(90deg, rgba(56, 189, 248, 0.1), transparent); border-left: 3px solid var(--color-accent); color: var(--color-text-primary); }
+        .menu-list { list-style: none; display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+        .menu-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 12px; color: var(--color-text-secondary); text-decoration: none; border-radius: 14px; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.4px; transition: all 0.15s ease-out; cursor: pointer; white-space: nowrap; }
+        .menu-item i { font-size: 15px; }
+        .menu-item:hover { background: rgba(255,255,255,0.05); color: var(--color-text-primary); }
+        .menu-item.active { background: linear-gradient(180deg, rgba(56, 189, 248, 0.16), rgba(56,189,248,0.03)); box-shadow: inset 0 0 0 1px rgba(56,189,248,0.3); color: var(--color-text-primary); }
         .menu-item.active i { color: var(--color-accent); }
-        .menu-group-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--color-text-secondary); opacity: 0.55; padding: 16px 18px 6px; }
-        .menu-list li:first-child .menu-group-label { padding-top: 4px; }
-        
-        .user-profile { display: flex; align-items: center; gap: 14px; border-top: 1px solid var(--border-glass); padding-top: 24px; position: relative;}
-        .avatar { width: 42px; height: 42px; background: linear-gradient(135deg, var(--color-accent), var(--color-purple)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #000; font-size: 16px; }
+        .menu-label { line-height: 1; }
+        .menu-sep { width: 1px; height: 26px; background: var(--border-glass); margin: 0 6px; flex-shrink: 0; cursor: default; }
 
-        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.7); z-index: 900; }
-        .sidebar-overlay.active { display: block; }
+        .topbar-user { display: flex; align-items: center; gap: 10px; padding-left: 12px; margin-left: 4px; border-left: 1px solid var(--border-glass); flex-shrink: 0; }
+        .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, var(--color-accent), var(--color-purple)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #000; font-size: 14px; flex-shrink: 0; }
+        .topbar-user-info { line-height: 1.15; }
+        .topbar-user-info h4 { font-size: 12px; font-weight: 800; color: white; white-space: nowrap; }
+        .topbar-user-info p { font-size: 9px; color: var(--color-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; white-space: nowrap; }
 
         /* --- CONTENIDO PRINCIPAL --- */
         .app-container { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; }
-        .main-content { flex: 1; padding: 24px 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; will-change: transform; }
+        .main-content { flex: 1; padding: 96px 40px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; will-change: transform; }
         
         .header-app { display: flex; justify-content: space-between; align-items: flex-end; }
         .header-app h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px; }
@@ -148,9 +148,47 @@
         .view-section.active { display: flex; animation: snapIn 0.15s ease-out forwards; }
         @keyframes snapIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .dashboard-row-1 { display: grid; grid-template-columns: 1.2fr 1.6fr 1.2fr; gap: 20px; }
-        .dashboard-row-2 { display: grid; grid-template-columns: 2.2fr 1fr; gap: 20px; }
-        
+        .dashboard-row-1 { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .dashboard-row-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
+
+        /* --- HOY EN EL TALLER (agenda del día) --- */
+        .agenda-grupo { margin-top: 20px; }
+        .agenda-grupo:first-child { margin-top: 0; }
+        .agenda-titulo { font-size: 11px; font-weight: 800; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .agenda-item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; }
+        .agenda-check { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid var(--border-glass); flex-shrink: 0; margin-top: 1px; }
+        .agenda-texto { font-size: 13.5px; line-height: 1.45; }
+        .agenda-texto strong { font-weight: 700; }
+        .agenda-texto .agenda-sub { color: var(--color-text-secondary); font-size: 12px; display: block; margin-top: 1px; }
+        .agenda-grupo.entregar .agenda-check { border-color: rgba(0,242,255,0.4); }
+        .agenda-grupo.entregar .agenda-titulo i { color: var(--color-accent); }
+        .agenda-grupo.produccion .agenda-item .agenda-check { border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.08); }
+        .agenda-grupo.produccion .agenda-titulo i { color: var(--color-warning); }
+        .agenda-grupo.comprar .agenda-titulo i { color: var(--color-danger); }
+        .agenda-grupo.comprar .agenda-item .agenda-check { border-color: rgba(244,63,94,0.5); background: rgba(244,63,94,0.08); }
+        .agenda-vacio { color: var(--color-text-secondary); font-size: 13px; font-style: italic; padding: 4px 0; }
+        .agenda-item.clickable { cursor: pointer; border-radius: 10px; margin: 0 -8px; padding: 8px; transition: background 0.15s; }
+        .agenda-item.clickable:hover { background: rgba(255,255,255,0.03); }
+
+        /* --- BITÁCORA DEL TALLER (feed cronológico) --- */
+        .bitacora-feed { position: relative; padding-left: 24px; }
+        .bitacora-feed::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 1.5px; background: var(--border-glass); }
+        .bit-entry { position: relative; padding-bottom: 16px; }
+        .bit-entry:last-child { padding-bottom: 0; }
+        .bit-entry::before { content: ''; position: absolute; left: -24px; top: 3px; width: 11px; height: 11px; border-radius: 50%; background: #0b1120; border: 2px solid var(--bit-color, var(--color-text-secondary)); }
+        .bit-hora { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 3px; }
+        .bit-texto { font-size: 13.5px; line-height: 1.5; }
+        .bit-texto strong { font-weight: 700; color: var(--color-text-primary); }
+        .bit-monto { font-family: 'Space Mono', monospace; font-weight: 700; }
+        .bit-entry.pedido { --bit-color: var(--color-accent); }
+        .bit-entry.cobro { --bit-color: var(--color-success); }
+        .bit-entry.cobro .bit-monto { color: var(--color-success); }
+        .bit-entry.egreso { --bit-color: var(--color-danger); }
+        .bit-entry.egreso .bit-monto { color: var(--color-danger); }
+        .bit-entry.stock { --bit-color: var(--color-danger); }
+        .bit-entry.entregado { --bit-color: var(--color-purple); }
+        .bit-icon { color: var(--bit-color, var(--color-text-secondary)); margin-right: 4px; }
+
         .panel-block { background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px; transition: padding-bottom 0.3s ease; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px; flex-wrap: wrap; gap: 10px; transition: border-bottom 0.3s; }
         .panel-header h3 { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
@@ -299,15 +337,16 @@
         @media (max-width: 1024px) {
             .dashboard-row-1, .dashboard-row-2 { grid-template-columns: 1fr; }
             .form-row { grid-template-columns: 1fr; gap: 16px; }
-            .main-content { padding: 24px; }
+            .main-content { padding: 90px 24px 24px; }
         }
         @media (max-width: 768px) {
-            body { flex-direction: column; padding-top: 60px; }
-            .mobile-navbar { display: flex; }
-            .sidebar { position: fixed; top: 0; left: 0; bottom: 0; height: 100%; transform: translateX(-100%); z-index: 1000; background: #0b1120; }
-            .sidebar.active { transform: translateX(0); }
-            .sidebar-close-btn { display: block; }
-            .main-content { padding: 16px; padding-bottom: 80px; gap: 16px; }
+            body { flex-direction: column; }
+            .topbar-float { top: 10px; padding: 6px 10px; border-radius: 16px; }
+            .topbar-logo { display: none; }
+            .menu-item { padding: 8px 10px; }
+            .menu-label { display: none; }
+            .topbar-user-info { display: none; }
+            .main-content { padding: 74px 16px 80px; gap: 16px; }
             .header-app { flex-direction: column; align-items: flex-start; gap: 10px; }
             .metrics-grid { grid-template-columns: 1fr; gap: 12px; }
             .bottom-actions { position: fixed; bottom: 0; left: 0; padding: 12px 16px; width: 100%; overflow-x: auto; background: #0b1120; z-index: 90; border-top: 1px solid var(--border-glass); }
@@ -330,47 +369,36 @@
     <!-- CONTENEDOR DE LA APP -->
     <div id="app-wrapper">
 
-        <!-- MENÚ MÓVIL -->
-        <div class="mobile-navbar">
-            <div class="mobile-logo">VESA<span>.</span></div>
-            <button class="menu-toggle-btn" onclick="toggleSidebar(true)"><i class="fa-solid fa-bars-staggered"></i></button>
-        </div>
+        <!-- BARRA SUPERIOR FLOTANTE -->
+        <nav class="topbar-float" id="app-topbar">
+            <div class="topbar-logo">VESA<span>.</span></div>
+            <ul class="menu-list">
+                <li><a class="menu-item active" onclick="switchTab('dashboard')" title="Inicio — Panel principal con métricas de salud del taller"><i class="fa-solid fa-chart-pie"></i><span class="menu-label">Inicio</span></a></li>
 
-        <!-- SIDEBAR -->
-        <div class="sidebar" id="app-sidebar">
-            <button class="sidebar-close-btn" onclick="toggleSidebar(false)"><i class="fa-solid fa-xmark"></i></button>
-            <div class="logo-section">
-                <h2>VESA<span>.</span></h2>
-                <span class="brand-sub">Core Operations</span>
-                <ul class="menu-list">
-                    <li><a class="menu-item active" onclick="switchTab('dashboard')" title="Panel principal con métricas de salud del taller"><i class="fa-solid fa-chart-pie"></i> Inicio</a></li>
+                <li class="menu-sep" title="Producción"></li>
+                <li><a class="menu-item" onclick="switchTab('pedidos')" title="Pedidos — Historial completo y búsqueda de órdenes de trabajo"><i class="fa-solid fa-folder-open"></i><span class="menu-label">Pedidos</span></a></li>
+                <li><a class="menu-item" onclick="switchTab('kanban')" title="Tablero — Vista Kanban interactiva para gestión de producción"><i class="fa-solid fa-layer-group"></i><span class="menu-label">Tablero</span></a></li>
+                <li><a class="menu-item" onclick="switchTab('clientes')" title="Clientes — Directorio de clientes y accesos directos de contacto"><i class="fa-solid fa-address-book"></i><span class="menu-label">Clientes</span></a></li>
+                <li><a class="menu-item" onclick="switchTab('stock')" title="Stock — Auditoría de insumos, materias primas y alertas de faltantes"><i class="fa-solid fa-boxes-stacked"></i><span class="menu-label">Stock</span></a></li>
+                <li><a class="menu-item" onclick="switchTab('proveedores')" title="Proveedores — Contactos de quienes te venden insumos, con acceso directo a WhatsApp"><i class="fa-solid fa-truck-field"></i><span class="menu-label">Proveed.</span></a></li>
 
-                    <li class="menu-group-label">Producción</li>
-                    <li><a class="menu-item" onclick="switchTab('pedidos')" title="Historial completo y búsqueda de órdenes de trabajo"><i class="fa-solid fa-folder-open"></i> Pedidos</a></li>
-                    <li><a class="menu-item" onclick="switchTab('kanban')" title="Vista Kanban interactiva para gestión de producción"><i class="fa-solid fa-layer-group"></i> Tablero</a></li>
-                    <li><a class="menu-item" onclick="switchTab('clientes')" title="Directorio de clientes y accesos directos de contacto"><i class="fa-solid fa-address-book"></i> Clientes</a></li>
-                    <li><a class="menu-item" onclick="switchTab('stock')" title="Auditoría de insumos, materias primas y alertas de faltantes"><i class="fa-solid fa-boxes-stacked"></i> Stock</a></li>
+                <li class="menu-sep" title="Finanzas"></li>
+                <li><a class="menu-item" onclick="switchTab('finanzas')" title="Caja — Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i><span class="menu-label">Caja</span></a></li>
+                <li><a class="menu-item" onclick="switchTab('gastos-insumos')" title="Gastos de Insumos — Cuánto se invirtió en materiales para el taller"><i class="fa-solid fa-receipt"></i><span class="menu-label">Gastos</span></a></li>
+                <li><a class="menu-item" onclick="switchTab('precios')" title="Lista de Precios — Precios de productos y servicios"><i class="fa-solid fa-tags"></i><span class="menu-label">Precios</span></a></li>
 
-                    <li class="menu-group-label">Finanzas</li>
-                    <li><a class="menu-item" onclick="switchTab('finanzas')" title="Registro de ingresos, egresos y control de rentabilidad mensual"><i class="fa-solid fa-chart-line"></i> Caja</a></li>
-                    <li><a class="menu-item" onclick="switchTab('gastos-insumos')" title="Cuánto se invirtió en materiales para el taller"><i class="fa-solid fa-receipt"></i> Gastos de Insumos</a></li>
-                    <li><a class="menu-item" onclick="switchTab('precios')" title="Lista de precios de productos y servicios"><i class="fa-solid fa-tags"></i> Lista de Precios</a></li>
+                <li class="menu-sep" title="Sistema"></li>
+                <li><a class="menu-item" onclick="switchTab('backup')" title="Backup — Copia de seguridad y exportación de todos los datos del taller"><i class="fa-solid fa-cloud-arrow-down"></i><span class="menu-label">Backup</span></a></li>
+            </ul>
 
-                    <li class="menu-group-label">Sistema</li>
-                    <li><a class="menu-item" onclick="switchTab('backup')" title="Copia de seguridad y exportación de todos los datos del taller"><i class="fa-solid fa-cloud-arrow-down"></i> Backup</a></li>
-                </ul>
-            </div>
-            
-            <div class="user-profile">
+            <div class="topbar-user" id="topbar-user">
                 <div class="avatar" id="avatar-initial">S</div>
-                <div>
-                    <h4 style="font-size: 14px; font-weight: 800; color: white;" id="user-display-name">Santiago</h4>
-                    <p style="font-size: 11px; color: var(--color-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px;">Director</p>
+                <div class="topbar-user-info">
+                    <h4 id="user-display-name">Santiago</h4>
+                    <p>Director</p>
                 </div>
             </div>
-        </div>
-
-        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
+        </nav>
 
         <div class="app-container">
             <div class="main-content">
@@ -405,16 +433,6 @@
                             <div class="metric-value" id="val-pendientes">0</div>
                             <div class="metric-subtext" id="val-produccion-sub" style="color: var(--color-text-secondary);">0 en proceso</div>
                         </div>
-                        <div class="metric-card" title="Suma total bruta del valor de los pedidos activos">
-                            <div class="metric-title">Flujo Ingresos <div class="metric-icon-box"><i class="fa-solid fa-arrow-trend-up"></i></div></div>
-                            <div class="metric-value" id="val-ventas">$0</div>
-                            <div class="metric-subtext text-green" id="val-ventas-trend"><i class="fa-solid fa-arrow-up-right-dots"></i> Tendencia estable</div>
-                        </div>
-                        <div class="metric-card" title="Cálculo matemático de margen operativo estimado (40% s/ventas)">
-                            <div class="metric-title">Utilidad Estimada <div class="metric-icon-box"><i class="fa-solid fa-scale-balanced"></i></div></div>
-                            <div class="metric-value" id="val-ganancias">$0</div>
-                            <div class="metric-subtext text-green" id="val-ganancias-trend"><i class="fa-solid fa-bullseye"></i> Margen bruto 40%</div>
-                        </div>
                         <div class="metric-card clickable" style="border-color: rgba(244, 63, 94, 0.3);" onclick="goToStockAndHighlight()" title="Artículos que requieren reposición urgente. Clic para auditar">
                             <div class="metric-title" style="color: white;">Faltantes Stock <div class="metric-icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div></div>
                             <div class="metric-value" id="val-stock" style="color: var(--color-danger);">0</div>
@@ -425,51 +443,22 @@
                     <div class="dashboard-row-1">
                         <div class="panel-block">
                             <div class="panel-header">
-                                <h3><i class="fa-solid fa-chart-pie"></i> Distribución Operativa</h3>
+                                <h3><i class="fa-solid fa-thumbtack"></i> Hoy en el Taller</h3>
                                 <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
                             </div>
-                            <div class="chart-container"><canvas id="chartPedidos" title="Porcentaje de pedidos en cada etapa de producción"></canvas></div>
-                        </div>
-                        <div class="panel-block">
-                            <div class="panel-header">
-                                <h3><i class="fa-solid fa-chart-column"></i> Finanzas</h3>
-                                <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
-                            </div>
-                            <div class="chart-container"><canvas id="chartFinanzas" title="Comparativa directa entre Ingresos (Verde) y Egresos (Rojo)"></canvas></div>
-                        </div>
-                        <div class="panel-block">
-                            <div class="panel-header">
-                                <h3><i class="fa-solid fa-bolt"></i> Alertas</h3>
-                                <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
-                            </div>
-                            <div class="alerts-container" id="dash-alerts"></div>
+                            <div id="dash-agenda"></div>
                         </div>
                     </div>
                     <div class="dashboard-row-2">
                         <div class="panel-block">
                             <div class="panel-header">
-                                <h3><i class="fa-solid fa-list-check"></i> Actividad Reciente</h3>
+                                <h3><i class="fa-solid fa-book-open"></i> Bitácora del Taller</h3>
                                 <div style="display: flex; gap: 8px; align-items: center;">
                                     <button class="btn btn-small" onclick="switchTab('pedidos')" title="Ver registro histórico completo">Ver todo</button>
                                     <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
                                 </div>
                             </div>
-                            <div class="table-wrapper">
-                                <table>
-                                    <thead><tr><th>Ref</th><th>Cliente</th><th>Detalle Comercial</th><th>Status</th><th>Acción</th></tr></thead>
-                                    <tbody id="dash-pedidos-tbody"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="panel-block">
-                            <div class="panel-header">
-                                <h3><i class="fa-solid fa-boxes-stacked"></i> Inventario Crítico</h3>
-                                <div style="display: flex; gap: 8px; align-items: center;">
-                                    <button class="btn btn-small" onclick="switchTab('stock')" title="Ir al panel de gestión de almacén">Gestionar</button>
-                                    <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
-                                </div>
-                            </div>
-                            <div id="dash-stock-list"></div>
+                            <div class="bitacora-feed" id="dash-bitacora"></div>
                         </div>
                     </div>
                 </div>
@@ -574,6 +563,22 @@
                 </div>
 
                 <!-- NUEVO: VISTA GASTOS DE INSUMOS — pestaña propia e independiente de Caja, registra qué se compró -->
+                <!-- NUEVO: VISTA PROVEEDORES -->
+                <div id="section-proveedores" class="view-section">
+                    <div class="panel-block">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-truck-field"></i> Proveedores</h3>
+                            <button class="btn btn-primary btn-small" onclick="openModal('modalProveedor')" title="Agregar un nuevo proveedor de insumos"><i class="fa-solid fa-plus"></i> Agregar Proveedor</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>ID</th><th>Nombre</th><th>WhatsApp</th><th style="text-align:right;">Total Comprado</th><th style="text-align:right;">Acciones</th></tr></thead>
+                                <tbody id="proveedores-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="section-gastos-insumos" class="view-section">
                     <div class="panel-block">
                         <div class="panel-header">
@@ -753,6 +758,21 @@
             <div style="display: flex; gap: 10px; margin-top: 16px;">
                 <button class="btn btn-primary" onclick="closeModal('modalWelcomeAlert'); if(window.speechSynthesis) window.speechSynthesis.cancel();" style="flex: 1; justify-content: center;"><i class="fa-solid fa-power-off" style="margin-right: 6px;"></i> Iniciar Jornada</button>
                 <button class="btn" onclick="playVoiceReport(window.lastReportText)" style="padding: 12px 16px;" title="Repetir reporte de voz de la IA"><i class="fa-solid fa-volume-high"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVEDADES DEL SISTEMA: aparece al cerrar el Reporte de Estado, explicado en criollo -->
+    <div class="modal-overlay" id="modalNovedades">
+        <div class="modal-box" style="border-top: 4px solid var(--color-purple);">
+            <div class="modal-header">
+                <h3 style="display: flex; align-items: center;"><i class="fa-solid fa-sparkles" style="color: var(--color-purple); margin-right: 10px; font-size: 20px;"></i> Novedades del Sistema</h3>
+                <button class="modal-close" onclick="cerrarNovedades()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size: 13px; line-height: 1.5; margin-bottom: 5px; color: var(--color-text-primary);">Esto es lo último que se agregó o cambió, explicado simple:</p>
+            <div class="alerts-container" id="novedades-container"></div>
+            <div style="display: flex; gap: 10px; margin-top: 16px;">
+                <button class="btn btn-primary" onclick="cerrarNovedades()" style="flex: 1; justify-content: center;"><i class="fa-solid fa-check" style="margin-right: 6px;"></i> Entendido</button>
             </div>
         </div>
     </div>
@@ -1103,6 +1123,12 @@
                     <input type="number" class="form-control" id="form-stk-costo" title="Cuánto te cuesta a vos cada unidad de este insumo (para calcular ganancia real por pedido)">
                 </div>
             </div>
+            <div class="form-group">
+                <label>Proveedor Habitual</label>
+                <select class="form-control" id="form-stk-proveedor" title="Quién te vende este insumo — habilita el botón de pedir reposición por WhatsApp">
+                    <option value="">Sin proveedor asignado</option>
+                </select>
+            </div>
 
             <button type="button" class="btn btn-primary" onclick="guardarStock()" style="margin-top:8px; justify-content:center;">Cargar Insumo</button>
         </div>
@@ -1122,7 +1148,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Proveedor (opcional)</label>
-                    <input type="text" class="form-control" id="form-gasto-proveedor" placeholder="Ej: Distribuidora XYZ">
+                    <input type="text" class="form-control" id="form-gasto-proveedor" list="proveedor-nombre-datalist" autocomplete="off" placeholder="Ej: Distribuidora XYZ">
                 </div>
                 <div class="form-group">
                     <label>Monto ($)</label>
@@ -1157,7 +1183,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Proveedor (opcional)</label>
-                    <input type="text" class="form-control" id="edit-gasto-proveedor">
+                    <input type="text" class="form-control" id="edit-gasto-proveedor" list="proveedor-nombre-datalist" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Monto ($)</label>
@@ -1241,6 +1267,7 @@
     <datalist id="finanzas-detalle-datalist"></datalist>
     <datalist id="stock-nombre-datalist"></datalist>
     <datalist id="stock-talle-datalist"></datalist>
+    <datalist id="proveedor-nombre-datalist"></datalist>
 
     <div class="modal-overlay" id="modalEditCliente">
         <div class="modal-box">
@@ -1286,6 +1313,62 @@
                 <table style="width:100%;">
                     <thead><tr><th>Fecha</th><th>Detalle</th><th>Estado</th><th style="text-align:right;">Monto</th><th style="text-align:right;">Saldo</th></tr></thead>
                     <tbody id="historial-cliente-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVO: Proveedores — alta, edición e historial -->
+    <div class="modal-overlay" id="modalProveedor">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Nuevo Proveedor</h3>
+                <button class="modal-close" onclick="closeModal('modalProveedor')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-group"><label>Nombre</label><input type="text" class="form-control" id="form-prov-nombre" placeholder="Ej: Distribuidora XYZ"></div>
+            <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="form-prov-tel" placeholder="Ej: 5493764123456 (con código de país)"></div>
+            <button type="button" class="btn btn-primary" onclick="guardarProveedor()" style="margin-top:8px; justify-content:center;">Registrar Proveedor</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEditProveedor">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Proveedor</h3>
+                <button class="modal-close" onclick="closeModal('modalEditProveedor')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input type="hidden" id="edit-prov-id-doc">
+            <input type="hidden" id="edit-prov-id-local">
+            <div class="form-group"><label>Nombre</label><input type="text" class="form-control" id="edit-prov-nombre"></div>
+            <div class="form-group"><label>WhatsApp</label><input type="text" class="form-control" id="edit-prov-tel"></div>
+            <button type="button" class="btn btn-primary" onclick="guardarEdicionProveedor()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalHistorialProveedor">
+        <div class="modal-box wide">
+            <div class="modal-header">
+                <h3 id="historial-proveedor-nombre">Historial del Proveedor</h3>
+                <button class="modal-close" onclick="closeModal('modalHistorialProveedor')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:16px; margin-bottom:6px;">
+                <div>
+                    <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Compras Totales</div>
+                    <div style="font-size:20px; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);" id="historial-proveedor-cantidad">0</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Total Comprado</div>
+                    <div style="font-size:20px; font-weight:800; font-family:'Space Mono'; color:var(--color-danger);" id="historial-proveedor-total">$0</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:var(--color-text-secondary); text-transform:uppercase; font-weight:700;">Última Compra</div>
+                    <div style="font-size:14px; font-weight:700; color:var(--color-text-primary);" id="historial-proveedor-ultimo">-</div>
+                </div>
+            </div>
+            <div class="table-wrapper" style="max-height:45vh; overflow-y:auto; margin-top:10px;">
+                <table style="width:100%;">
+                    <thead><tr><th>Fecha</th><th>Qué se compró</th><th>Medio de Pago</th><th style="text-align:right;">Monto</th></tr></thead>
+                    <tbody id="historial-proveedor-tbody"></tbody>
                 </table>
             </div>
         </div>
@@ -1363,6 +1446,12 @@
                     <label>Costo Unitario ($)</label>
                     <input type="number" class="form-control" id="edit-stk-costo" title="Cuánto te cuesta a vos cada unidad de este insumo (para calcular ganancia real por pedido)">
                 </div>
+            </div>
+            <div class="form-group">
+                <label>Proveedor Habitual</label>
+                <select class="form-control" id="edit-stk-proveedor" title="Quién te vende este insumo — habilita el botón de pedir reposición por WhatsApp">
+                    <option value="">Sin proveedor asignado</option>
+                </select>
             </div>
             <button type="button" class="btn btn-primary" onclick="guardarEdicionStock()" style="margin-top:8px; justify-content:center;">Guardar Cambios</button>
         </div>
@@ -1540,6 +1629,15 @@
         var welcomeShown = sessionStorage.getItem("vesa_welcome_shown");
         var lastReportText = "";
 
+        // NOVEDADES: cada vez que se agrega o cambia algo importante, se suma acá arriba y se sube NOVEDADES_VERSION.
+        // Se muestra una sola vez por cada versión nueva (no molesta de nuevo hasta la próxima novedad real).
+        var NOVEDADES_VERSION = "2026-09-26";
+        var NOVEDADES = [
+            { icono: "fa-truck-field", titulo: "Proveedores", texto: "Ahora podés cargar a tus proveedores con su WhatsApp. Si a un insumo le asignás un proveedor y se te está por acabar, te va a aparecer un botón para escribirle directo por WhatsApp y pedirle más, sin buscar el número." },
+            { icono: "fa-table-cells", titulo: "Menú arriba", texto: "El menú con las secciones (Pedidos, Stock, Caja, etc.) ahora está arriba de la pantalla, flotando con sus íconos, en vez de estar pegado al costado. Es más cómodo tanto en la compu como en el celular." },
+            { icono: "fa-thumbtack", titulo: "Inicio renovado", texto: "La pantalla de Inicio ya no muestra números de plata ni gráficos (eso lo seguís viendo en Caja, tal cual). Ahora te muestra dos cosas simples: qué hay que entregar y qué está en producción, y una lista de todo lo que fue pasando en el taller durante el día." }
+        ];
+
         var returnToPedidoModalFromCliente = false;
         var returnToPedidoModalFromStock = false;
 
@@ -1568,9 +1666,10 @@
             ], 
             finanzas: [],
             precios: [],
-            gastosInsumos: []
+            gastosInsumos: [],
+            proveedores: []
         };
-        var appState = { pedidos: [], clientes: [], stock: [], finanzas: [], precios: [], gastosInsumos: [] };
+        var appState = { pedidos: [], clientes: [], stock: [], finanzas: [], precios: [], gastosInsumos: [], proveedores: [] };
 
         function playVoiceReport(text) {
             if ('speechSynthesis' in window) {
@@ -1610,9 +1709,26 @@
                 }
             }
             window.lastReportText = voiceText;
-            openModal('modalWelcomeAlert'); 
+            openModal('modalWelcomeAlert');
             sessionStorage.setItem("vesa_welcome_shown", "true"); welcomeShown = "true";
-            setTimeout(() => { playVoiceReport(window.lastReportText); }, 600); 
+            setTimeout(() => { playVoiceReport(window.lastReportText); }, 600);
+        }
+
+        // Se abre justo al cerrar el Reporte de Estado, pero solo si hay novedades que Carlos todavía no vio
+        function mostrarNovedadesSiCorresponde() {
+            var yaVistas = localStorage.getItem("vesa_novedades_vista");
+            if (yaVistas === NOVEDADES_VERSION) return;
+            var container = document.getElementById("novedades-container");
+            if (!container) return;
+            container.innerHTML = NOVEDADES.map(function(n) {
+                return `<div class="alert-item" style="border-left-color: var(--color-purple);"><div class="alert-icon" style="color: var(--color-purple);"><i class="fa-solid ${n.icono}"></i></div><div class="alert-text"><h4>${sanitizeHTML(n.titulo)}</h4><p>${sanitizeHTML(n.texto)}</p></div></div>`;
+            }).join('');
+            openModal('modalNovedades');
+        }
+
+        function cerrarNovedades() {
+            closeModal('modalNovedades');
+            localStorage.setItem("vesa_novedades_vista", NOVEDADES_VERSION);
         }
 
         function getFileBase64(file) {
@@ -2057,6 +2173,10 @@
                 var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
                 appState.gastosInsumos = list.sort(function(a,b) { return b.id - a.id; }); renderAll();
             });
+            db.collection('artifacts/' + appId + '/public/data/proveedores').onSnapshot(function(snapshot) {
+                var list = []; snapshot.forEach(function(doc) { list.push({ docId: doc.id, ...doc.data() }); });
+                appState.proveedores = list.sort(function(a,b) { return b.id - a.id; }); renderAll();
+            });
         }
 
         function setupLocalStorageFallback() {
@@ -2068,10 +2188,12 @@
                 appState.finanzas = JSON.parse(localStorage.getItem("vesa_finanzas"));
                 appState.precios = localStorage.getItem("vesa_precios") ? JSON.parse(localStorage.getItem("vesa_precios")) : [...defaultState.precios];
                 appState.gastosInsumos = localStorage.getItem("vesa_gastos_insumos") ? JSON.parse(localStorage.getItem("vesa_gastos_insumos")) : [...defaultState.gastosInsumos];
+                appState.proveedores = localStorage.getItem("vesa_proveedores") ? JSON.parse(localStorage.getItem("vesa_proveedores")) : [...defaultState.proveedores];
             } else {
                 appState.pedidos = [...defaultState.pedidos]; appState.clientes = [...defaultState.clientes];
                 appState.stock = [...defaultState.stock]; appState.finanzas = [...defaultState.finanzas];
                 appState.precios = [...defaultState.precios]; appState.gastosInsumos = [...defaultState.gastosInsumos];
+                appState.proveedores = [...defaultState.proveedores];
             }
             renderAll(); updateCharts();
             actualizarBotonNotificaciones();
@@ -2085,14 +2207,15 @@
                 localStorage.setItem("vesa_finanzas", JSON.stringify(appState.finanzas));
                 localStorage.setItem("vesa_precios", JSON.stringify(appState.precios));
                 localStorage.setItem("vesa_gastos_insumos", JSON.stringify(appState.gastosInsumos));
+                localStorage.setItem("vesa_proveedores", JSON.stringify(appState.proveedores));
             } catch(e) {
                 throw new Error("QUOTA_EXCEEDED");
             }
         }
 
         function renderAll() {
-            renderMetrics(); renderDashboardAlerts(); renderDashboardOrders(); renderDashboardStock();
-            renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable(); renderPreciosTable(); renderRentabilidadProduccion(); renderGastosInsumos();
+            renderMetrics(); renderHoyEnElTaller(); renderBitacoraTaller();
+            renderPedidosTable(); renderKanbanBoard(); renderClientesTable(); renderStockTable(); renderFinanzasTable(); renderPreciosTable(); renderRentabilidadProduccion(); renderGastosInsumos(); renderProveedoresTable();
             populateDropdowns();
             verificarAlertasStockPush();
         }
@@ -2289,95 +2412,119 @@
             llenarDatalist("stock-nombre-datalist", [...appState.stock.map(s => s.item), ...appState.precios.map(p => p.nombre)]);
             // Stock > Talle: sugiere los talles ya utilizados
             llenarDatalist("stock-talle-datalist", appState.stock.map(s => s.talle));
+            // Gastos de Insumos > Proveedor: sugiere proveedores ya registrados
+            llenarDatalist("proveedor-nombre-datalist", appState.proveedores.map(p => p.nombre));
+
+            // NUEVO: Stock > Proveedor Habitual — select real (no datalist), para poder ubicar el WhatsApp exacto al pedir reposición
+            var proveedorHabitualSelects = [document.getElementById("form-stk-proveedor"), document.getElementById("edit-stk-proveedor")];
+            proveedorHabitualSelects.forEach(function(sel) {
+                if (!sel) return;
+                var valorActual = sel.value;
+                sel.innerHTML = `<option value="">Sin proveedor asignado</option>`;
+                appState.proveedores.forEach(function(p) { sel.innerHTML += `<option value="${sanitizeHTML(p.nombre)}">${sanitizeHTML(p.nombre)}</option>`; });
+                if (valorActual) sel.value = valorActual;
+            });
         }
 
         function renderMetrics() {
             document.getElementById("val-pendientes").innerText = appState.pedidos.filter(p=>p.estado !== "Entregado").length;
-            var ventasTotal = appState.pedidos.reduce((acc, p) => acc + p.monto, 0);
-            document.getElementById("val-ventas").innerText = "$" + ventasTotal.toLocaleString('es-AR');
-            document.getElementById("val-ganancias").innerText = "$" + Math.round(ventasTotal * 0.4).toLocaleString('es-AR');
             var lowStock = appState.stock.filter(s=>s.cantidad <= s.minimo).length;
-            document.getElementById("val-stock").innerText = lowStock; 
+            document.getElementById("val-stock").innerText = lowStock;
         }
 
-        function renderDashboardAlerts() { 
-            var container = document.getElementById("dash-alerts"); 
+        // "HOY EN EL TALLER": agenda del día — sin métricas ni montos, solo lo operativo (ya sale en detalle en sus propios apartados)
+        function renderHoyEnElTaller() {
+            var container = document.getElementById("dash-agenda");
             if (!container) return;
-            container.innerHTML = ""; 
-            
-            var stockBajo = appState.stock.filter(s => s.cantidad <= s.minimo);
-            var atrasados = appState.pedidos.filter(p => p.estado === "En diseño" || p.estado === "Confirmado");
 
-            if (atrasados.length > 0) {
-                container.innerHTML += `<div class="alert-item danger" style="cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(244,63,94,0.1)'; this.style.borderColor='var(--color-danger)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border-glass)';" onclick="switchTab('kanban')">
-                    <div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
-                    <div class="alert-text"><h4>${atrasados.length} pedidos atrasados</h4><p>Revisá pre-prensa y confirmaciones. <strong>Clic para ir al Tablero.</strong></p></div>
-                </div>`;
+            var listos = appState.pedidos.filter(function(p) { return p.estado === "Listo"; }).slice(0, 6);
+            var enCurso = appState.pedidos.filter(function(p) { return ["Confirmado","En diseño","Producción","Estampado"].indexOf(p.estado) !== -1; }).slice(0, 6);
+            var stockBajo = appState.stock.filter(function(s) { return s.cantidad <= s.minimo; });
+
+            var html = "";
+
+            html += `<div class="agenda-grupo entregar">
+                <div class="agenda-titulo"><i class="fa-solid fa-box-open"></i> Para entregar</div>`;
+            if (listos.length === 0) {
+                html += `<div class="agenda-vacio">No hay pedidos listos para entregar.</div>`;
+            } else {
+                listos.forEach(function(p) {
+                    html += `<div class="agenda-item clickable" onclick="switchTab('kanban')" title="Ir al Tablero">
+                        <div class="agenda-check"></div>
+                        <div class="agenda-texto"><strong>${sanitizeHTML(p.cliente)}</strong> — ${sanitizeHTML(p.detalle)}<span class="agenda-sub">Pedido #${p.id} · ${sanitizeHTML(p.horaEntrega || 'A coordinar')}</span></div>
+                    </div>`;
+                });
             }
-            if (stockBajo.length > 0) {
-                container.innerHTML += `<div class="alert-item" style="cursor:pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.1)'; this.style.borderColor='var(--color-warning)';" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='var(--border-glass)';" onclick="goToStockAndHighlight()">
-                    <div class="alert-icon warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                    <div class="alert-text" style="flex:1;">
-                        <h4>${stockBajo.length} insumos en crítico</h4>
-                        <p>Materia prima por debajo del límite. <strong>Clic para auditar.</strong></p>
-                        <button type="button" onclick="event.stopPropagation(); enviarAlertaStockWhatsApp();" class="btn btn-small" style="background:rgba(37,211,102,0.15); color:#25D366; border-color:rgba(37,211,102,0.35); margin-top:8px;" title="Arma el mensaje y lo abre en WhatsApp para que lo envíes"><i class="fa-brands fa-whatsapp"></i> Avisar por WhatsApp</button>
-                    </div>
-                </div>`;
+            html += `</div>`;
+
+            html += `<div class="agenda-grupo produccion">
+                <div class="agenda-titulo"><i class="fa-solid fa-hourglass-half"></i> En producción</div>`;
+            if (enCurso.length === 0) {
+                html += `<div class="agenda-vacio">No hay pedidos en curso ahora mismo.</div>`;
+            } else {
+                enCurso.forEach(function(p) {
+                    html += `<div class="agenda-item clickable" onclick="switchTab('kanban')" title="Ir al Tablero">
+                        <div class="agenda-check"></div>
+                        <div class="agenda-texto"><strong>${sanitizeHTML(p.cliente)}</strong> — ${sanitizeHTML(p.detalle)}<span class="agenda-sub">Pedido #${p.id} · ${sanitizeHTML(p.estado)}</span></div>
+                    </div>`;
+                });
             }
-            if (atrasados.length === 0 && stockBajo.length === 0) {
-                container.innerHTML += `<div class="alert-item success" style="border-left-color: var(--color-success);">
-                    <div class="alert-icon" style="color: var(--color-success);"><i class="fa-solid fa-square-check"></i></div>
-                    <div class="alert-text"><h4>Todo en orden</h4><p>Operación óptima sin retrasos.</p></div>
-                </div>`;
+            html += `</div>`;
+
+            html += `<div class="agenda-grupo comprar">
+                <div class="agenda-titulo"><i class="fa-solid fa-cart-shopping"></i> Hay que comprar</div>`;
+            if (stockBajo.length === 0) {
+                html += `<div class="agenda-vacio">El stock general está saludable.</div>`;
+            } else {
+                stockBajo.forEach(function(s) {
+                    html += `<div class="agenda-item clickable" onclick="goToStockAndHighlight()" title="Ir a Stock">
+                        <div class="agenda-check"></div>
+                        <div class="agenda-texto"><strong>${sanitizeHTML(s.item)}</strong> (${sanitizeHTML(s.talle)})<span class="agenda-sub">Quedan ${s.cantidad} unidades</span></div>
+                    </div>`;
+                });
+                html += `<button type="button" onclick="enviarAlertaStockWhatsApp();" class="btn btn-small" style="background:rgba(37,211,102,0.15); color:#25D366; border-color:rgba(37,211,102,0.35); margin-top:8px;" title="Arma el mensaje y lo abre en WhatsApp para que lo envíes"><i class="fa-brands fa-whatsapp"></i> Avisar por WhatsApp</button>`;
             }
+            html += `</div>`;
+
+            container.innerHTML = html;
         }
 
-        function renderDashboardOrders() { 
-            var tbody = document.getElementById("dash-pedidos-tbody"); 
-            if (!tbody) return;
-            tbody.innerHTML = ""; 
-            
-            var ultimos = appState.pedidos.slice(0, 4); 
-            ultimos.forEach(p => {
-                var docIdSegura = p.docId ? `'${p.docId}'` : 'null';
-                var badgeClass = "badge-" + p.estado.toLowerCase().replace(" ", "");
-                tbody.innerHTML += `<tr>
-                    <td>#${p.id}</td>
-                    <td style="font-weight:700;">${sanitizeHTML(p.cliente)}</td>
-                    <td style="color: var(--color-text-secondary); font-size: 11px;">${sanitizeHTML(p.detalle)}</td>
-                    <td><span class="badge ${badgeClass}">${p.estado}</span></td>
-                    <td>
-                        <div style="display:flex; gap:6px;">
-                            <button class="btn btn-primary btn-small" style="padding: 4px 8px;" onclick="generarFichaTecnica(${p.id})" title="Generar PDF"><i class="fa-solid fa-file-pdf"></i></button>
-                            <button class="btn btn-small" style="background:rgba(255,255,255,0.03); padding: 4px 8px;" onclick="abrirEditarPedido(${docIdSegura}, ${p.id})" title="Editar Orden"><i class="fa-solid fa-pen"></i></button>
-                        </div>
-                    </td>
-                </tr>`;
+        // "BITÁCORA DEL TALLER": feed cronológico de lo que fue pasando (pedidos, cobros/egresos, entregas) — sin flujo de ingresos ni utilidad, eso ya está en Caja
+        function renderBitacoraTaller() {
+            var container = document.getElementById("dash-bitacora");
+            if (!container) return;
+
+            var eventos = [];
+
+            appState.pedidos.forEach(function(p) {
+                eventos.push({ tipo: "pedido", ts: p.timestamp || 0, fecha: p.fecha, icon: "fa-plus", texto: `Se cargó el <strong>Pedido #${p.id}</strong> (${sanitizeHTML(p.cliente)}) — ${sanitizeHTML(p.detalle)}` });
+                if (p.estado === "Entregado") {
+                    eventos.push({ tipo: "entregado", ts: p.entregaTimestamp || p.timestamp || 0, fecha: p.fecha, icon: "fa-box-open", texto: `<strong>Pedido #${p.id}</strong> (${sanitizeHTML(p.cliente)}) se marcó como entregado` });
+                }
             });
-            if(ultimos.length === 0) tbody.innerHTML = `<tr><td colspan="5" class="empty-placeholder">No hay pedidos recientes.</td></tr>`;
-        }
 
-        function renderDashboardStock() { 
-            var container = document.getElementById("dash-stock-list"); 
-            if (!container) return;
-            container.innerHTML = ""; 
-            
-            var criticos = appState.stock.filter(s => s.cantidad <= s.minimo).slice(0, 4); 
-            if (criticos.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--color-text-secondary); font-size: 12px;">El stock general está saludable.</div>`;
+            appState.finanzas.forEach(function(f) {
+                var esIngreso = f.tipo === "Ingreso";
+                eventos.push({ tipo: esIngreso ? "cobro" : "egreso", ts: f.timestamp || 0, fecha: f.fecha, icon: esIngreso ? "fa-circle-check" : "fa-circle-minus", texto: sanitizeHTML(f.detalle), monto: f.monto });
+            });
+
+            eventos.sort(function(a, b) { return b.ts - a.ts; });
+            eventos = eventos.slice(0, 12);
+
+            if (eventos.length === 0) {
+                container.innerHTML = `<div class="agenda-vacio">Todavía no hay actividad registrada.</div>`;
                 return;
             }
-            criticos.forEach(s => {
-                container.innerHTML += `
-                    <div class="stock-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <div class="stock-info">
-                            <h5 style="font-size:13px; font-weight:700;">${sanitizeHTML(s.item)}</h5>
-                            <p style="font-size:11px; color:var(--color-text-secondary); font-family: 'Space Mono', monospace;">Talle: ${sanitizeHTML(s.talle)}</p>
-                        </div>
-                        <div class="stock-qty" style="color:var(--color-danger); font-weight:800; font-family:'Space Mono', monospace;">${s.cantidad} un.</div>
-                    </div>
-                `;
+
+            var html = "";
+            eventos.forEach(function(e) {
+                var montoHtml = (e.monto !== undefined) ? ` — <span class="bit-monto">$${e.monto.toLocaleString('es-AR')}</span>` : "";
+                html += `<div class="bit-entry ${e.tipo}">
+                    <div class="bit-hora">${sanitizeHTML(e.fecha || '')}</div>
+                    <div class="bit-texto"><i class="fa-solid ${e.icon} bit-icon"></i>${e.texto}${montoHtml}</div>
+                </div>`;
             });
+            container.innerHTML = html;
         }
         
         // NUEVO: Historial de pedidos y gasto total de un cliente
@@ -2423,15 +2570,77 @@
                 tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${sanitizeHTML(c.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.whatsapp)}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${sanitizeHTML(c.instagram)}</td><td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);">$${totalGastado.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(56,189,248,0.1); color:var(--color-accent); border-color:rgba(56,189,248,0.3);" onclick="abrirHistorialCliente(${c.id})" title="Ver historial de pedidos y gastos de este cliente"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
+
+        // NUEVO: Proveedores — tabla, historial de compras y contacto directo por WhatsApp
+        function renderProveedoresTable() {
+            var tbody = document.getElementById("proveedores-tbody"); if (!tbody) return; tbody.innerHTML = "";
+            appState.proveedores.forEach(function(p) {
+                var docIdSegura = p.docId ? `'${p.docId}'` : 'null';
+                var comprasProveedor = (appState.gastosInsumos || []).filter(function(g) { return g.proveedor === p.nombre; });
+                var totalComprado = comprasProveedor.reduce(function(acc, g) { return acc + (g.monto || 0); }, 0);
+                tbody.innerHTML += `<tr><td>#${p.id}</td><td style="font-weight:700;">${sanitizeHTML(p.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(p.whatsapp)}</td><td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);">$${totalComprado.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:8px; justify-content:flex-end;"><button class="btn btn-small" style="background:rgba(37,211,102,0.15); color:#25D366; border-color:rgba(37,211,102,0.35);" onclick="enviarWhatsAppProveedor('${p.whatsapp}', '${sanitizeHTML(p.nombre).replace(/'/g, "\\'")}')" title="Escribirle por WhatsApp"><i class="fa-brands fa-whatsapp"></i></button><button class="btn btn-small" style="background:rgba(56,189,248,0.1); color:var(--color-accent); border-color:rgba(56,189,248,0.3);" onclick="abrirHistorialProveedor(${p.id})" title="Ver historial de compras a este proveedor"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarProveedor(${docIdSegura}, ${p.id})" title="Editar datos del proveedor"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarProveedor(${docIdSegura}, ${p.id})" title="Eliminar proveedor del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+            });
+        }
+
+        // Abre WhatsApp con un mensaje genérico de pedido, listo para editar antes de enviar
+        function enviarWhatsAppProveedor(whatsapp, nombre, mensajePersonalizado) {
+            var numero = String(whatsapp || '').replace(/[^0-9]/g, '');
+            if (!numero) { showToast("Sin Número", "Este proveedor no tiene un WhatsApp cargado.", true); return; }
+            var mensaje = mensajePersonalizado || `Hola${nombre ? ' ' + nombre : ''}, quería hacer un pedido de insumos. ¿Tenés disponibilidad?`;
+            window.open("https://wa.me/" + numero + "?text=" + encodeURIComponent(mensaje), '_blank');
+        }
+        window.enviarWhatsAppProveedor = enviarWhatsAppProveedor;
+
+        function abrirHistorialProveedor(proveedorId) {
+            var p = appState.proveedores.find(function(x) { return x.id === proveedorId; }); if (!p) return;
+            var comprasProveedor = (appState.gastosInsumos || []).filter(function(g) { return g.proveedor === p.nombre; }).sort(function(a, b) { return (b.timestamp || 0) - (a.timestamp || 0); });
+
+            var totalComprado = comprasProveedor.reduce(function(acc, g) { return acc + (g.monto || 0); }, 0);
+
+            document.getElementById("historial-proveedor-nombre").innerText = "Historial de " + p.nombre;
+            document.getElementById("historial-proveedor-cantidad").innerText = comprasProveedor.length;
+            document.getElementById("historial-proveedor-total").innerText = "$" + totalComprado.toLocaleString('es-AR');
+            document.getElementById("historial-proveedor-ultimo").innerText = comprasProveedor.length > 0 ? comprasProveedor[0].fecha : "-";
+
+            var tbody = document.getElementById("historial-proveedor-tbody"); tbody.innerHTML = "";
+            if (comprasProveedor.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-placeholder"><i class="fa-solid fa-inbox"></i>Todavía no le compraste nada a este proveedor.</td></tr>`;
+            } else {
+                comprasProveedor.forEach(function(g) {
+                    tbody.innerHTML += `<tr>
+                        <td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${sanitizeHTML(g.fecha)}</td>
+                        <td style="font-weight:700;">${sanitizeHTML(g.insumo)}</td>
+                        <td style="color:var(--color-text-secondary);">${sanitizeHTML(g.medioPago || 'Efectivo')}</td>
+                        <td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-danger);">$${(g.monto || 0).toLocaleString('es-AR')}</td>
+                    </tr>`;
+                });
+            }
+            openModal('modalHistorialProveedor');
+        }
+        window.abrirHistorialProveedor = abrirHistorialProveedor;
+
         function renderStockTable() {
             var tbody = document.getElementById("stock-tbody"); tbody.innerHTML = "";
             appState.stock.forEach(function(s) {
                 var docIdSegura = s.docId ? `'${s.docId}'` : 'null';
                 var isLow = s.cantidad <= s.minimo;
                 var badge = isLow ? `<span class="badge" style="background:rgba(244, 63, 94, 0.1); color:var(--color-danger); border-color: rgba(244, 63, 94, 0.3);">Quiebre</span>` : `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color: rgba(16, 185, 129, 0.3);">Estable</span>`;
-                tbody.innerHTML += `<tr><td>#${s.id}</td><td style="font-weight:700;">${sanitizeHTML(s.item)}</td><td>${sanitizeHTML(s.talle)}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td style="color:var(--color-text-secondary); font-family:'Space Mono';">$${(s.costo || 0).toLocaleString('es-AR')}</td><td>${badge}</td><td><div style="display:flex; gap:6px;"><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})" title="Modificar cantidades o límites"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})" title="Remover insumo de la base de datos"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                // NUEVO: si el insumo está bajo y tiene un proveedor habitual asignado, un botón pide la reposición directo por WhatsApp
+                var proveedorAsignado = s.proveedorHabitual ? appState.proveedores.find(function(p) { return p.nombre === s.proveedorHabitual; }) : null;
+                var botonPedir = (isLow && proveedorAsignado) ? `<button class="btn btn-small" style="background:rgba(37,211,102,0.15); color:#25D366; border-color:rgba(37,211,102,0.35);" onclick="pedirReposicionWhatsApp(${s.id})" title="Pedirle reposición a ${sanitizeHTML(proveedorAsignado.nombre)} por WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>` : '';
+                tbody.innerHTML += `<tr><td>#${s.id}</td><td style="font-weight:700;">${sanitizeHTML(s.item)}</td><td>${sanitizeHTML(s.talle)}</td><td style="font-weight:800; font-family:'Space Mono'; color:${isLow ? 'var(--color-danger)' : 'var(--color-text-primary)'}">${s.cantidad} un.</td><td style="color:var(--color-text-secondary);">${s.minimo}</td><td style="color:var(--color-text-secondary); font-family:'Space Mono';">$${(s.costo || 0).toLocaleString('es-AR')}</td><td>${badge}</td><td><div style="display:flex; gap:6px;">${botonPedir}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarStock(${docIdSegura}, ${s.id})" title="Modificar cantidades o límites"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarStock(${docIdSegura}, ${s.id})" title="Remover insumo de la base de datos"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
+
+        // NUEVO: arma el mensaje de reposición con el insumo puntual y lo manda al proveedor habitual asignado
+        function pedirReposicionWhatsApp(stockId) {
+            var s = appState.stock.find(function(x) { return x.id === stockId; }); if (!s) return;
+            var proveedor = s.proveedorHabitual ? appState.proveedores.find(function(p) { return p.nombre === s.proveedorHabitual; }) : null;
+            if (!proveedor) { showToast("Sin Proveedor", "Este insumo no tiene un proveedor habitual asignado.", true); return; }
+            var mensaje = `Hola ${proveedor.nombre}, necesito reponer ${s.item} (${s.talle}) — me quedan ${s.cantidad} unidades. ¿Tenés disponible?`;
+            enviarWhatsAppProveedor(proveedor.whatsapp, proveedor.nombre, mensaje);
+        }
+        window.pedirReposicionWhatsApp = pedirReposicionWhatsApp;
         function renderPreciosTable() {
             var tbody = document.getElementById("precios-tbody"); if (!tbody) return; tbody.innerHTML = "";
             var tipoStyles = {
@@ -2827,7 +3036,7 @@
 
         // --- NAVEGACIÓN Y TABS ---
         let tabHistory = []; let currentTabId = 'dashboard';
-        function toggleSidebar(open) { var sidebar = document.getElementById("app-sidebar"); var overlay = document.getElementById("sidebar-overlay"); if (open) { sidebar.classList.add("active"); overlay.classList.add("active"); } else { sidebar.classList.remove("active"); overlay.classList.remove("active"); } }
+        function toggleSidebar(open) { var sidebar = document.getElementById("app-sidebar"); var overlay = document.getElementById("sidebar-overlay"); if (!sidebar || !overlay) return; if (open) { sidebar.classList.add("active"); overlay.classList.add("active"); } else { sidebar.classList.remove("active"); overlay.classList.remove("active"); } }
         
         function switchTab(tabId, isGoBack = false) {
             if (currentTabId === tabId) return;
@@ -2877,10 +3086,11 @@
             document.getElementById(id).classList.add('active'); 
         }
 
-        function closeModal(id) { 
-            document.getElementById(id).classList.remove('active'); 
-            if(id === 'modalCliente' && returnToPedidoModalFromCliente) { document.getElementById('modalPedido').classList.add('active'); returnToPedidoModalFromCliente = false; } 
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            if(id === 'modalCliente' && returnToPedidoModalFromCliente) { document.getElementById('modalPedido').classList.add('active'); returnToPedidoModalFromCliente = false; }
             else if(id === 'modalStock' && returnToPedidoModalFromStock) { const targetModal = returnToPedidoModalFromStock === 'edit' ? 'modalEditPedido' : 'modalPedido'; document.getElementById(targetModal).classList.add('active'); returnToPedidoModalFromStock = false; }
+            else if(id === 'modalWelcomeAlert') { setTimeout(mostrarNovedadesSiCorresponde, 350); }
         }
 
         // --- KANBAN DRAG & DROP ---
@@ -2904,20 +3114,21 @@
             var nuevaFinanza = {
                 id: maxFinId + 1,
                 tipo: "Ingreso", detalle: `Saldo Final Pedido #${pedido.id} (${pedido.cliente}) - Entregado`,
-                monto: calculoSaldo.neto, montoBruto: saldoPendiente, comision: calculoSaldo.comision, fecha: hoy, medioPago: medioPagoFinal
+                monto: calculoSaldo.neto, montoBruto: saldoPendiente, comision: calculoSaldo.comision, fecha: hoy, medioPago: medioPagoFinal, timestamp: Date.now()
             };
 
             pedido.sena = pedido.monto;
             pedido.saldo = 0;
+            pedido.entregaTimestamp = Date.now();
             appState.finanzas.unshift(nuevaFinanza);
 
             if (hasFirebase && authUser) {
-                if (pedido.docId) { 
-                    db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ sena: pedido.sena, saldo: pedido.saldo }).catch(console.error); 
+                if (pedido.docId) {
+                    db.collection('artifacts/' + appId + '/public/data/pedidos').doc(pedido.docId).update({ sena: pedido.sena, saldo: pedido.saldo, entregaTimestamp: pedido.entregaTimestamp }).catch(console.error);
                 }
                 db.collection('artifacts/' + appId + '/public/data/finanzas').add(nuevaFinanza).catch(console.error);
-            } else { 
-                try { saveToLocalStorage(); } catch(e) {} 
+            } else {
+                try { saveToLocalStorage(); } catch(e) {}
             }
             return true;
         }
@@ -3010,9 +3221,9 @@
                     // NUEVO: si la seña se cobró por Transferencia o Tarjeta, se descuenta la comisión antes de asentarla en Caja (el pedido sigue registrando la seña a valor de cara)
                     var calculoSena = calcularNetoPorMedioPago(sena, mediopago);
                     nuevaFinanza = {
-                        id: maxFinId + 1, 
-                        tipo: "Ingreso", detalle: `Seña Pedido #${nuevoId} (${cliente})`, 
-                        monto: calculoSena.neto, montoBruto: sena, comision: calculoSena.comision, fecha: hoy, medioPago: mediopago
+                        id: maxFinId + 1,
+                        tipo: "Ingreso", detalle: `Seña Pedido #${nuevoId} (${cliente})`,
+                        monto: calculoSena.neto, montoBruto: sena, comision: calculoSena.comision, fecha: hoy, medioPago: mediopago, timestamp: Date.now()
                     };
                 }
 
@@ -3178,6 +3389,7 @@
                     if (saldoPendienteEdicion && saldoPendienteEdicion > 0) {
                         updatedData.sena = updatedData.monto;
                         updatedData.saldo = 0;
+                        updatedData.entregaTimestamp = Date.now();
 
                         var hoyEdicion = new Date().toLocaleDateString('es-AR', dateOptions);
                         let maxFinIdEdicion = 0;
@@ -3188,7 +3400,7 @@
                         var nuevaFinanzaEdicion = {
                             id: maxFinIdEdicion + 1,
                             tipo: "Ingreso", detalle: `Saldo Final Pedido #${localId} (${cliente}) - Entregado`,
-                            monto: calculoSaldoEdicion.neto, montoBruto: saldoPendienteEdicion, comision: calculoSaldoEdicion.comision, fecha: hoyEdicion, medioPago: medioPagoEdicion
+                            monto: calculoSaldoEdicion.neto, montoBruto: saldoPendienteEdicion, comision: calculoSaldoEdicion.comision, fecha: hoyEdicion, medioPago: medioPagoEdicion, timestamp: Date.now()
                         };
                         appState.finanzas.unshift(nuevaFinanzaEdicion);
 
@@ -3465,6 +3677,74 @@
             renderAll(); showToast("Baja Efectuada", "Contacto removido.");
         }
 
+        // --- CRUD PROVEEDORES ---
+        async function guardarProveedor() {
+            var nombre = document.getElementById("form-prov-nombre").value.trim();
+            var whatsapp = document.getElementById("form-prov-tel").value.trim();
+            if (!nombre || !whatsapp) { showToast("Error", "Nombre y WhatsApp son obligatorios.", true); return; }
+            var nuevoId = appState.proveedores.length > 0 ? Math.max(...appState.proveedores.map(p=>p.id)) + 1 : 1;
+            var nuevoProv = { id: nuevoId, nombre: nombre, whatsapp: whatsapp };
+
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.proveedores.push(nuevoProv);
+
+            if (hasFirebase && authUser) {
+                db.collection('artifacts/' + appId + '/public/data/proveedores').add(nuevoProv).catch(console.error);
+            } else {
+                try { saveToLocalStorage(); } catch(e) {}
+            }
+
+            document.getElementById("form-prov-nombre").value = ""; document.getElementById("form-prov-tel").value = "";
+            closeModal('modalProveedor'); renderAll(); showToast("Carga Lista", "Proveedor agendado.");
+        }
+        window.guardarProveedor = guardarProveedor;
+
+        function abrirEditarProveedor(docId, localId) {
+            var p = appState.proveedores.find(x => x.id === localId); if (!p) return;
+            document.getElementById("edit-prov-id-doc").value = docId || ''; document.getElementById("edit-prov-id-local").value = localId;
+            document.getElementById("edit-prov-nombre").value = p.nombre; document.getElementById("edit-prov-tel").value = p.whatsapp;
+            openModal('modalEditProveedor');
+        }
+        window.abrirEditarProveedor = abrirEditarProveedor;
+
+        async function guardarEdicionProveedor() {
+            var docId = document.getElementById("edit-prov-id-doc").value; var localId = parseInt(document.getElementById("edit-prov-id-local").value);
+            var nombre = document.getElementById("edit-prov-nombre").value.trim(); var whatsapp = document.getElementById("edit-prov-tel").value.trim();
+            if (!nombre || !whatsapp) { showToast("Error", "Nombre y WhatsApp son obligatorios.", true); return; }
+            var updatedData = { nombre: nombre, whatsapp: whatsapp };
+
+            // ACTUALIZACIÓN OPTIMISTA (si cambia el nombre, actualiza también las compras ya vinculadas por nombre)
+            var idx = appState.proveedores.findIndex(x => x.id === localId);
+            if (idx !== -1) {
+                var viejoNombre = appState.proveedores[idx].nombre;
+                appState.proveedores[idx] = { ...appState.proveedores[idx], ...updatedData };
+                appState.gastosInsumos.forEach(function(g, gIdx) { if (g.proveedor === viejoNombre) { appState.gastosInsumos[gIdx].proveedor = nombre; } });
+            }
+
+            if (hasFirebase && authUser && docId) {
+                db.collection('artifacts/' + appId + '/public/data/proveedores').doc(docId).update(updatedData).catch(console.error);
+            } else {
+                try { saveToLocalStorage(); } catch(e) {}
+            }
+            closeModal('modalEditProveedor'); renderAll(); showToast("Guardado", "Cambios aplicados.");
+        }
+        window.guardarEdicionProveedor = guardarEdicionProveedor;
+
+        async function eliminarProveedor(docId, localId) {
+            if (!confirm("⚠️ ¿Eliminar este proveedor del directorio?")) return;
+
+            // ACTUALIZACIÓN OPTIMISTA
+            appState.proveedores = appState.proveedores.filter(p => p.id !== localId);
+
+            if (hasFirebase && authUser && docId) {
+                db.collection('artifacts/' + appId + '/public/data/proveedores').doc(docId).delete().catch(console.error);
+            } else {
+                try { saveToLocalStorage(); } catch(e) {}
+            }
+            renderAll(); showToast("Baja Efectuada", "Proveedor removido.");
+        }
+        window.eliminarProveedor = eliminarProveedor;
+
         // --- CRUD LISTA DE PRECIOS ---
         async function guardarPrecio() {
             var nombre = document.getElementById("form-precio-nombre").value.trim();
@@ -3558,7 +3838,7 @@
             }
 
             var hoy = new Date().toLocaleDateString('es-AR', dateOptions);
-            var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, montoBruto: montoBruto, comision: comisionAplicada, fecha: hoy, medioPago: mediopago };
+            var nuevaFin = { id: appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) + 1 : 1, tipo: tipo, detalle: detalle, monto: monto, montoBruto: montoBruto, comision: comisionAplicada, fecha: hoy, medioPago: mediopago, timestamp: Date.now() };
             
             // ACTUALIZACIÓN OPTIMISTA
             appState.finanzas.unshift(nuevaFin); 
@@ -3657,7 +3937,8 @@
                 app: "VESA Core OS", version: 1, exportedAt: new Date().toISOString(),
                 data: {
                     pedidos: appState.pedidos, clientes: appState.clientes, stock: appState.stock,
-                    finanzas: appState.finanzas, precios: appState.precios, gastosInsumos: appState.gastosInsumos
+                    finanzas: appState.finanzas, precios: appState.precios, gastosInsumos: appState.gastosInsumos,
+                    proveedores: appState.proveedores
                 }
             };
             var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -3687,7 +3968,7 @@
                     event.target.value = ''; return;
                 }
 
-                var confirmado = confirm("⚠️ ATENCIÓN: esto va a REEMPLAZAR todos los datos actuales (Pedidos, Clientes, Stock, Caja, Precios y Gastos de Insumos) por los del backup. No se puede deshacer.\n\n¿Confirmás que querés continuar?");
+                var confirmado = confirm("⚠️ ATENCIÓN: esto va a REEMPLAZAR todos los datos actuales (Pedidos, Clientes, Stock, Caja, Precios, Gastos de Insumos y Proveedores) por los del backup. No se puede deshacer.\n\n¿Confirmás que querés continuar?");
                 if (!confirmado) { event.target.value = ''; return; }
 
                 appState.pedidos = datos.pedidos || [];
@@ -3696,10 +3977,11 @@
                 appState.finanzas = datos.finanzas || [];
                 appState.precios = datos.precios || [];
                 appState.gastosInsumos = datos.gastosInsumos || [];
+                appState.proveedores = datos.proveedores || [];
 
                 if (hasFirebase && authUser) {
                     showToast("Restaurando...", "Subiendo los datos del backup, no cierres la app.");
-                    var colecciones = [['pedidos','pedidos'], ['clientes','clientes'], ['stock','stock'], ['finanzas','finanzas'], ['precios','precios'], ['gastos_insumos','gastosInsumos']];
+                    var colecciones = [['pedidos','pedidos'], ['clientes','clientes'], ['stock','stock'], ['finanzas','finanzas'], ['precios','precios'], ['gastos_insumos','gastosInsumos'], ['proveedores','proveedores']];
                     for (var c = 0; c < colecciones.length; c++) {
                         var col = colecciones[c][0]; var clavePropia = colecciones[c][1];
                         var refColeccion = db.collection('artifacts/' + appId + '/public/data/' + col);
@@ -4011,6 +4293,7 @@
             var cant = parseInt(document.getElementById("form-stk-cant").value) || 0; 
             var min = parseInt(document.getElementById("form-stk-min").value) || 0;
             var costo = parseFloat(document.getElementById("form-stk-costo").value) || 0;
+            var proveedorHabitual = document.getElementById("form-stk-proveedor") ? document.getElementById("form-stk-proveedor").value : "";
             if (!nombre) { showToast("Error", "Falta nombre del artículo.", true); return; }
 
             const isOneOffEl = document.getElementById("form-stk-oneoff");
@@ -4036,7 +4319,7 @@
                 returnToPedidoModalFromStock = false; document.getElementById("form-stk-nombre").value = ""; showToast("Insumo Especial", `Prenda única cargada al carrito.`); return; 
             }
 
-            var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min, costo: costo };
+            var nuevoInsumo = { id: appState.stock.length > 0 ? Math.max(...appState.stock.map(s=>s.id)) + 1 : 1, item: nombre, talle: talle, cantidad: cant, minimo: min, costo: costo, proveedorHabitual: proveedorHabitual };
             
             // ACTUALIZACIÓN OPTIMISTA
             appState.stock.push(nuevoInsumo); 
@@ -4068,14 +4351,15 @@
         function abrirEditarStock(docId, localId) {
             var s = appState.stock.find(x => x.id === localId); if (!s) return;
             document.getElementById("edit-stk-id-doc").value = docId || ''; document.getElementById("edit-stk-id-local").value = localId;
-            document.getElementById("edit-stk-nombre").value = s.item; document.getElementById("edit-stk-talle").value = s.talle; document.getElementById("edit-stk-cant").value = s.cantidad; document.getElementById("edit-stk-min").value = s.minimo; document.getElementById("edit-stk-costo").value = s.costo || 0; openModal('modalEditStock');
+            document.getElementById("edit-stk-nombre").value = s.item; document.getElementById("edit-stk-talle").value = s.talle; document.getElementById("edit-stk-cant").value = s.cantidad; document.getElementById("edit-stk-min").value = s.minimo; document.getElementById("edit-stk-costo").value = s.costo || 0; if (document.getElementById("edit-stk-proveedor")) document.getElementById("edit-stk-proveedor").value = s.proveedorHabitual || ""; openModal('modalEditStock');
         }
 
         async function guardarEdicionStock() {
             var docId = document.getElementById("edit-stk-id-doc").value; var localId = parseInt(document.getElementById("edit-stk-id-local").value);
             var nombre = document.getElementById("edit-stk-nombre").value; var talle = document.getElementById("edit-stk-talle").value; var cant = parseInt(document.getElementById("edit-stk-cant").value) || 0; var min = parseInt(document.getElementById("edit-stk-min").value) || 0;
             var costo = parseFloat(document.getElementById("edit-stk-costo").value) || 0;
-            var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min, costo: costo };
+            var proveedorHabitual = document.getElementById("edit-stk-proveedor") ? document.getElementById("edit-stk-proveedor").value : "";
+            var updatedData = { item: nombre, talle: talle, cantidad: cant, minimo: min, costo: costo, proveedorHabitual: proveedorHabitual };
             
             // ACTUALIZACIÓN OPTIMISTA
             var idx = appState.stock.findIndex(x => x.id === localId); 

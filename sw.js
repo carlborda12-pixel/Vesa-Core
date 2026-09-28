@@ -2,7 +2,7 @@
 // Solo cachea el "cascarón" propio de la app (HTML, manifest, íconos).
 // Nunca intercepta pedidos a Firebase, fuentes o CDNs externos: esos siempre van directo a la red.
 
-const CACHE_NAME = "vesa-core-shell-v3";
+const CACHE_NAME = "vesa-core-shell-v4";
 const APP_SHELL = [
   "./index.html",
   "./manifest.json",

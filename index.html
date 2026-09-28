@@ -7,15 +7,15 @@
     <title>VESA Core OS - Sistema Inteligente</title>
 
     <!-- PWA: Instalable desde el navegador -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=2">
     <meta name="theme-color" content="#0a0a0a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="VESA">
-    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png?v=2">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 
     <!-- Splash screens de iOS (pantalla de carga al abrir la app instalada) -->
     <link rel="apple-touch-startup-image" href="splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
@@ -2811,7 +2811,7 @@
                 var cuerpo = nuevosParaAvisar.slice(0, LIMITE_LINEAS).map(function(s) { return "• " + s.item + " (" + s.talle + "): quedan " + s.cantidad; }).join("\n");
                 if (nuevosParaAvisar.length > LIMITE_LINEAS) { cuerpo += "\n… y " + (nuevosParaAvisar.length - LIMITE_LINEAS) + " más"; }
                 navigator.serviceWorker.ready.then(function(reg) {
-                    reg.showNotification(titulo, { body: cuerpo, icon: 'icon-192.png', badge: 'badge-96.png', tag: 'vesa-stock-alerta' });
+                    reg.showNotification(titulo, { body: cuerpo, icon: 'icon-192.png?v=2', badge: 'badge-96.png?v=2', tag: 'vesa-stock-alerta' });
                 }).catch(function() {});
                 nuevosParaAvisar.forEach(function(s) { yaNotificados.push(s.id); });
             }

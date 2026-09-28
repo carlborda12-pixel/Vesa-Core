@@ -8,7 +8,7 @@
 
     <!-- PWA: Instalable desde el navegador -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#020617">
+    <meta name="theme-color" content="#0a0a0a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -35,7 +35,7 @@
     <!-- Fuentes e Iconos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -49,16 +49,16 @@
     <style>
         /* === PALETA ULTRA PREMIUM ORIGINAL === */
         :root {
-            --bg-base: #020617; 
-            --bg-glass: rgba(15, 23, 42, 0.6); 
-            --bg-glass-hover: rgba(30, 41, 59, 0.8);
+            --bg-base: #0a0a0a; 
+            --bg-glass: rgba(255, 255, 255, 0.035); 
+            --bg-glass-hover: rgba(255, 255, 255, 0.06);
             --border-glass: rgba(255, 255, 255, 0.08);
-            --color-accent: #00f2ff; 
-            --color-accent-glow: rgba(56, 189, 248, 0.3);
+            --color-accent: #ff6a1a; 
+            --color-accent-glow: rgba(255, 106, 26, 0.35);
             --color-purple: #a855f7;
             
-            --color-text-primary: #f8fafc;
-            --color-text-secondary: #94a3b8;
+            --color-text-primary: #f5f2ee;
+            --color-text-secondary: #948d86;
             --color-success: #10b981;
             --color-warning: #f59e0b;
             --color-danger: #f43f5e;
@@ -71,10 +71,10 @@
             display: flex; height: 100vh; height: 100dvh; overflow: hidden; position: relative;
         }
 
-        /* --- FONDOS AMBIENTALES (AURORA GLOW) --- */
+        /* --- FONDOS AMBIENTALES --- */
         .ambient-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; pointer-events: none; }
         .glow-blob { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.4; mix-blend-mode: screen; animation: float 25s infinite ease-in-out alternate; will-change: transform; }
-        .glow-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: rgba(56, 189, 248, 0.15); }
+        .glow-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: rgba(255, 106, 26, 0.15); }
         .glow-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: rgba(168, 85, 247, 0.15); animation-delay: -5s; }
         @keyframes float { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(3vw, 3vh) scale(1.05); } }
         
@@ -87,40 +87,42 @@
         /* Contenedor principal */
         #app-wrapper { display: flex; width: 100%; height: 100%; flex-direction: column; z-index: 10; position: relative; opacity: 1; transition: opacity 0.3s ease;}
 
-        /* --- BARRA SUPERIOR FLOTANTE --- */
+        /* --- BARRA SUPERIOR (flotante) --- */
         .topbar-float {
             position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
             z-index: 1000; display: flex; align-items: center; gap: 4px;
-            background: rgba(11,17,32,0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-glass); border-radius: 20px;
-            padding: 8px 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-            max-width: calc(100vw - 24px); overflow-x: auto; scrollbar-width: none;
+            padding: 0 16px; height: 60px; box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            max-width: calc(100vw - 32px); overflow-x: auto; scrollbar-width: none;
         }
         .topbar-float::-webkit-scrollbar { display: none; }
-        .topbar-logo { font-size: 16px; font-weight: 900; letter-spacing: 2px; padding: 0 10px 0 4px; flex-shrink: 0; text-transform: uppercase; white-space: nowrap; }
+        .topbar-logo { font-family: 'Anton', sans-serif; font-size: 17px; font-weight: 400; letter-spacing: 2.5px; padding: 0 24px 0 8px; flex-shrink: 0; text-transform: uppercase; white-space: nowrap; display: flex; align-items: center; gap: 9px; }
         .topbar-logo span { color: var(--color-accent); text-shadow: 0 0 10px var(--color-accent-glow); }
+        .brand-glyph { width: 16px; height: 15px; flex-shrink: 0; display: inline-flex; }
+        .brand-glyph svg { width: 100%; height: 100%; display: block; }
 
-        .menu-list { list-style: none; display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
-        .menu-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 12px; color: var(--color-text-secondary); text-decoration: none; border-radius: 14px; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.4px; transition: all 0.15s ease-out; cursor: pointer; white-space: nowrap; }
-        .menu-item i { font-size: 15px; }
+        .menu-list { list-style: none; display: flex; align-items: center; gap: 4px; flex-shrink: 0; height: 100%; }
+        .menu-item { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; color: var(--color-text-secondary); text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 12.5px; text-transform: none; letter-spacing: 0; transition: all 0.15s ease-out; cursor: pointer; white-space: nowrap; height: 42px; border-bottom: none; }
+        .menu-item i { font-size: 12px; opacity: 0.7; }
         .menu-item:hover { background: rgba(255,255,255,0.05); color: var(--color-text-primary); }
-        .menu-item.active { background: linear-gradient(180deg, rgba(56, 189, 248, 0.16), rgba(56,189,248,0.03)); box-shadow: inset 0 0 0 1px rgba(56,189,248,0.3); color: var(--color-text-primary); }
-        .menu-item.active i { color: var(--color-accent); }
+        .menu-item.active { background: rgba(255,106,26,0.12); box-shadow: none; color: var(--color-text-primary); font-weight: 700; border-bottom-color: transparent; }
+        .menu-item.active i { color: var(--color-accent); opacity: 1; }
         .menu-label { line-height: 1; }
-        .menu-sep { width: 1px; height: 26px; background: var(--border-glass); margin: 0 6px; flex-shrink: 0; cursor: default; }
+        .menu-sep { width: 1px; height: 18px; background: var(--border-glass); margin: 0 10px; flex-shrink: 0; cursor: default; }
 
-        .topbar-user { display: flex; align-items: center; gap: 10px; padding-left: 12px; margin-left: 4px; border-left: 1px solid var(--border-glass); flex-shrink: 0; }
-        .avatar { width: 34px; height: 34px; background: linear-gradient(135deg, var(--color-accent), var(--color-purple)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #000; font-size: 14px; flex-shrink: 0; }
+        .topbar-user { display: flex; align-items: center; gap: 10px; padding-left: 20px; margin-left: 12px; border-left: 1px solid var(--border-glass); flex-shrink: 0; }
+        .avatar { width: 34px; height: 34px; background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--color-text-primary); font-size: 13px; flex-shrink: 0; }
         .topbar-user-info { line-height: 1.15; }
-        .topbar-user-info h4 { font-size: 12px; font-weight: 800; color: white; white-space: nowrap; }
-        .topbar-user-info p { font-size: 9px; color: var(--color-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; white-space: nowrap; }
+        .topbar-user-info h4 { font-size: 12px; font-weight: 700; color: var(--color-text-primary); white-space: nowrap; }
+        .topbar-user-info p { font-size: 9px; color: var(--color-text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; white-space: nowrap; }
 
         /* --- CONTENIDO PRINCIPAL --- */
         .app-container { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; }
         .main-content { flex: 1; padding: 96px 40px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; will-change: transform; }
         
         .header-app { display: flex; justify-content: space-between; align-items: flex-end; }
-        .header-app h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .header-app h1 { font-family: 'Anton', sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 0.5px; margin-bottom: 4px; }
         .header-app p { color: var(--color-text-secondary); font-size: 14px; font-weight: 500; }
 
         .db-status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; background: var(--bg-glass); border: 1px solid var(--border-glass); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
@@ -128,20 +130,20 @@
         .db-status.online i { color: var(--color-accent); animation: pulse 2s infinite; }
         .db-status.local i { color: var(--color-warning); }
 
-        /* --- TARJETAS DE MÉTRICAS --- */
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .metric-card { background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: transform 0.2s ease-out, border-color 0.2s ease-out; overflow: hidden; }
-        .metric-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.3); }
-        .metric-card.clickable { cursor: pointer; transition: all 0.3s; }
-        .metric-card.clickable:hover { box-shadow: 0 15px 40px rgba(244, 63, 94, 0.15), inset 0 0 20px rgba(244, 63, 94, 0.05); transform: translateY(-6px); }
-        .metric-card.filtro-activo { border-color: var(--color-accent) !important; box-shadow: 0 0 0 2px rgba(56,189,248,0.5), 0 10px 30px rgba(56,189,248,0.15); }
-        
-        .metric-title { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .metric-icon-box { width: 36px; height: 36px; border-radius: 10px; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--color-accent); }
-        .metric-card:nth-child(4) .metric-icon-box { background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.2); color: var(--color-danger); }
-        
-        .metric-value { font-size: 32px; font-weight: 900; color: var(--color-text-primary); letter-spacing: -1px; line-height: 1; }
-        .metric-subtext { font-size: 12px; margin-top: 12px; display: flex; align-items: center; gap: 6px; font-weight: 600; font-family: 'Space Mono', monospace; }
+        /* --- TARJETAS DE MÉTRICAS (planas) --- */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .metric-card { background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 16px; padding: 22px 24px; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; overflow: hidden; }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        .metric-card.clickable { cursor: pointer; }
+        .metric-card.clickable:hover { border-color: rgba(244, 63, 94, 0.3); }
+        .metric-card.filtro-activo { border-color: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
+
+        .metric-title { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .metric-icon-box { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--color-text-secondary); }
+        .metric-card:nth-child(4) .metric-icon-box { background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.2); color: var(--color-danger); }
+
+        .metric-value { font-size: 28px; font-weight: 800; color: var(--color-text-primary); letter-spacing: -0.5px; line-height: 1; }
+        .metric-subtext { font-size: 12px; margin-top: 10px; display: flex; align-items: center; gap: 6px; font-weight: 600; font-family: 'Space Mono', monospace; }
 
         /* --- PANELES Y SECCIONES --- */
         .view-section { display: none; flex-direction: column; gap: 20px; opacity: 0; }
@@ -160,7 +162,7 @@
         .agenda-texto { font-size: 13.5px; line-height: 1.45; }
         .agenda-texto strong { font-weight: 700; }
         .agenda-texto .agenda-sub { color: var(--color-text-secondary); font-size: 12px; display: block; margin-top: 1px; }
-        .agenda-grupo.entregar .agenda-check { border-color: rgba(0,242,255,0.4); }
+        .agenda-grupo.entregar .agenda-check { border-color: rgba(255,106,26,0.4); }
         .agenda-grupo.entregar .agenda-titulo i { color: var(--color-accent); }
         .agenda-grupo.produccion .agenda-item .agenda-check { border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.08); }
         .agenda-grupo.produccion .agenda-titulo i { color: var(--color-warning); }
@@ -190,9 +192,9 @@
         .bit-icon { color: var(--bit-color, var(--color-text-secondary)); margin-right: 4px; }
 
         .panel-block { background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px; transition: padding-bottom 0.3s ease; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px; flex-wrap: wrap; gap: 10px; transition: border-bottom 0.3s; }
-        .panel-header h3 { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
-        .panel-header h3 i { color: var(--color-accent); background: rgba(56,189,248,0.1); padding: 8px; border-radius: 8px; font-size: 14px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glass); padding-bottom: 14px; flex-wrap: wrap; gap: 10px; transition: border-bottom 0.3s; }
+        .panel-header h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; letter-spacing: -0.2px; }
+        .panel-header h3 i { color: var(--color-accent); background: rgba(255,106,26,0.1); padding: 6px; border-radius: 6px; font-size: 13px; }
 
         /* Estilos para colapsar paneles */
         .panel-block.collapsed { padding-bottom: 24px; gap: 0; }
@@ -210,7 +212,7 @@
         td { background: rgba(255,255,255,0.02); padding: 14px 16px; font-size: 13px; font-weight: 600; color: var(--color-text-primary); border-top: 1px solid rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.02); white-space: nowrap; }
         td:first-child { border-left: 1px solid rgba(255,255,255,0.02); border-radius: 12px 0 0 12px; font-family: 'Space Mono', monospace; color: var(--color-accent); font-weight: 700; }
         td:last-child { border-right: 1px solid rgba(255,255,255,0.02); border-radius: 0 12px 12px 0; }
-        tr:hover td { background: rgba(56,189,248,0.04); }
+        tr:hover td { background: rgba(255,106,26,0.04); }
 
         @keyframes flashRow { 
             0% { background-color: rgba(244, 63, 94, 0.4); box-shadow: inset 0 0 20px rgba(244, 63, 94, 0.5); } 
@@ -251,8 +253,8 @@
         .btn { background: rgba(255,255,255,0.03); color: var(--color-text-primary); border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 12px; font-size: 13px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background-color 0.15s, border-color 0.15s; text-transform: uppercase; letter-spacing: 1px; }
         .btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-primary { background: linear-gradient(135deg, var(--color-accent), #00a2ff); color: #000; border: none; }
-        .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #7dd3fc, #0ea5e9); }
+        .btn-primary { background: linear-gradient(135deg, var(--color-accent), #ff3d00); color: #000; border: none; }
+        .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #ffab6b, #ff6a1a); }
         .btn-danger { background: rgba(244, 63, 94, 0.1); color: var(--color-danger); border-color: rgba(244, 63, 94, 0.3); }
         .btn-danger:hover { background: var(--color-danger); color: white; }
         .btn-small { padding: 8px 14px; font-size: 11px; border-radius: 8px; text-transform: none; letter-spacing: 0; }
@@ -262,7 +264,7 @@
         /* KANBAN BOARD */
         .kanban-board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; align-items: stretch; min-height: 480px; scroll-snap-type: x mandatory;}
         .kanban-column { background: rgba(255,255,255,0.02); border-radius: 16px; min-width: 280px; flex: 1; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.03); scroll-snap-align: start; }
-        .kanban-column.drag-over { background: rgba(56, 189, 248, 0.05); border-color: var(--color-accent); }
+        .kanban-column.drag-over { background: rgba(255, 106, 26, 0.05); border-color: var(--color-accent); }
         .kanban-header { padding: 14px 16px; background: rgba(255,255,255,0.01); border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 16px 16px 0 0; font-weight: 800; display: flex; justify-content: space-between; align-items: center; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;}
         .kanban-cards { padding: 10px; display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; }
         .kanban-card { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; cursor: grab; display: flex; flex-direction: column; gap: 10px; transition: transform 0.1s ease-out, border-color 0.1s; }
@@ -270,19 +272,19 @@
         .kanban-card:active { cursor: grabbing; transform: scale(0.98); opacity: 0.9; }
         .k-card-image { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 2px;}
         .k-card-title { font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; align-items: center;}
-        .k-card-title span:first-child { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--color-accent); background: rgba(56,189,248,0.1); padding: 4px 8px; border-radius: 6px; }
+        .k-card-title span:first-child { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--color-accent); background: rgba(255,106,26,0.1); padding: 4px 8px; border-radius: 6px; }
         .k-card-desc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.4; font-weight: 500;}
 
         /* MODALES */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.85); z-index: 2000; align-items: center; justify-content: center; animation: fadeInModal 0.2s ease-out; overflow-y: auto; padding: 20px; }
         .modal-overlay.active { display: flex; }
         @keyframes fadeInModal { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        
+
         .modal-box { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; width: 500px; max-width: 100%; padding: 32px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .modal-box.wide { width: 950px; }
         .modal-body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .modal-col { display: flex; flex-direction: column; gap: 16px; }
-        
+
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px; }
         .modal-header h3 { font-size: 18px; font-weight: 900; color: var(--color-text-primary); }
         .modal-close { background: rgba(255,255,255,0.05); border: none; color: var(--color-text-secondary); width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.15s, color 0.15s; }
@@ -301,8 +303,9 @@
         .expired-icon { font-size: 40px; color: var(--color-danger); margin-bottom: 16px; }
         #login-screen { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background: #020617; align-items: center; justify-content: center; padding: 20px; }
         .login-box { background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 36px 32px; width: 380px; max-width: 100%; }
-        .login-box .login-logo { font-size: 26px; font-weight: 900; letter-spacing: 3px; text-align: center; margin-bottom: 4px; text-transform: uppercase; }
+        .login-box .login-logo { font-family: 'Anton', sans-serif; font-size: 30px; font-weight: 400; letter-spacing: 3px; text-align: center; margin-bottom: 4px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 12px; }
         .login-box .login-logo span { color: var(--color-accent); text-shadow: 0 0 10px var(--color-accent-glow); }
+        .login-box .login-logo .brand-glyph { width: 30px; height: 27px; }
         .login-box .login-sub { text-align: center; color: var(--color-text-secondary); font-size: 12px; margin-bottom: 24px; }
         .login-error { display: none; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); color: var(--color-danger); font-size: 12px; padding: 10px 12px; border-radius: 10px; margin-bottom: 14px; line-height: 1.4; }
         .login-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--color-text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
@@ -312,8 +315,8 @@
         .login-forgot { display: block; text-align: center; font-size: 11px; color: var(--color-text-secondary); margin-top: 14px; cursor: pointer; text-decoration: underline; }
         #biometric-lock-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; background: #020617; align-items: center; justify-content: center; padding: 20px; }
         .biometric-box { text-align: center; width: 320px; max-width: 100%; }
-        .biometric-icon { width: 90px; height: 90px; border-radius: 50%; background: rgba(0,242,255,0.08); border: 1px solid rgba(0,242,255,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 34px; color: var(--color-accent); cursor: pointer; transition: all 0.2s; }
-        .biometric-icon:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(0,242,255,0.2); }
+        .biometric-icon { width: 90px; height: 90px; border-radius: 50%; background: rgba(255,106,26,0.08); border: 1px solid rgba(255,106,26,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 34px; color: var(--color-accent); cursor: pointer; transition: all 0.2s; }
+        .biometric-icon:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(255,106,26,0.2); }
 
         /* NOTIFICACIÓN TOAST */
         .notification-toast { display: none; position: fixed; bottom: 30px; right: 30px; max-width: 350px; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--color-accent); border-radius: 16px; padding: 16px 20px; color: white; gap: 14px; align-items: center; z-index: 3000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInToast 0.3s ease-out; }
@@ -373,7 +376,7 @@
 
         <!-- BARRA SUPERIOR FLOTANTE -->
         <nav class="topbar-float" id="app-topbar">
-            <div class="topbar-logo">VESA<span>.</span></div>
+            <div class="topbar-logo"><span class="brand-glyph"><svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="80" r="9" style="fill:var(--color-accent)"/><path d="M22 20 L48 78 L58 78 L84 20 L70 20 L53 60 L36 20 Z" style="fill:var(--color-accent)"/></svg></span>VESA<span>.</span></div>
             <ul class="menu-list">
                 <li><a class="menu-item active" onclick="switchTab('dashboard')" title="Inicio — Panel principal con métricas de salud del taller"><i class="fa-solid fa-chart-pie"></i><span class="menu-label">Inicio</span></a></li>
 
@@ -414,7 +417,7 @@
                         <div class="db-status local" id="status-badge" onclick="openModal('modalConfigFirebase')" title="Verificar estado de conexión con servidores de Google">
                             <i class="fa-solid fa-circle"></i> <span id="status-text">Inicializando...</span>
                         </div>
-                        <button type="button" id="btn-instalar-pwa" onclick="instalarAppVesa()" style="display:none; align-items:center; gap:8px; padding:6px 14px; border-radius:50px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; background:rgba(0,242,255,0.1); border:1px solid rgba(0,242,255,0.35); color:var(--color-accent); cursor:pointer;" title="Instalar VESA como app en este dispositivo">
+                        <button type="button" id="btn-instalar-pwa" onclick="instalarAppVesa()" style="display:none; align-items:center; gap:8px; padding:6px 14px; border-radius:50px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; background:rgba(255,106,26,0.1); border:1px solid rgba(255,106,26,0.35); color:var(--color-accent); cursor:pointer;" title="Instalar VESA como app en este dispositivo">
                             <i class="fa-solid fa-download"></i> Instalar App
                         </button>
                         <button type="button" id="btn-activar-notif" onclick="activarNotificacionesStock()" style="display:flex; align-items:center; gap:8px; padding:6px 14px; border-radius:50px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); color:var(--color-warning); cursor:pointer;" title="Recibir una notificación en este dispositivo cuando el stock baje del mínimo">
@@ -646,7 +649,7 @@
                             <div class="metric-title" style="color: var(--color-purple);">Capital Privado <div class="metric-icon-box" style="color: var(--color-purple); border-color: rgba(168, 85, 247, 0.2); background: rgba(168, 85, 247, 0.05);"><i class="fa-solid fa-user-tie"></i></div></div>
                             <div class="metric-value" id="fin-fondo-privado">$0</div>
                         </div>
-                        <div class="metric-card clickable" id="card-filtro-flujo" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(56,189,248,0.05), rgba(15,23,42,0.6));" title="Ingresos reales menos Egresos (Rentabilidad neta del Taller). Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Flujo')">
+                        <div class="metric-card clickable" id="card-filtro-flujo" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(255,106,26,0.05), rgba(15,23,42,0.6));" title="Ingresos reales menos Egresos (Rentabilidad neta del Taller). Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Flujo')">
                             <div class="metric-title" style="color: var(--color-accent);">Flujo Libre (Profit) <div class="metric-icon-box"><i class="fa-solid fa-scale-balanced"></i></div></div>
                             <div class="metric-value" id="fin-profit-total">$0</div>
                         </div>
@@ -680,7 +683,7 @@
 
                     <div class="panel-block" style="margin-top: 10px;" id="panel-movimientos-caja">
                         <div class="panel-header">
-                            <h3><i class="fa-solid fa-list-ul"></i> Movimientos de Caja <span id="finanzas-filtro-chip" style="display:none; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(56,189,248,0.12); color:var(--color-accent); border:1px solid rgba(56,189,248,0.3); margin-left:8px; cursor:pointer; vertical-align:middle;" onclick="filtrarMovimientosCaja(null)"><i class="fa-solid fa-filter"></i> <span id="finanzas-filtro-chip-texto"></span> <i class="fa-solid fa-xmark" style="margin-left:4px;"></i></span></h3>
+                            <h3><i class="fa-solid fa-list-ul"></i> Movimientos de Caja <span id="finanzas-filtro-chip" style="display:none; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; background:rgba(255,106,26,0.12); color:var(--color-accent); border:1px solid rgba(255,106,26,0.3); margin-left:8px; cursor:pointer; vertical-align:middle;" onclick="filtrarMovimientosCaja(null)"><i class="fa-solid fa-filter"></i> <span id="finanzas-filtro-chip-texto"></span> <i class="fa-solid fa-xmark" style="margin-left:4px;"></i></span></h3>
                             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                 <button class="btn btn-small" style="background: rgba(16,185,129,0.1); color: var(--color-success); border-color: rgba(16,185,129,0.3);" onclick="abrirAgregarFinanzasRapido('Ingreso')" title="Cargar cobros o adelantos">+ Ingreso</button>
                                 <button class="btn btn-small" style="background: rgba(244,63,94,0.1); color: var(--color-danger); border-color: rgba(244,63,94,0.3);" onclick="abrirAgregarFinanzasRapido('Egreso')" title="Cargar compras de insumos o pagos">- Egreso</button>
@@ -716,7 +719,7 @@
                         <div style="margin-top:18px; padding-top:18px; border-top:1px solid var(--border-glass);">
                             <h4 style="font-size:13px; font-weight:800; color:white; margin-bottom:6px;"><i class="fa-solid fa-file-import" style="color:var(--color-accent);"></i> Importar Datos de un Excel Viejo</h4>
                             <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:12px;">¿Santiago anotó pedidos o cobros en una planilla propia mientras no tenía la app a mano? Subila acá — el sistema va a leer cada fila y adivinar si es un <strong>Pedido</strong>, un <strong>Ingreso</strong>, un <strong>Egreso</strong> o una <strong>Deuda</strong>. Antes de cargar nada, te muestra una vista previa para que revises y corrijas lo que haga falta.</p>
-                            <button class="btn" style="background:rgba(56,189,248,0.1); color:var(--color-accent); border-color:rgba(56,189,248,0.3); justify-content:center;" onclick="prepararImportarExcel()" title="Subí un .xlsx, .xls o .csv con tus anotaciones viejas">
+                            <button class="btn" style="background:rgba(255,106,26,0.1); color:var(--color-accent); border-color:rgba(255,106,26,0.3); justify-content:center;" onclick="prepararImportarExcel()" title="Subí un .xlsx, .xls o .csv con tus anotaciones viejas">
                                 <i class="fa-solid fa-file-excel"></i> Elegir Excel/CSV para Importar
                             </button>
                             <input type="file" id="input-importar-excel" accept=".xlsx,.xls,.csv" style="display:none;" onchange="procesarExcelImportado(event)">
@@ -1526,7 +1529,7 @@
     <!-- NUEVO: PANTALLA DE LOGIN -->
     <div id="login-screen">
         <div class="login-box">
-            <div class="login-logo">VESA<span>.</span></div>
+            <div class="login-logo"><span class="brand-glyph"><svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="80" r="9" style="fill:var(--color-accent)"/><path d="M22 20 L48 78 L58 78 L84 20 L70 20 L53 60 L36 20 Z" style="fill:var(--color-accent)"/></svg></span>VESA<span>.</span></div>
             <div class="login-sub">Iniciá sesión para entrar al taller</div>
 
             <div class="login-error" id="login-error"></div>
@@ -1580,7 +1583,7 @@
 
     <!-- NOTIFICACIÓN TOAST -->
     <div class="notification-toast" id="toast">
-        <div style="background: rgba(0, 229, 255, 0.1); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0, 229, 255, 0.2);" id="toast-icon-box">
+        <div style="background: rgba(255, 106, 26, 0.1); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 106, 26, 0.2);" id="toast-icon-box">
             <i class="fa-solid fa-check" style="color: var(--color-accent); font-size: 16px;" id="toast-icon"></i>
         </div>
         <div>
@@ -1590,9 +1593,9 @@
     </div>
 
     <!-- BANNER: Instrucciones de instalación para iPhone/Safari (no soportan el instalador automático) -->
-    <div id="ios-install-banner" style="display:none; position:fixed; left:12px; right:12px; bottom:12px; z-index:9999; background:rgba(15,23,42,0.97); backdrop-filter: blur(12px); border:1px solid rgba(0,242,255,0.3); border-radius:16px; padding:16px; box-shadow:0 10px 40px rgba(0,0,0,0.5); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));">
+    <div id="ios-install-banner" style="display:none; position:fixed; left:12px; right:12px; bottom:12px; z-index:9999; background:rgba(15,23,42,0.97); backdrop-filter: blur(12px); border:1px solid rgba(255,106,26,0.3); border-radius:16px; padding:16px; box-shadow:0 10px 40px rgba(0,0,0,0.5); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));">
         <div style="display:flex; align-items:flex-start; gap:12px;">
-            <div style="flex-shrink:0; width:38px; height:38px; border-radius:10px; background:rgba(0,242,255,0.1); border:1px solid rgba(0,242,255,0.25); display:flex; align-items:center; justify-content:center;">
+            <div style="flex-shrink:0; width:38px; height:38px; border-radius:10px; background:rgba(255,106,26,0.1); border:1px solid rgba(255,106,26,0.25); display:flex; align-items:center; justify-content:center;">
                 <i class="fa-solid fa-mobile-screen-button" style="color:var(--color-accent); font-size:16px;"></i>
             </div>
             <div style="flex:1; min-width:0;">
@@ -2569,7 +2572,7 @@
                 var docIdSegura = c.docId ? `'${c.docId}'` : 'null';
                 var pedidosCliente = appState.pedidos.filter(function(p) { return p.cliente === c.nombre; });
                 var totalGastado = pedidosCliente.reduce(function(acc, p) { return acc + (p.monto || 0); }, 0);
-                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${sanitizeHTML(c.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.whatsapp)}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${sanitizeHTML(c.instagram)}</td><td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);">$${totalGastado.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(56,189,248,0.1); color:var(--color-accent); border-color:rgba(56,189,248,0.3);" onclick="abrirHistorialCliente(${c.id})" title="Ver historial de pedidos y gastos de este cliente"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbody.innerHTML += `<tr><td>#${c.id}</td><td style="font-weight:700;">${sanitizeHTML(c.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(c.whatsapp)}</td><td style="color:var(--color-accent);"><i class="fa-brands fa-instagram"></i> ${sanitizeHTML(c.instagram)}</td><td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);">$${totalGastado.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:8px;"><button class="btn btn-small" style="background:rgba(255,106,26,0.1); color:var(--color-accent); border-color:rgba(255,106,26,0.3);" onclick="abrirHistorialCliente(${c.id})" title="Ver historial de pedidos y gastos de este cliente"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarCliente(${docIdSegura}, ${c.id})" title="Editar datos del cliente"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarCliente(${docIdSegura}, ${c.id})" title="Eliminar cliente del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
 
@@ -2580,7 +2583,7 @@
                 var docIdSegura = p.docId ? `'${p.docId}'` : 'null';
                 var comprasProveedor = (appState.gastosInsumos || []).filter(function(g) { return g.proveedor === p.nombre; });
                 var totalComprado = comprasProveedor.reduce(function(acc, g) { return acc + (g.monto || 0); }, 0);
-                tbody.innerHTML += `<tr><td>#${p.id}</td><td style="font-weight:700;">${sanitizeHTML(p.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(p.whatsapp)}</td><td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);">$${totalComprado.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:8px; justify-content:flex-end;"><button class="btn btn-small" style="background:rgba(37,211,102,0.15); color:#25D366; border-color:rgba(37,211,102,0.35);" onclick="enviarWhatsAppProveedor('${p.whatsapp}', '${sanitizeHTML(p.nombre).replace(/'/g, "\\'")}')" title="Escribirle por WhatsApp"><i class="fa-brands fa-whatsapp"></i></button><button class="btn btn-small" style="background:rgba(56,189,248,0.1); color:var(--color-accent); border-color:rgba(56,189,248,0.3);" onclick="abrirHistorialProveedor(${p.id})" title="Ver historial de compras a este proveedor"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarProveedor(${docIdSegura}, ${p.id})" title="Editar datos del proveedor"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarProveedor(${docIdSegura}, ${p.id})" title="Eliminar proveedor del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
+                tbody.innerHTML += `<tr><td>#${p.id}</td><td style="font-weight:700;">${sanitizeHTML(p.nombre)}</td><td style="color:var(--color-success);"><i class="fa-brands fa-whatsapp"></i> ${sanitizeHTML(p.whatsapp)}</td><td style="text-align:right; font-weight:800; font-family:'Space Mono'; color:var(--color-text-primary);">$${totalComprado.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:8px; justify-content:flex-end;"><button class="btn btn-small" style="background:rgba(37,211,102,0.15); color:#25D366; border-color:rgba(37,211,102,0.35);" onclick="enviarWhatsAppProveedor('${p.whatsapp}', '${sanitizeHTML(p.nombre).replace(/'/g, "\\'")}')" title="Escribirle por WhatsApp"><i class="fa-brands fa-whatsapp"></i></button><button class="btn btn-small" style="background:rgba(255,106,26,0.1); color:var(--color-accent); border-color:rgba(255,106,26,0.3);" onclick="abrirHistorialProveedor(${p.id})" title="Ver historial de compras a este proveedor"><i class="fa-solid fa-clock-rotate-left"></i></button><button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarProveedor(${docIdSegura}, ${p.id})" title="Editar datos del proveedor"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarProveedor(${docIdSegura}, ${p.id})" title="Eliminar proveedor del sistema"><i class="fa-solid fa-trash"></i></button></div></td></tr>`;
             });
         }
 
@@ -2646,7 +2649,7 @@
         function renderPreciosTable() {
             var tbody = document.getElementById("precios-tbody"); if (!tbody) return; tbody.innerHTML = "";
             var tipoStyles = {
-                "LISO/VESA": { bg: "rgba(0, 242, 255, 0.1)", color: "var(--color-accent)", border: "rgba(0, 242, 255, 0.3)" },
+                "LISO/VESA": { bg: "rgba(255, 106, 26, 0.1)", color: "var(--color-accent)", border: "rgba(255, 106, 26, 0.3)" },
                 "NEGOCIO/EQUIPO": { bg: "rgba(168, 85, 247, 0.15)", color: "var(--color-purple)", border: "rgba(168, 85, 247, 0.3)" },
                 "CON IMAGEN": { bg: "rgba(245, 158, 11, 0.1)", color: "var(--color-warning)", border: "rgba(245, 158, 11, 0.3)" }
             };
@@ -2683,7 +2686,7 @@
                 var notaComision = (f.comision && f.comision > 0) ? `<div style="font-size:10px; color:var(--color-warning); margin-top:2px;" title="Se cobraron $${(f.montoBruto || 0).toLocaleString('es-AR')} brutos, se descontó comisión de ${f.medioPago}"><i class="fa-solid fa-circle-info"></i> Neto (-$${f.comision.toLocaleString('es-AR')} comisión)</div>` : '';
                 var notaVinculado = f.origenGastoInsumo ? `<div style="font-size:10px; color:var(--color-accent); margin-top:2px;" title="Este movimiento se generó automáticamente desde Gastos de Insumos."><i class="fa-solid fa-link"></i> Desde Gastos de Insumos</div>` : '';
                 var accionesHtml = f.origenGastoInsumo
-                    ? `<button class="btn btn-small" style="background:rgba(56,189,248,0.1); color:var(--color-accent); border-color:rgba(56,189,248,0.3);" onclick="switchTab('gastos-insumos')" title="Se edita y se borra desde la pestaña Gastos de Insumos"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ir a Gastos de Insumos</button>`
+                    ? `<button class="btn btn-small" style="background:rgba(255,106,26,0.1); color:var(--color-accent); border-color:rgba(255,106,26,0.3);" onclick="switchTab('gastos-insumos')" title="Se edita y se borra desde la pestaña Gastos de Insumos"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ir a Gastos de Insumos</button>`
                     : `${f.tipo === 'Deuda' ? `<button class="btn btn-small" style="background:var(--color-success); color:black; border:none;" onclick="cobrarDeuda(${docIdSegura}, ${f.id})" title="Marcar deuda como cobrada a favor"><i class="fa-solid fa-check"></i></button>` : ''}<button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarFinanzas(${docIdSegura}, ${f.id})" title="Editar monto o detalle del registro"><i class="fa-solid fa-pen"></i></button><button class="btn btn-small btn-danger" onclick="eliminarFinanzas(${docIdSegura}, ${f.id})" title="Eliminar registro contable"><i class="fa-solid fa-trash"></i></button>`;
                 tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<div><span style="font-weight:700; color:white;">${sanitizeHTML(f.detalle)}</span>${notaComision}${notaVinculado}</div></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${accionesHtml}</div></td></tr>`;
             });
@@ -2971,7 +2974,7 @@
                             <td style="font-weight:800; font-family:'Space Mono'; color:var(--color-accent);">$${p.monto.toLocaleString('es-AR')}</td>
                             <td>
                                 <div style="display:flex; gap:6px;">
-                                    <button class="btn btn-small" style="background:rgba(56, 189, 248, 0.1); color: var(--color-accent); border-color: rgba(56, 189, 248, 0.3);" onclick="generarFichaTecnica(${p.id})" title="Ver Ficha Técnica"><i class="fa-solid fa-eye"></i></button>
+                                    <button class="btn btn-small" style="background:rgba(255, 106, 26, 0.1); color: var(--color-accent); border-color: rgba(255, 106, 26, 0.3);" onclick="generarFichaTecnica(${p.id})" title="Ver Ficha Técnica"><i class="fa-solid fa-eye"></i></button>
                                     <button class="btn btn-small" style="background:rgba(16, 185, 129, 0.1); color: var(--color-success); border-color: rgba(16, 185, 129, 0.3);" onclick="descargarFichaDirecta(${p.id})" title="Descargar Ficha en PDF"><i class="fa-solid fa-download"></i></button>
                                     <button class="btn btn-small" style="background:rgba(255,255,255,0.03);" onclick="abrirEditarPedido(${docIdSegura}, ${p.id})" title="Editar parámetros técnicos o de facturación"><i class="fa-solid fa-pen"></i></button>
                                     <button class="btn btn-small btn-danger" onclick="eliminarPedido(${docIdSegura}, ${p.id})" title="Eliminar orden por completo"><i class="fa-solid fa-trash"></i></button>
@@ -3007,7 +3010,7 @@
                     const isNonImage = urlWithoutQuery.match(/\.(pdf|ai|cdr|psd|zip)$/);
                     
                     if (isNonImage) {
-                        imageHtml = `<a href="${firstUrl}" target="_blank" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px 10px; background:rgba(56, 189, 248, 0.1); border:1px solid rgba(56, 189, 248, 0.2); border-radius:8px; color:var(--color-accent); text-decoration:none; margin-bottom:6px; font-size: 11px; font-weight: 700; text-transform: uppercase;"><i class="fa-solid fa-file-arrow-down" style="font-size:24px;"></i> Descargar Matriz 1</a>`;
+                        imageHtml = `<a href="${firstUrl}" target="_blank" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px 10px; background:rgba(255, 106, 26, 0.1); border:1px solid rgba(255, 106, 26, 0.2); border-radius:8px; color:var(--color-accent); text-decoration:none; margin-bottom:6px; font-size: 11px; font-weight: 700; text-transform: uppercase;"><i class="fa-solid fa-file-arrow-down" style="font-size:24px;"></i> Descargar Matriz 1</a>`;
                     } else {
                         imageHtml = `<img src="${firstUrl}" class="k-card-image" alt="Visual" style="cursor:pointer; margin-bottom:6px;" onclick="window.open('${firstUrl}', '_blank')" title="Clic para ver diseño en alta resolución">`;
                     }
@@ -3018,7 +3021,7 @@
                             const fUrl = arteArray[i];
                             const fUrlClean = typeof fUrl === 'string' ? fUrl.split('?')[0].toLowerCase() : '';
                             const fIcon = fUrlClean.match(/\.(pdf|ai|cdr|psd|zip)$/) ? 'fa-file-arrow-down' : 'fa-image';
-                            imageHtml += `<a href="${fUrl}" target="_blank" style="font-size:10px; background:rgba(56,189,248,0.1); color:var(--color-accent); border:1px solid rgba(56,189,248,0.3); padding:4px 8px; border-radius:6px; text-decoration:none; display:flex; align-items:center; gap:4px;"><i class="fa-solid ${fIcon}"></i> Archivo ${i+1}</a>`;
+                            imageHtml += `<a href="${fUrl}" target="_blank" style="font-size:10px; background:rgba(255,106,26,0.1); color:var(--color-accent); border:1px solid rgba(255,106,26,0.3); padding:4px 8px; border-radius:6px; text-decoration:none; display:flex; align-items:center; gap:4px;"><i class="fa-solid ${fIcon}"></i> Archivo ${i+1}</a>`;
                         }
                         imageHtml += `</div>`;
                     }
@@ -3598,7 +3601,7 @@
                     document.getElementById("toast").style.borderColor = "var(--color-danger)";
                 } else { 
                     icon.className = "fa-solid fa-check"; icon.style.color = "var(--color-accent)"; 
-                    iconBox.style.background = "rgba(56, 189, 248, 0.1)"; iconBox.style.borderColor = "rgba(56, 189, 248, 0.2)";
+                    iconBox.style.background = "rgba(255, 106, 26, 0.1)"; iconBox.style.borderColor = "rgba(255, 106, 26, 0.2)";
                     document.getElementById("toast").style.borderColor = "var(--color-accent)";
                 }
             }

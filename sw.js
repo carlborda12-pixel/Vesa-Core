@@ -2,7 +2,7 @@
 // Solo cachea el "cascarón" propio de la app (HTML, manifest, íconos).
 // Nunca intercepta pedidos a Firebase, fuentes o CDNs externos: esos siempre van directo a la red.
 
-const CACHE_NAME = "vesa-core-shell-v5";
+const CACHE_NAME = "vesa-core-shell-v6";
 const APP_SHELL = [
   "./index.html",
   "./manifest.json?v=2",
@@ -12,7 +12,7 @@ const APP_SHELL = [
   "./apple-touch-icon.png?v=2",
   "./favicon-48.png?v=2",
   "./favicon-32.png?v=2",
-  "./badge-96.png?v=2"
+  "./badge-96.png?v=3"
 ];
 
 self.addEventListener("install", (event) => {

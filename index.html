@@ -2811,7 +2811,7 @@
                 var cuerpo = nuevosParaAvisar.slice(0, LIMITE_LINEAS).map(function(s) { return "• " + s.item + " (" + s.talle + "): quedan " + s.cantidad; }).join("\n");
                 if (nuevosParaAvisar.length > LIMITE_LINEAS) { cuerpo += "\n… y " + (nuevosParaAvisar.length - LIMITE_LINEAS) + " más"; }
                 navigator.serviceWorker.ready.then(function(reg) {
-                    reg.showNotification(titulo, { body: cuerpo, icon: 'icon-192.png?v=2', badge: 'badge-96.png?v=2', tag: 'vesa-stock-alerta' });
+                    reg.showNotification(titulo, { body: cuerpo, icon: 'icon-192.png?v=2', badge: 'badge-96.png?v=3', tag: 'vesa-stock-alerta' });
                 }).catch(function() {});
                 nuevosParaAvisar.forEach(function(s) { yaNotificados.push(s.id); });
             }

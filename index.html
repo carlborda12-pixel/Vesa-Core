@@ -632,13 +632,16 @@
 
                 <!-- VISTA FINANZAS -->
                 <div id="section-finanzas" class="view-section">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; color:var(--color-text-secondary); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;">
+                        <i class="fa-solid fa-calendar-day" style="color:var(--color-accent);"></i> Caja de <span id="finanzas-mes-actual-label" style="color:var(--color-text-primary);">—</span>
+                    </div>
                     <div class="finanzas-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px;">
-                        <div class="metric-card clickable" id="card-filtro-ingreso" style="border-top: 3px solid var(--color-success);" title="Totalidad de dinero que entró a caja. Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Ingreso')">
-                            <div class="metric-title" style="color: var(--color-success);">Caja Positiva <div class="metric-icon-box" style="color: var(--color-success); border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);"><i class="fa-solid fa-arrow-up"></i></div></div>
+                        <div class="metric-card clickable" id="card-filtro-ingreso" style="border-top: 3px solid var(--color-success);" title="Dinero que entró a caja este mes. Se reinicia al empezar el mes siguiente (sin borrar el historial). Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Ingreso')">
+                            <div class="metric-title" style="color: var(--color-success);">Caja Positiva (mes) <div class="metric-icon-box" style="color: var(--color-success); border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);"><i class="fa-solid fa-arrow-up"></i></div></div>
                             <div class="metric-value" id="fin-total-ingresos">$0</div>
                         </div>
-                        <div class="metric-card clickable" id="card-filtro-egreso" style="border-top: 3px solid var(--color-danger);" title="Totalidad de dinero gastado o invertido en el taller. Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Egreso')">
-                            <div class="metric-title" style="color: var(--color-danger);">Caja Negativa <div class="metric-icon-box" style="color: var(--color-danger); border-color: rgba(244,63,94,0.2); background: rgba(244,63,94,0.05);"><i class="fa-solid fa-arrow-down"></i></div></div>
+                        <div class="metric-card clickable" id="card-filtro-egreso" style="border-top: 3px solid var(--color-danger);" title="Dinero gastado o invertido en el taller este mes. Se reinicia al empezar el mes siguiente (sin borrar el historial). Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Egreso')">
+                            <div class="metric-title" style="color: var(--color-danger);">Caja Negativa (mes) <div class="metric-icon-box" style="color: var(--color-danger); border-color: rgba(244,63,94,0.2); background: rgba(244,63,94,0.05);"><i class="fa-solid fa-arrow-down"></i></div></div>
                             <div class="metric-value" id="fin-total-egresos">$0</div>
                         </div>
                         <div class="metric-card clickable" id="card-filtro-deuda" style="border-top: 3px solid var(--color-warning);" title="Saldos pendientes de cobro a favor de VESA. Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Deuda')">
@@ -649,8 +652,8 @@
                             <div class="metric-title" style="color: var(--color-purple);">Capital Privado <div class="metric-icon-box" style="color: var(--color-purple); border-color: rgba(168, 85, 247, 0.2); background: rgba(168, 85, 247, 0.05);"><i class="fa-solid fa-user-tie"></i></div></div>
                             <div class="metric-value" id="fin-fondo-privado">$0</div>
                         </div>
-                        <div class="metric-card clickable" id="card-filtro-flujo" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(255,106,26,0.05), rgba(15,23,42,0.6));" title="Ingresos reales menos Egresos (Rentabilidad neta del Taller). Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Flujo')">
-                            <div class="metric-title" style="color: var(--color-accent);">Flujo Libre (Profit) <div class="metric-icon-box"><i class="fa-solid fa-scale-balanced"></i></div></div>
+                        <div class="metric-card clickable" id="card-filtro-flujo" style="border-top: 3px solid var(--color-accent); background: linear-gradient(180deg, rgba(255,106,26,0.05), rgba(15,23,42,0.6));" title="Ingresos reales menos Egresos de este mes (Rentabilidad neta del Taller). Tocá para ver el detalle." onclick="filtrarMovimientosCaja('Flujo')">
+                            <div class="metric-title" style="color: var(--color-accent);">Flujo Libre (mes) <div class="metric-icon-box"><i class="fa-solid fa-scale-balanced"></i></div></div>
                             <div class="metric-value" id="fin-profit-total">$0</div>
                         </div>
                     </div>
@@ -696,6 +699,34 @@
                                 <thead><tr><th>Fecha</th><th>Concepto</th><th>Movimiento</th><th>Canal</th><th style="text-align: right;">Monto</th><th style="text-align: right;">Acciones</th></tr></thead>
                                 <tbody id="finanzas-main-tbody"></tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- NUEVO: HISTORIAL MENSUAL DE CAJA — compara un mes con otro sin borrar nada del pasado -->
+                    <div class="panel-block" style="margin-top: 10px;" id="panel-historial-mensual">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-calendar-week"></i> Historial Mensual de Caja <span title="Cada mes queda guardado acá para siempre, aunque la Caja de arriba se reinicie al empezar uno nuevo." style="cursor:help; color:var(--color-text-secondary);"><i class="fa-solid fa-circle-question"></i></span></h3>
+                            <button class="collapse-btn" onclick="togglePanel(this)" title="Minimizar panel"><i class="fa-solid fa-chevron-up"></i></button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Mes</th><th style="text-align:right;">Ingresos</th><th style="text-align:right;">Egresos</th><th style="text-align:right;">Balance</th></tr></thead>
+                                <tbody id="historial-mensual-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top:18px; padding-top:18px; border-top:1px solid var(--border-glass);">
+                            <h4 style="font-size:13px; font-weight:800; color:white; margin-bottom:10px;"><i class="fa-solid fa-code-compare" style="color:var(--color-accent);"></i> Comparar dos meses</h4>
+                            <div class="form-row" style="grid-template-columns: 1fr 1fr;">
+                                <div class="form-group">
+                                    <label>Mes A</label>
+                                    <select class="form-control" id="comparar-mes-a" onchange="renderComparacionMeses()"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Mes B</label>
+                                    <select class="form-control" id="comparar-mes-b" onchange="renderComparacionMeses()"></select>
+                                </div>
+                            </div>
+                            <div id="comparacion-meses-resultado" style="margin-top:14px;"></div>
                         </div>
                     </div>
                 </div>
@@ -1636,8 +1667,10 @@
 
         // NOVEDADES: cada vez que se agrega o cambia algo importante, se suma acá arriba y se sube NOVEDADES_VERSION.
         // Se muestra una sola vez por cada versión nueva (no molesta de nuevo hasta la próxima novedad real).
-        var NOVEDADES_VERSION = "2026-09-26";
+        var NOVEDADES_VERSION = "2026-10-02";
         var NOVEDADES = [
+            { icono: "fa-calendar-week", titulo: "Caja mes a mes", texto: "La Caja ahora funciona por mes: los números de Caja Positiva, Caja Negativa y Flujo Libre se reinician solos al empezar un mes nuevo, para que siempre veas lo que pasó en el mes en curso. Ningún dato se borra — abajo de los Movimientos agregamos un Historial Mensual donde podés ver todos los meses anteriores y comparar uno con otro." },
+            { icono: "fa-palette", titulo: "Nueva imagen de VESA", texto: "El sistema ya tiene la nueva identidad del taller: negro y naranja, con el logo nuevo en el menú de arriba y en la pantalla de acceso." },
             { icono: "fa-truck-field", titulo: "Proveedores", texto: "Ahora podés cargar a tus proveedores con su WhatsApp. Si a un insumo le asignás un proveedor y se te está por acabar, te va a aparecer un botón para escribirle directo por WhatsApp y pedirle más, sin buscar el número." },
             { icono: "fa-table-cells", titulo: "Menú arriba", texto: "El menú con las secciones (Pedidos, Stock, Caja, etc.) ahora está arriba de la pantalla, flotando con sus íconos, en vez de estar pegado al costado. Es más cómodo tanto en la compu como en el celular." },
             { icono: "fa-thumbtack", titulo: "Inicio renovado", texto: "La pantalla de Inicio ya no muestra números de plata ni gráficos (eso lo seguís viendo en Caja, tal cual). Ahora te muestra dos cosas simples: qué hay que entregar y qué está en producción, y una lista de todo lo que fue pasando en el taller durante el día." }
@@ -2270,7 +2303,7 @@
             var maxFinId = appState.finanzas.length > 0 ? Math.max(...appState.finanzas.map(f=>f.id)) : 0;
 
             // NUEVO: cada gasto de insumo genera también su Egreso vinculado en Caja, para que el Flujo Libre sea real
-            var nuevaFinanza = { id: maxFinId + 1, tipo: 'Egreso', detalle: `Compra de Insumo: ${insumo}` + (proveedor ? ` (${proveedor})` : ''), monto: monto, montoBruto: monto, comision: 0, fecha: hoy, medioPago: medioPago, origenGastoInsumo: true };
+            var nuevaFinanza = { id: maxFinId + 1, tipo: 'Egreso', detalle: `Compra de Insumo: ${insumo}` + (proveedor ? ` (${proveedor})` : ''), monto: monto, montoBruto: monto, comision: 0, fecha: hoy, medioPago: medioPago, origenGastoInsumo: true, timestamp: Date.now() };
             var nuevoGasto = { id: maxGastoId + 1, insumo: insumo, proveedor: proveedor, monto: monto, medioPago: medioPago, fecha: hoy, timestamp: Date.now(), finanzaId: nuevaFinanza.id };
 
             // ACTUALIZACIÓN OPTIMISTA
@@ -2663,25 +2696,31 @@
             var tbodyMain = document.getElementById("finanzas-main-tbody");
             if (!tbodyMain) return; tbodyMain.innerHTML = "";
             var sumI = 0, sumE = 0, sumD = 0, sumInv = 0;
+            var mesActualKey = mesKeyActual();
 
-            // NUEVO: determina si un movimiento corresponde al filtro activo (tocando una de las tarjetas de arriba)
-            function pasaFiltroCaja(f) {
-                if (!finanzasFiltro) return true;
+            // NUEVO: la Caja Positiva/Negativa/Flujo son del MES ACTUAL (se "renuevan" solo al cambiar el mes);
+            // Deuda y Capital Privado son saldos corrientes (no se resetean por mes, son plata pendiente/invertida hasta que se resuelva).
+            function pasaFiltroCaja(f, esDelMesActual) {
                 if (finanzasFiltro === 'Privado') return f.tipo === 'Inversion' || f.tipo === 'Fondo Privado';
-                if (finanzasFiltro === 'Flujo') return f.tipo === 'Ingreso' || f.tipo === 'Egreso';
-                return f.tipo === finanzasFiltro;
+                if (finanzasFiltro === 'Deuda') return f.tipo === 'Deuda';
+                if (finanzasFiltro === 'Flujo') return esDelMesActual && (f.tipo === 'Ingreso' || f.tipo === 'Egreso');
+                if (finanzasFiltro === 'Ingreso') return esDelMesActual && f.tipo === 'Ingreso';
+                if (finanzasFiltro === 'Egreso') return esDelMesActual && f.tipo === 'Egreso';
+                return esDelMesActual; // sin filtro: el libro del mes en curso
             }
 
             appState.finanzas.forEach(function(f) {
                 var docIdSegura = f.docId ? `'${f.docId}'` : 'null';
+                var ts = timestampDeFinanza(f);
+                var esDelMesActual = ts !== null && mesKeyDeTimestamp(ts) === mesActualKey;
                 var colorMonto = 'var(--color-text-primary)'; var badgeHtml = ''; var iconHtml = '';
-                if (f.tipo === 'Inversion' || f.tipo === 'Fondo Privado') { colorMonto = 'var(--color-purple)'; badgeHtml = `<span class="badge" style="background:rgba(168, 85, 247, 0.15); color:var(--color-purple); border-color:rgba(168, 85, 247, 0.3);">Privado</span>`; iconHtml = `<i class="fa-solid fa-user-tie" style="color:var(--color-purple); font-size:16px; width:20px; text-align:center;"></i>`; sumInv += f.monto; } 
-                else if (f.tipo === 'Egreso') { colorMonto = 'var(--color-danger)'; badgeHtml = `<span class="badge" style="background:rgba(244, 63, 94, 0.1); color:var(--color-danger); border-color:rgba(244, 63, 94, 0.3);">Gasto</span>`; iconHtml = `<i class="fa-solid fa-arrow-down" style="color:var(--color-danger); font-size:16px; width:20px; text-align:center;"></i>`; sumE += f.monto; } 
-                else if (f.tipo === 'Deuda') { colorMonto = 'var(--color-warning)'; badgeHtml = `<span class="badge" style="background:rgba(245, 158, 11, 0.1); color:var(--color-warning); border-color:rgba(245, 158, 11, 0.3);">Pendiente</span>`; iconHtml = `<i class="fa-solid fa-clock" style="color:var(--color-warning); font-size:16px; width:20px; text-align:center;"></i>`; sumD += f.monto; } 
-                else if (f.tipo === 'Ingreso') { colorMonto = 'var(--color-success)'; badgeHtml = `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color:rgba(16, 185, 129, 0.3);">Venta</span>`; iconHtml = `<i class="fa-solid fa-arrow-up" style="color:var(--color-success); font-size:16px; width:20px; text-align:center;"></i>`; sumI += f.monto; }
+                if (f.tipo === 'Inversion' || f.tipo === 'Fondo Privado') { colorMonto = 'var(--color-purple)'; badgeHtml = `<span class="badge" style="background:rgba(168, 85, 247, 0.15); color:var(--color-purple); border-color:rgba(168, 85, 247, 0.3);">Privado</span>`; iconHtml = `<i class="fa-solid fa-user-tie" style="color:var(--color-purple); font-size:16px; width:20px; text-align:center;"></i>`; sumInv += f.monto; }
+                else if (f.tipo === 'Egreso') { colorMonto = 'var(--color-danger)'; badgeHtml = `<span class="badge" style="background:rgba(244, 63, 94, 0.1); color:var(--color-danger); border-color:rgba(244, 63, 94, 0.3);">Gasto</span>`; iconHtml = `<i class="fa-solid fa-arrow-down" style="color:var(--color-danger); font-size:16px; width:20px; text-align:center;"></i>`; if (esDelMesActual) sumE += f.monto; }
+                else if (f.tipo === 'Deuda') { colorMonto = 'var(--color-warning)'; badgeHtml = `<span class="badge" style="background:rgba(245, 158, 11, 0.1); color:var(--color-warning); border-color:rgba(245, 158, 11, 0.3);">Pendiente</span>`; iconHtml = `<i class="fa-solid fa-clock" style="color:var(--color-warning); font-size:16px; width:20px; text-align:center;"></i>`; sumD += f.monto; }
+                else if (f.tipo === 'Ingreso') { colorMonto = 'var(--color-success)'; badgeHtml = `<span class="badge" style="background:rgba(16, 185, 129, 0.1); color:var(--color-success); border-color:rgba(16, 185, 129, 0.3);">Venta</span>`; iconHtml = `<i class="fa-solid fa-arrow-up" style="color:var(--color-success); font-size:16px; width:20px; text-align:center;"></i>`; if (esDelMesActual) sumI += f.monto; }
                 else { colorMonto = 'var(--color-text-secondary)'; badgeHtml = `<span class="badge" style="background:rgba(255, 255, 255, 0.1); color:white;">Otro</span>`; iconHtml = `<i class="fa-solid fa-circle-question" style="color:white; font-size:16px; width:20px; text-align:center;"></i>`; }
 
-                if (!pasaFiltroCaja(f)) return; // El movimiento cuenta para los totales de arriba, pero no se lista si no pasa el filtro activo
+                if (!pasaFiltroCaja(f, esDelMesActual)) return; // El movimiento cuenta para los totales de arriba, pero no se lista si no pasa el filtro activo
 
                 var notaComision = (f.comision && f.comision > 0) ? `<div style="font-size:10px; color:var(--color-warning); margin-top:2px;" title="Se cobraron $${(f.montoBruto || 0).toLocaleString('es-AR')} brutos, se descontó comisión de ${f.medioPago}"><i class="fa-solid fa-circle-info"></i> Neto (-$${f.comision.toLocaleString('es-AR')} comisión)</div>` : '';
                 var notaVinculado = f.origenGastoInsumo ? `<div style="font-size:10px; color:var(--color-accent); margin-top:2px;" title="Este movimiento se generó automáticamente desde Gastos de Insumos."><i class="fa-solid fa-link"></i> Desde Gastos de Insumos</div>` : '';
@@ -2691,13 +2730,16 @@
                 tbodyMain.innerHTML += `<tr><td style="color:var(--color-text-secondary); font-family:'Space Mono'; font-size:11px;">${f.fecha}</td><td><div style="display:flex; align-items:center; gap:10px;">${iconHtml}<div><span style="font-weight:700; color:white;">${sanitizeHTML(f.detalle)}</span>${notaComision}${notaVinculado}</div></div></td><td>${badgeHtml}</td><td style="color:var(--color-text-secondary);"><i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${f.medioPago || 'Mercado Pago'}</td><td style="font-weight:800; text-align: right; color:${colorMonto}; font-family:'Space Mono';">$${f.monto.toLocaleString('es-AR')}</td><td><div style="display:flex; gap:6px; justify-content:flex-end;">${accionesHtml}</div></td></tr>`;
             });
             if (tbodyMain.innerHTML === "") {
-                var msgVacio = finanzasFiltro ? "No hay movimientos en esta categoría." : "Libro contable vacío.";
+                var msgVacio = finanzasFiltro ? "No hay movimientos en esta categoría." : "Todavía no hay movimientos este mes. Arriba podés ver el Historial Mensual.";
                 tbodyMain.innerHTML = `<tr><td colspan="6" class="empty-placeholder"><i class="fa-solid fa-money-bill-transfer"></i>${msgVacio}</td></tr>`;
             }
             document.getElementById("fin-total-ingresos").innerText = "$" + sumI.toLocaleString('es-AR'); document.getElementById("fin-total-egresos").innerText = "$" + sumE.toLocaleString('es-AR'); document.getElementById("fin-total-deudas").innerText = "$" + sumD.toLocaleString('es-AR');
             if (document.getElementById("fin-fondo-privado")) document.getElementById("fin-fondo-privado").innerText = "$" + sumInv.toLocaleString('es-AR');
-            
-            var profitTotal = sumI - sumE; var profitEl = document.getElementById("fin-profit-total"); profitEl.innerText = "$" + profitTotal.toLocaleString('es-AR'); profitEl.style.color = profitTotal >= 0 ? "var(--color-accent)" : "var(--color-danger)"; 
+
+            var profitTotal = sumI - sumE; var profitEl = document.getElementById("fin-profit-total"); profitEl.innerText = "$" + profitTotal.toLocaleString('es-AR'); profitEl.style.color = profitTotal >= 0 ? "var(--color-accent)" : "var(--color-danger)";
+
+            var labelMes = document.getElementById("finanzas-mes-actual-label");
+            if (labelMes) labelMes.innerText = nombreDeMesKey(mesActualKey);
 
             // NUEVO: refleja visualmente qué tarjeta es el filtro activo y actualiza el chip del encabezado
             var mapaTarjetas = { 'Ingreso': 'card-filtro-ingreso', 'Egreso': 'card-filtro-egreso', 'Deuda': 'card-filtro-deuda', 'Privado': 'card-filtro-privado', 'Flujo': 'card-filtro-flujo' };
@@ -2708,6 +2750,92 @@
                 var etiquetas = { 'Ingreso': 'Caja Positiva', 'Egreso': 'Caja Negativa', 'Deuda': 'Capital Pendiente', 'Privado': 'Capital Privado', 'Flujo': 'Flujo Libre' };
                 if (chip) { document.getElementById("finanzas-filtro-chip-texto").innerText = etiquetas[finanzasFiltro]; chip.style.display = 'inline-block'; }
             } else if (chip) { chip.style.display = 'none'; }
+
+            renderHistorialMensualCaja();
+        }
+
+        // --- NUEVO: HISTORIAL MENSUAL DE CAJA (agrupa Ingresos/Egresos por mes, sin perder nunca el detalle) ---
+        function calcularHistorialMensual() {
+            var porMes = {}; // { "2026-10": { ingresos, egresos } }
+            appState.finanzas.forEach(function(f) {
+                if (f.tipo !== 'Ingreso' && f.tipo !== 'Egreso') return; // Deuda/Privado son saldos corrientes, no flujo mensual
+                var ts = timestampDeFinanza(f);
+                if (ts === null) return; // fecha no determinable: no se puede ubicar en un mes
+                var key = mesKeyDeTimestamp(ts);
+                if (!porMes[key]) porMes[key] = { ingresos: 0, egresos: 0 };
+                if (f.tipo === 'Ingreso') porMes[key].ingresos += f.monto; else porMes[key].egresos += f.monto;
+            });
+            return Object.keys(porMes).sort().reverse().map(function(key) {
+                return { key: key, nombre: nombreDeMesKey(key), ingresos: porMes[key].ingresos, egresos: porMes[key].egresos, balance: porMes[key].ingresos - porMes[key].egresos };
+            });
+        }
+
+        function renderHistorialMensualCaja() {
+            var tbody = document.getElementById("historial-mensual-tbody");
+            if (!tbody) return;
+            var historial = calcularHistorialMensual();
+            tbody.innerHTML = "";
+            if (historial.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-placeholder"><i class="fa-solid fa-calendar-week"></i>Todavía no hay meses con movimientos para mostrar.</td></tr>`;
+            } else {
+                historial.forEach(function(m) {
+                    var esActual = m.key === mesKeyActual();
+                    var colorBalance = m.balance >= 0 ? 'var(--color-accent)' : 'var(--color-danger)';
+                    tbody.innerHTML += `<tr>
+                        <td style="font-weight:700;">${m.nombre}${esActual ? ' <span class="badge" style="background:rgba(255,106,26,0.12); color:var(--color-accent); border-color:rgba(255,106,26,0.3); margin-left:6px;">En curso</span>' : ''}</td>
+                        <td style="text-align:right; color:var(--color-success); font-family:'Space Mono'; font-weight:700;">$${m.ingresos.toLocaleString('es-AR')}</td>
+                        <td style="text-align:right; color:var(--color-danger); font-family:'Space Mono'; font-weight:700;">$${m.egresos.toLocaleString('es-AR')}</td>
+                        <td style="text-align:right; color:${colorBalance}; font-family:'Space Mono'; font-weight:800;">$${m.balance.toLocaleString('es-AR')}</td>
+                    </tr>`;
+                });
+            }
+
+            // Pobla los selects de comparación, preservando la selección si todavía existe
+            var selA = document.getElementById("comparar-mes-a"); var selB = document.getElementById("comparar-mes-b");
+            if (selA && selB) {
+                var prevA = selA.value, prevB = selB.value;
+                var opciones = historial.map(function(m) { return `<option value="${m.key}">${m.nombre}</option>`; }).join('');
+                selA.innerHTML = opciones; selB.innerHTML = opciones;
+                if (historial.length > 0) {
+                    selA.value = historial.some(function(m){return m.key === prevA;}) ? prevA : historial[0].key;
+                    var defaultB = historial.length > 1 ? historial[1].key : historial[0].key;
+                    selB.value = historial.some(function(m){return m.key === prevB;}) ? prevB : defaultB;
+                }
+                renderComparacionMeses();
+            }
+        }
+
+        function renderComparacionMeses() {
+            var cont = document.getElementById("comparacion-meses-resultado");
+            if (!cont) return;
+            var selA = document.getElementById("comparar-mes-a"); var selB = document.getElementById("comparar-mes-b");
+            if (!selA || !selB || !selA.value || !selB.value) { cont.innerHTML = ''; return; }
+            var historial = calcularHistorialMensual();
+            var mesA = historial.find(function(m) { return m.key === selA.value; });
+            var mesB = historial.find(function(m) { return m.key === selB.value; });
+            if (!mesA || !mesB) { cont.innerHTML = ''; return; }
+
+            function filaComparacion(etiqueta, valA, valB, colorPositivo) {
+                var delta = valB - valA;
+                var deltaPct = valA !== 0 ? (delta / Math.abs(valA)) * 100 : (valB !== 0 ? 100 : 0);
+                var deltaColor = (colorPositivo ? delta >= 0 : delta <= 0) ? 'var(--color-success)' : 'var(--color-danger)';
+                var flecha = delta === 0 ? '' : (delta > 0 ? '<i class="fa-solid fa-arrow-trend-up"></i>' : '<i class="fa-solid fa-arrow-trend-down"></i>');
+                return `<tr>
+                    <td style="color:var(--color-text-secondary); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">${etiqueta}</td>
+                    <td style="text-align:right; font-family:'Space Mono'; font-weight:700;">$${valA.toLocaleString('es-AR')}</td>
+                    <td style="text-align:right; font-family:'Space Mono'; font-weight:700;">$${valB.toLocaleString('es-AR')}</td>
+                    <td style="text-align:right; font-family:'Space Mono'; font-weight:800; color:${deltaColor};">${flecha} ${delta >= 0 ? '+' : ''}${deltaPct.toLocaleString('es-AR', {maximumFractionDigits:0})}%</td>
+                </tr>`;
+            }
+
+            cont.innerHTML = `<div class="table-wrapper"><table>
+                <thead><tr><th></th><th style="text-align:right;">${mesA.nombre}</th><th style="text-align:right;">${mesB.nombre}</th><th style="text-align:right;">Variación</th></tr></thead>
+                <tbody>
+                    ${filaComparacion('Ingresos', mesA.ingresos, mesB.ingresos, true)}
+                    ${filaComparacion('Egresos', mesA.egresos, mesB.egresos, false)}
+                    ${filaComparacion('Balance', mesA.balance, mesB.balance, true)}
+                </tbody>
+            </table></div>`;
         }
 
         function filtrarMovimientosCaja(tipo) {
@@ -2811,7 +2939,7 @@
                 var cuerpo = nuevosParaAvisar.slice(0, LIMITE_LINEAS).map(function(s) { return "• " + s.item + " (" + s.talle + "): quedan " + s.cantidad; }).join("\n");
                 if (nuevosParaAvisar.length > LIMITE_LINEAS) { cuerpo += "\n… y " + (nuevosParaAvisar.length - LIMITE_LINEAS) + " más"; }
                 navigator.serviceWorker.ready.then(function(reg) {
-                    reg.showNotification(titulo, { body: cuerpo, icon: 'icon-192.png?v=2', badge: 'badge-96.png?v=3', tag: 'vesa-stock-alerta' });
+                    reg.showNotification(titulo, { body: cuerpo, icon: 'icon-192.png?v=2', badge: 'badge-notif.png', tag: 'vesa-stock-alerta' });
                 }).catch(function() {});
                 nuevosParaAvisar.forEach(function(s) { yaNotificados.push(s.id); });
             }
@@ -4139,6 +4267,53 @@
             return d.toLocaleDateString('es-AR', dateOptions);
         }
 
+        // --- NUEVO: utilidades de mes/fecha para la Caja mensual e Historial Mensual ---
+        const MESES_ES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+        function parsearFechaFlexible(str) {
+            if (!str) return null;
+            if (str instanceof Date) return isNaN(str.getTime()) ? null : str;
+            str = String(str).trim();
+            // "15 de mayo de 2026" (formato largo es-AR usado en toda la app)
+            var mLargo = str.match(/^(\d{1,2})\s+de\s+([a-záéíóúñ]+)\s+de\s+(\d{4})$/i);
+            if (mLargo) {
+                var mesIdx = MESES_ES.indexOf(mLargo[2].toLowerCase());
+                if (mesIdx !== -1) {
+                    var dLargo = new Date(parseInt(mLargo[3]), mesIdx, parseInt(mLargo[1]));
+                    if (!isNaN(dLargo.getTime())) return dLargo;
+                }
+            }
+            // "15/05/2026" o "15-05-2026"
+            var mNum = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+            if (mNum) {
+                var yyyy = mNum[3].length === 2 ? '20' + mNum[3] : mNum[3];
+                var dNum = new Date(parseInt(yyyy), parseInt(mNum[2]) - 1, parseInt(mNum[1]));
+                if (!isNaN(dNum.getTime())) return dNum;
+            }
+            // "2026-05-15"
+            var mIso = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (mIso) {
+                var dIso = new Date(parseInt(mIso[1]), parseInt(mIso[2]) - 1, parseInt(mIso[3]));
+                if (!isNaN(dIso.getTime())) return dIso;
+            }
+            var dGenerico = new Date(str);
+            return isNaN(dGenerico.getTime()) ? null : dGenerico;
+        }
+        function timestampDeFinanza(f) {
+            if (f.timestamp) return f.timestamp;
+            var d = parsearFechaFlexible(f.fecha);
+            return d ? d.getTime() : null; // null = fecha no se pudo determinar
+        }
+        function mesKeyDeTimestamp(ts) {
+            var d = new Date(ts);
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        }
+        function mesKeyActual() { return mesKeyDeTimestamp(Date.now()); }
+        function nombreDeMesKey(mesKey) {
+            var partes = mesKey.split('-'); var anio = partes[0]; var mesIdx = parseInt(partes[1]) - 1;
+            var nombre = MESES_ES[mesIdx] || '?';
+            return nombre.charAt(0).toUpperCase() + nombre.slice(1) + ' ' + anio;
+        }
+
         function clasificarFilaImportada(fila) {
             var claves = Object.keys(fila);
             if (claves.length === 0) return null;
@@ -4250,7 +4425,8 @@
                     });
                 } else {
                     maxFinId++;
-                    nuevosFinanzas.push({ id: maxFinId, tipo: f.tipo, detalle: f.detalle, monto: f.monto, fecha: f.fecha, medioPago: 'Efectivo', importadoDeExcel: true });
+                    var fechaParseada = parsearFechaFlexible(f.fecha);
+                    nuevosFinanzas.push({ id: maxFinId, tipo: f.tipo, detalle: f.detalle, monto: f.monto, fecha: f.fecha, medioPago: 'Efectivo', importadoDeExcel: true, timestamp: (fechaParseada || new Date()).getTime() });
                 }
             });
 
